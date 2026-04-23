@@ -65,9 +65,10 @@ function buildPrefill(type: BuildType, answers: Record<string, string>): string 
 interface Props {
   onComplete: (result: WizardResult) => void
   onSkip: () => void
+  onVoice?: () => void
 }
 
-export default function IdeaWizard({ onComplete, onSkip }: Props) {
+export default function IdeaWizard({ onComplete, onSkip, onVoice }: Props) {
   const [step, setStep] = useState<'type' | 'questions' | 'review'>('type')
   const [buildType, setBuildType] = useState<BuildType | null>(null)
   const [qIndex, setQIndex] = useState(0)
@@ -150,9 +151,16 @@ export default function IdeaWizard({ onComplete, onSkip }: Props) {
               </button>
             ))}
           </div>
-          <button onClick={onSkip} style={{ display: 'block', margin: '20px auto 0', background: 'none', border: 'none', fontSize: 14, color: '#AEAEB2', cursor: 'pointer', textDecoration: 'underline' }}>
-            Skip — just let me type
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 20 }}>
+            {onVoice && (
+              <button onClick={onVoice} style={{ background: 'none', border: 'none', fontSize: 14, color: '#FF3B30', cursor: 'pointer', fontWeight: 600 }}>
+                🎙 Use voice instead
+              </button>
+            )}
+            <button onClick={onSkip} style={{ background: 'none', border: 'none', fontSize: 14, color: '#AEAEB2', cursor: 'pointer', textDecoration: 'underline' }}>
+              Skip — just let me type
+            </button>
+          </div>
         </div>
       )}
 

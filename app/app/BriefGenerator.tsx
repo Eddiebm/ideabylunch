@@ -5,6 +5,7 @@ import BuildFlow from './BuildFlow'
 import PhotographySection from './PhotographySection'
 import IdeaWizard from './IdeaWizard'
 import EmailGate from './EmailGate'
+import VoiceInterview from './VoiceInterview'
 
 const SYSTEM_PROMPT = `You are idea2Lunch — an elite product studio AI. Transform a raw idea into a complete, actionable product brief.
 
@@ -340,6 +341,7 @@ export default function BriefGenerator() {
   const [showLaunch, setShowLaunch] = useState(false)
   const [agent, setAgent] = useState('claude')
   const [showWizard, setShowWizard] = useState(true)
+  const [showVoice, setShowVoice] = useState(false)
   const [showEmailGate, setShowEmailGate] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -438,8 +440,23 @@ export default function BriefGenerator() {
       <div style={{ background: '#F2F2F7', minHeight: '100vh', paddingTop: 68 }}>
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '52px 20px 120px' }}>
 
+          {/* Voice interview */}
+          {showVoice && !output && !loading && (
+            <div style={{ background: '#fff', borderRadius: 20, padding: '28px 28px 32px', boxShadow: '0 2px 8px rgba(0,0,0,.06)', marginBottom: 12 }}>
+              <VoiceInterview
+                onComplete={prefill => {
+                  setInput(prefill)
+                  setShowVoice(false)
+                  setShowWizard(false)
+                  setTimeout(() => handleGenerate(), 100)
+                }}
+                onSkip={() => { setShowVoice(false) }}
+              />
+            </div>
+          )}
+
           {/* Wizard — shown before first generate */}
-          {showWizard && !output && !loading && (
+          {showWizard && !showVoice && !output && !loading && (
             <div style={{ background: '#fff', borderRadius: 20, padding: '28px 28px 32px', boxShadow: '0 2px 8px rgba(0,0,0,.06)', marginBottom: 12 }}>
               <IdeaWizard
                 onComplete={({ prefill }) => {
@@ -448,6 +465,7 @@ export default function BriefGenerator() {
                   setTimeout(() => textareaRef.current?.focus(), 50)
                 }}
                 onSkip={() => setShowWizard(false)}
+                onVoice={() => { setShowWizard(false); setShowVoice(true) }}
               />
             </div>
           )}
