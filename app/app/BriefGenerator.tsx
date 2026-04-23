@@ -477,7 +477,7 @@ export default function BriefGenerator() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px 14px', borderTop: input || loading ? '0.5px solid rgba(0,0,0,.06)' : 'none' }}>
               <span style={{ fontSize: 12, color: '#AEAEB2', fontWeight: 400 }}>⌘ Return to generate</span>
               <button
-                onClick={handleGenerate}
+                onClick={() => handleGenerate()}
                 disabled={loading || !input.trim()}
                 style={{
                   background: loading || !input.trim() ? 'rgba(0,0,0,.05)' : '#0066CC',
