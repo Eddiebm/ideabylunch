@@ -3,6 +3,8 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import WebsitePreview from './WebsitePreview'
 import BuildFlow from './BuildFlow'
 import PhotographySection from './PhotographySection'
+import IdeaWizard from './IdeaWizard'
+import EmailGate from './EmailGate'
 
 const SYSTEM_PROMPT = `You are idea2Lunch — an elite product studio AI. Transform a raw idea into a complete, actionable product brief.
 
@@ -291,9 +293,18 @@ export default function BriefGenerator() {
   const [copiedAll, setCopiedAll] = useState(false)
   const [showLaunch, setShowLaunch] = useState(false)
   const [agent, setAgent] = useState('claude')
+  const [showWizard, setShowWizard] = useState(true)
+  const [showEmailGate, setShowEmailGate] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const runningRef = useRef(false)
+
+  // Restore email from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('i2l_email')
+    if (saved) setUserEmail(saved)
+  }, [])
 
   useEffect(() => {
     const el = textareaRef.current
@@ -302,19 +313,26 @@ export default function BriefGenerator() {
     el.style.height = Math.max(56, el.scrollHeight) + 'px'
   }, [input])
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(async (overrideEmail?: string) => {
     if (!input.trim() || loading || runningRef.current) return
     runningRef.current = true
     setLoading(true); setStreaming(true); setOutput(''); setError(''); setShowLaunch(false)
     abortRef.current?.abort()
     abortRef.current = new AbortController()
+    const email = overrideEmail ?? userEmail
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: abortRef.current.signal,
-        body: JSON.stringify({ systemPrompt: SYSTEM_PROMPT, userMessage: input.trim() }),
+        body: JSON.stringify({ systemPrompt: SYSTEM_PROMPT, userMessage: input.trim(), email }),
       })
+      if (res.status === 429) {
+        // Hit rate limit — show email gate
+        setLoading(false); setStreaming(false); runningRef.current = false
+        setShowEmailGate(true)
+        return
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const reader = res.body!.getReader()
       const decoder = new TextDecoder()
@@ -363,18 +381,39 @@ export default function BriefGenerator() {
       `}</style>
 
       {showLaunch && <LaunchModal brief={output} onClose={() => setShowLaunch(false)} />}
+      {showEmailGate && (
+        <EmailGate onUnlock={email => {
+          setUserEmail(email)
+          setShowEmailGate(false)
+          handleGenerate(email)
+        }} />
+      )}
 
       <div style={{ background: '#F2F2F7', minHeight: '100vh', paddingTop: 68 }}>
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '52px 20px 120px' }}>
 
-          {/* Hero — only when no output */}
-          {!output && !loading && (
-            <div style={{ textAlign: 'center' as const, marginBottom: 40, animation: 'fadeUp .5s ease both' }}>
-              <h1 style={{ fontSize: 'clamp(40px,7vw,64px)', fontWeight: 700, color: '#1D1D1F', letterSpacing: '-2px', lineHeight: 1.05, margin: '0 0 14px' }}>
+          {/* Wizard — shown before first generate */}
+          {showWizard && !output && !loading && (
+            <div style={{ background: '#fff', borderRadius: 20, padding: '28px 28px 32px', boxShadow: '0 2px 8px rgba(0,0,0,.06)', marginBottom: 12 }}>
+              <IdeaWizard
+                onComplete={({ prefill }) => {
+                  setInput(prefill)
+                  setShowWizard(false)
+                  setTimeout(() => textareaRef.current?.focus(), 50)
+                }}
+                onSkip={() => setShowWizard(false)}
+              />
+            </div>
+          )}
+
+          {/* Hero — only when wizard done and no output */}
+          {!showWizard && !output && !loading && (
+            <div style={{ textAlign: 'center' as const, marginBottom: 24, animation: 'fadeUp .4s ease both' }}>
+              <h1 style={{ fontSize: 'clamp(32px,6vw,52px)', fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1.5px', lineHeight: 1.08, margin: '0 0 10px' }}>
                 Your idea,<br/><span style={{ color: '#0066CC' }}>fully cooked.</span>
               </h1>
-              <p style={{ fontSize: 19, color: '#6E6E73', lineHeight: 1.55, maxWidth: 480, margin: '0 auto', fontWeight: 400, letterSpacing: '-.2px' }}>
-                Describe your idea. Get a complete product brief — vision, market intelligence, copy, launch strategy, and a master build prompt.
+              <p style={{ fontSize: 16, color: '#6E6E73', lineHeight: 1.55, maxWidth: 440, margin: '0 auto', fontWeight: 400 }}>
+                Review or add to your description, then hit Cook.
               </p>
             </div>
           )}
