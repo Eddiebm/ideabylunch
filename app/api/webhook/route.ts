@@ -13,14 +13,18 @@ function getRedis() {
   return new Redis({ url, token })
 }
 
+function cleanToken(raw: string | undefined): string | null {
+  if (!raw) return null
+  return raw.trim().replace(/\\n$/, '').replace(/^["']|["']$/g, '')
+}
+
 async function deployToVercel(projectSlug: string, html: string): Promise<string | null> {
-  const token = process.env.VERCEL_DEPLOY_TOKEN || process.env.VERCEL_TOKEN
+  const token = cleanToken(process.env.VERCEL_DEPLOY_TOKEN || process.env.VERCEL_TOKEN)
   const teamId = process.env.VERCEL_TEAM_ID
   if (!token) return null
 
   const qs = teamId ? `?teamId=${teamId}` : ''
 
-  // Use Vercel Deployments API with inline files. This auto-creates the project if it doesn't exist.
   const res = await fetch(`https://api.vercel.com/v13/deployments${qs}`, {
     method: 'POST',
     headers: {
@@ -31,9 +35,7 @@ async function deployToVercel(projectSlug: string, html: string): Promise<string
       name: projectSlug,
       target: 'production',
       project: projectSlug,
-      files: [
-        { file: 'index.html', data: html },
-      ],
+      files: [{ file: 'index.html', data: html }],
       projectSettings: {
         framework: null,
         buildCommand: null,
@@ -44,12 +46,19 @@ async function deployToVercel(projectSlug: string, html: string): Promise<string
     }),
   })
   if (!res.ok) {
-    const text = await res.text()
-    console.error('Vercel deploy failed', res.status, text)
+    console.error('Vercel deploy failed', res.status, await res.text())
     return null
   }
   const data: any = await res.json()
   const url = data?.url || data?.alias?.[0]
+
+  // Make the project publicly accessible (disable SSO + password protection)
+  await fetch(`https://api.vercel.com/v10/projects/${projectSlug}${qs}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ssoProtection: null, passwordProtection: null }),
+  }).catch(e => console.error('disable protection failed', e))
+
   return url ? `https://${url.replace(/^https?:\/\//, '')}` : null
 }
 
