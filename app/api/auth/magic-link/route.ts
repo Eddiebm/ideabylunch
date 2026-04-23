@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 import { getRedis } from '@/app/lib/redis'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 function generateToken(): string {
   const arr = new Uint8Array(24)

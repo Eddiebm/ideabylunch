@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     return Response.redirect(new URL('/login', req.url))
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-11-20.acacia' })
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
