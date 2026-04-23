@@ -1,7 +1,10 @@
-.next/
-node_modules/
-.vercel/
+!.env.example
 *.env*.local
 .env
-out/
+.env*.local
+.env.*
+.next/
+.vercel/
 dist/
+node_modules/
+out/
