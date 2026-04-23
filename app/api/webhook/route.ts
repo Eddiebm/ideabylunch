@@ -75,28 +75,131 @@ function extractProductName(brief: string): string {
   return m?.[1] || 'Your Product'
 }
 
-async function generateHtmlFromBrief(brief: string, productName: string): Promise<string | null> {
+async function fetchPhotos(query: string, count: number): Promise<string[]> {
+  const key = process.env.UNSPLASH_ACCESS_KEY
+  if (!key) return []
+  try {
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=${count}&orientation=landscape&content_filter=high`
+    const res = await fetch(url, { headers: { Authorization: `Client-ID ${key}` } })
+    if (!res.ok) return []
+    const data: any = await res.json()
+    return (data.results || []).map((p: any) => p.urls.regular as string)
+  } catch { return [] }
+}
+
+function extractPhotoQuery(brief: string, productName: string): string {
+  const lower = brief.toLowerCase()
+  if (/restaurant|food|cafe|kitchen|menu|dish/.test(lower)) return 'restaurant food'
+  if (/vitamin|peptide|supplement|health|medical|pharma/.test(lower)) return 'wellness supplements'
+  if (/plumb|repair|contractor|hvac|handyman/.test(lower)) return 'professional service worker'
+  if (/real estate|property|realtor|homes/.test(lower)) return 'modern architecture home'
+  if (/fashion|apparel|clothing|boutique/.test(lower)) return 'fashion editorial'
+  if (/fitness|gym|yoga|personal trainer/.test(lower)) return 'fitness athlete'
+  if (/law|legal|attorney/.test(lower)) return 'law office professional'
+  if (/salon|beauty|spa|hair|barber/.test(lower)) return 'luxury spa beauty'
+  if (/tech|software|saas|platform|app/.test(lower)) return 'modern office technology'
+  if (/consult|agency|marketing|branding/.test(lower)) return 'business strategy meeting'
+  return `${productName} lifestyle`
+}
+
+type Tier = 'starter' | 'professional' | 'premium'
+
+const TIER_CONFIG: Record<Tier, { model: string; photos: number; maxTokens: number; directive: string }> = {
+  starter: {
+    model: 'google/gemini-2.5-flash',
+    photos: 4,
+    maxTokens: 8000,
+    directive: `Aim for a site that looks like it cost $100,000 — Stripe-level polish. Modern premium SaaS aesthetic.
+- Inter or Geist font, tight typographic hierarchy (88px hero → 48px section → 20px body)
+- Generous whitespace, 1440px max-width, precise 8pt grid
+- Photos MUST be used as full-bleed hero background (with 0.4 dark overlay + white text) and in a 3-column feature gallery
+- Subtle gradients, soft shadows (0 10px 40px rgba(0,0,0,0.08)), rounded-xl cards
+- Monochrome palette with ONE vivid accent color derived from the product
+- Micro-interactions: hover lifts, fade-in on scroll (IntersectionObserver), smooth button transitions`,
+  },
+  professional: {
+    model: 'google/gemini-2.5-pro',
+    photos: 6,
+    maxTokens: 12000,
+    directive: `Aim for a site that looks like it cost $500,000 — Apple meets Linear. Top 1% of landing pages.
+- Custom-feeling typography (Fraunces + Inter pairing, or Playfair + Söhne)
+- Asymmetric editorial layouts, magazine-style spreads, layered imagery
+- 6 photos used across: hero (parallax), 3-col feature grid, testimonial portraits, footer CTA backdrop
+- Signature color story: rich primary + analogous secondary + 1 unexpected accent
+- Advanced CSS: scroll-triggered animations, subtle parallax, blurred background orbs, gradient text
+- Sections: sticky nav w/ backdrop-filter, video-worthy hero, social proof bar (fake press logos as SVG), feature storytelling (alternating image-left/right), stats/metrics band, 3-tier pricing, testimonial carousel, FAQ accordion, multi-column footer`,
+  },
+  premium: {
+    model: 'anthropic/claude-sonnet-4.5',
+    photos: 8,
+    maxTokens: 16000,
+    directive: `DESIGN GOD TIER — a site that looks like it cost $2,000,000. Awwwards-winner. Apple.com / Rauno / Vercel / Linear quality.
+- Custom type pairing with variable fonts, 120px+ display heading, optical size adjustments, display tracking tuned by hand
+- Full-bleed cinematic hero with layered photo + gradient mesh + animated noise texture
+- 8 photos orchestrated: hero parallax, bento feature grid (varied sizes), portrait testimonials, lifestyle/product crops, footer epic scene
+- Signature design system: a distinct color story that feels like a brand (reference Stripe/Linear/Vercel as inspiration), custom SVG icons
+- Advanced motion: scroll-triggered reveals, magnetic buttons, cursor trail, smooth-scroll, bento cards that reorganize on scroll, number counters
+- Rich sections: kinetic hero, "as seen in" press bar with realistic SVG logos, 3-act storytelling features with oversized imagery, interactive pricing compare table, case study / metric band with animated counters, testimonial quotes in editorial typography, founder letter with signature, FAQ with smooth accordion, EPIC multi-column footer with newsletter + social + sitemap
+- Details matter: hairline dividers, small-caps labels, pull quotes, drop caps in at least one section, pull-through type, hand-crafted micro-copy`,
+  },
+}
+
+async function generateHtmlFromBrief(brief: string, productName: string, plan: string): Promise<string | null> {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) return null
-  const system = `You are a world-class frontend designer. Output a COMPLETE, BEAUTIFUL, PRODUCTION-READY single-page HTML document.
-REQUIRED SECTIONS: fixed nav · hero · how it works (3 steps) · features · pricing · CTA · footer.
-Import Google Fonts via @import in <style>. Inline ALL CSS and JS. Use tasteful gradients in place of photos.
-Style: modern minimal — Inter font, generous whitespace, soft gray/black palette, subtle borders.
-Start directly with <!DOCTYPE html>. No explanation before or after.`
-  const user = `PRODUCT: ${productName}\nBRIEF:\n${brief.slice(0, 2500)}\n\nBuild the complete website now.`
+
+  const tier: Tier = (['starter', 'professional', 'premium'].includes(plan) ? plan : 'starter') as Tier
+  const cfg = TIER_CONFIG[tier]
+
+  const photoQuery = extractPhotoQuery(brief, productName)
+  const photos = await fetchPhotos(photoQuery, cfg.photos)
+  const photoBlock = photos.length
+    ? photos.map((u, i) => `  photo_${i + 1}: ${u}`).join('\n')
+    : '  (no photos available — use rich gradient meshes and SVG illustrations instead)'
+
+  const system = `You are a world-class frontend designer and art director in the top 0.1% of your craft.
+Output a COMPLETE, PRODUCTION-READY single-page HTML document.
+
+${cfg.directive}
+
+HARD REQUIREMENTS:
+- Start directly with <!DOCTYPE html>. No markdown fences, no preamble, no explanation.
+- Import Google Fonts via @import in <style>. Inline ALL CSS and JS.
+- Use the provided photo URLs as <img src="..."> and CSS background-image exactly — do NOT invent placeholder URLs.
+- Every image must have object-fit: cover; and proper alt text.
+- Build a REAL navigation bar with logo + 4 links + primary CTA button.
+- Build a REAL footer with brand, 3-4 link columns (Product/Company/Resources/Legal), social icons, and copyright.
+- Write compelling, specific copy — no lorem ipsum, no "Lorem" placeholder text, no generic "Feature one / Feature two". Every headline, subhead, and button label must speak to the product's actual value.
+- Use the product name consistently throughout.
+- Make it feel ALIVE: subtle animations, hover states, scroll behaviors.`
+
+  const user = `PRODUCT NAME: ${productName}
+TIER: ${tier.toUpperCase()}
+
+BRIEF (use this as ground truth for copy, features, audience, pricing):
+${brief.slice(0, 3500)}
+
+AVAILABLE PHOTOS (use EVERY ONE in the layout — do not skip any):
+${photoBlock}
+
+Build the complete website now. Be bold. Be specific. Make the client's jaw drop.`
+
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        max_tokens: 6000,
+        model: cfg.model,
+        max_tokens: cfg.maxTokens,
+        temperature: 0.85,
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
       }),
     })
     if (!res.ok) { console.error('generate html failed', res.status, await res.text()); return null }
     const data: any = await res.json()
-    const html = data?.choices?.[0]?.message?.content || ''
+    let html = data?.choices?.[0]?.message?.content || ''
+    // Strip markdown fences if the model wrapped it
+    html = html.replace(/^```(?:html)?\s*/i, '').replace(/```\s*$/i, '').trim()
     return html.includes('<!DOCTYPE') ? html : null
   } catch (e) {
     console.error('generate html error', e)
@@ -186,7 +289,7 @@ export async function POST(req: Request) {
 
       // Get or generate HTML
       let html: string | null = order?.selectedHtml || null
-      if (!html && brief) html = await generateHtmlFromBrief(brief, productName)
+      if (!html && brief) html = await generateHtmlFromBrief(brief, productName, plan)
 
       // Deploy if we have HTML
       const projectSlug = slugify(productName)
