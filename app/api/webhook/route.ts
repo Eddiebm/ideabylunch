@@ -126,6 +126,23 @@ export async function POST(req: Request) {
     const projectSlug = slugify(productName)
     const liveUrl = await deployToVercel(projectSlug, html)
 
+    // Track referral conversion
+    const refCode = session.metadata?.ref
+    if (redis && customerEmail && refCode) {
+      const referrerEmail = await redis.get(`refer:code:${refCode}`)
+      if (referrerEmail && String(referrerEmail) !== customerEmail) {
+        const alreadyUsed = await redis.get(`refer:used:${customerEmail}`)
+        if (!alreadyUsed) {
+          await redis.set(`refer:used:${customerEmail}`, refCode)
+          await redis.incr(`refer:conversions:${String(referrerEmail)}`)
+          // Track reseller revenue
+          const amount = session.amount_total || 0
+          await redis.incr(`reseller:sales:${refCode}`)
+          await redis.incrby(`reseller:revenue:${refCode}`, amount)
+        }
+      }
+    }
+
     if (redis) {
       if (liveUrl) redis.incr('stats:deploys')
       if (customerEmail) redis.set(`customer:${customerEmail}:order`, session.id)

@@ -11,7 +11,7 @@ const PRICES: Record<string, { amount: number; name: string; priceId?: string }>
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan, brief } = await req.json() as { plan: string; brief: string }
+    const { plan, brief, ref } = await req.json() as { plan: string; brief: string; ref?: string }
     const planMeta = PRICES[plan]
     if (!planMeta) return Response.json({ error: 'Invalid plan' }, { status: 400 })
 
@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         plan,
         brief: brief.slice(0, 500),
+        ...(ref ? { ref } : {}),
       },
     })
 
