@@ -62,6 +62,18 @@ async function deployToVercel(projectSlug: string, html: string): Promise<string
   return url ? `https://${url.replace(/^https?:\/\//, '')}` : null
 }
 
+function watermark(html: string, meta: { sessionId: string; customerEmail: string; plan: string }): string {
+  const banner = `<!--
+  Built by idea2Lunch — https://idea2lunch.com
+  Licensed for exclusive use by: ${meta.customerEmail}
+  Order: ${meta.sessionId} · Plan: ${meta.plan} · Built: ${new Date().toISOString()}
+  Redistribution, resale, or use for other businesses is prohibited.
+  Questions? hello@idea2lunch.com
+-->
+`
+  return html.replace(/^<!DOCTYPE[^>]*>/i, m => `${banner}${m}`)
+}
+
 function slugify(name: string) {
   return (name || 'site')
     .toLowerCase()
@@ -296,9 +308,10 @@ export async function POST(req: Request) {
       let html: string | null = order?.selectedHtml || null
       if (!html && brief) html = await generateHtmlFromBrief(brief, productName, plan)
 
-      // Deploy if we have HTML
+      // Watermark + deploy
       const projectSlug = slugify(productName)
-      const liveUrl = html ? await deployToVercel(projectSlug, html) : null
+      const watermarkedHtml = html ? watermark(html, { sessionId: session.id, customerEmail: customerEmail || '', plan }) : null
+      const liveUrl = watermarkedHtml ? await deployToVercel(projectSlug, watermarkedHtml) : null
 
       // Track referral conversion
       const refCode = session.metadata?.ref

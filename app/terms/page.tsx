@@ -1,3 +1,4 @@
+export const runtime = 'edge'
 import Link from 'next/link'
 
 export const metadata = {
@@ -179,6 +180,8 @@ export default function TermsPage() {
               <Rule>Unsplash photos are licensed for commercial use under the <a href="https://unsplash.com/license" target="_blank" rel="noopener noreferrer">Unsplash License</a>. Attribution is not required but appreciated.</Rule>
               <Rule>AI-generated code and copy passes ownership to you on payment — we make no claim on it.</Rule>
               <Rule>We may show your site in our portfolio unless you ask us not to in writing.</Rule>
+              <Rule><strong>The deliverable is licensed for your own business only.</strong> You may not resell, redistribute, sublicense, or reuse the code, copy, or design for other businesses — whether directly or by feeding it into an AI tool to generate derivative sites. Each delivery includes an invisible watermark with your order ID; derivative works may be traced back to you.</Rule>
+              <Rule>Breach of this clause terminates your license immediately and entitles us to take down any infringing site and seek damages equal to the full retail price of each unauthorized copy.</Rule>
             </Section>
 
             <Section id="liability" title="9. Liability">
