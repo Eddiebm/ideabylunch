@@ -1,7 +1,20 @@
+export const runtime = 'edge'
 import Stripe from 'stripe'
 import { NextRequest } from 'next/server'
+import { Redis } from '@upstash/redis'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
+
+function getRedis() {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return null
+  return new Redis({ url, token })
+}
+
+function makeToken() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+}
 
 const PRICES: Record<string, { amount: number; name: string; priceId?: string }> = {
   starter:      { amount: 14900,  name: 'idea2Lunch — Starter Website',     priceId: process.env.STRIPE_STARTER_PRICE_ID },
@@ -55,6 +68,13 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // Store full brief in Redis keyed by a token — Stripe metadata only holds 500 chars per field
+    const briefToken = makeToken()
+    const redis = getRedis()
+    if (redis && brief) {
+      await redis.set(`brief:${briefToken}`, brief, { ex: 60 * 60 * 24 * 7 })
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -63,7 +83,8 @@ export async function POST(req: NextRequest) {
       cancel_url: `${appUrl}/app`,
       metadata: {
         plan,
-        brief: brief.slice(0, 500),
+        briefToken,
+        briefSummary: brief.slice(0, 400),
         express: express ? 'true' : 'false',
         ...(ref ? { ref } : {}),
       },

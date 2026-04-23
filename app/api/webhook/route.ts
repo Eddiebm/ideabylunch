@@ -281,7 +281,12 @@ export async function POST(req: Request) {
       const order: any = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null
 
       const customerEmail = session.customer_details?.email || order?.contact?.email
-      const brief = session.metadata?.brief || order?.brief || ''
+      const briefToken = session.metadata?.briefToken
+      let brief = order?.brief || session.metadata?.brief || session.metadata?.briefSummary || ''
+      if (briefToken && redis) {
+        const fullBrief = await redis.get(`brief:${briefToken}`)
+        if (fullBrief) brief = String(fullBrief)
+      }
       const plan = session.metadata?.plan || order?.plan || 'starter'
       const amountPaid = (session.amount_total || 0) / 100
       const productName = order?.productName || session.metadata?.productName || extractProductName(brief)
