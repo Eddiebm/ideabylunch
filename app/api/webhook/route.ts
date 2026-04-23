@@ -1,3 +1,4 @@
+export const runtime = 'nodejs'
 import Stripe from 'stripe'
 import { headers } from 'next/headers'
 import { Resend } from 'resend'
@@ -60,6 +61,70 @@ function slugify(name: string) {
     .slice(0, 40) + '-' + Math.random().toString(36).slice(2, 7)
 }
 
+function extractProductName(brief: string): string {
+  const m = brief.match(/(?:PRODUCT VISION|^)\s*([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+is/)
+  return m?.[1] || 'Your Product'
+}
+
+async function generateHtmlFromBrief(brief: string, productName: string): Promise<string | null> {
+  const apiKey = process.env.OPENROUTER_API_KEY
+  if (!apiKey) return null
+  const system = `You are a world-class frontend designer. Output a COMPLETE, BEAUTIFUL, PRODUCTION-READY single-page HTML document.
+REQUIRED SECTIONS: fixed nav · hero · how it works (3 steps) · features · pricing · CTA · footer.
+Import Google Fonts via @import in <style>. Inline ALL CSS and JS. Use tasteful gradients in place of photos.
+Style: modern minimal — Inter font, generous whitespace, soft gray/black palette, subtle borders.
+Start directly with <!DOCTYPE html>. No explanation before or after.`
+  const user = `PRODUCT: ${productName}\nBRIEF:\n${brief.slice(0, 2500)}\n\nBuild the complete website now.`
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        max_tokens: 6000,
+        messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+      }),
+    })
+    if (!res.ok) { console.error('generate html failed', res.status, await res.text()); return null }
+    const data: any = await res.json()
+    const html = data?.choices?.[0]?.message?.content || ''
+    return html.includes('<!DOCTYPE') ? html : null
+  } catch (e) {
+    console.error('generate html error', e)
+    return null
+  }
+}
+
+async function alertAdmin(resend: Resend, data: {
+  customerEmail: string; productName: string; plan: string; amount: number;
+  sessionId: string; liveUrl: string | null; deployFailed: boolean;
+}) {
+  const adminEmail = process.env.ADMIN_EMAIL || 'eddie@bannermanmenson.com'
+  const statusLine = data.liveUrl
+    ? `<p style="color:#0a0">Site deployed: <a href="${data.liveUrl}">${data.liveUrl}</a></p>`
+    : data.deployFailed
+      ? `<p style="color:#c00"><strong>AUTO-DEPLOY FAILED — deliver manually.</strong></p>`
+      : ''
+  try {
+    await resend.emails.send({
+      from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
+      to: adminEmail,
+      subject: `💰 $${data.amount} — ${data.plan} — ${data.customerEmail}`,
+      html: `<div style="font-family:-apple-system,sans-serif">
+        <h2>New paid order</h2>
+        <p><strong>Amount:</strong> $${data.amount}</p>
+        <p><strong>Plan:</strong> ${data.plan}</p>
+        <p><strong>Customer:</strong> ${data.customerEmail}</p>
+        <p><strong>Product:</strong> ${data.productName}</p>
+        <p><strong>Stripe session:</strong> ${data.sessionId}</p>
+        ${statusLine}
+      </div>`,
+    })
+  } catch (e) {
+    console.error('admin alert failed', e)
+  }
+}
+
 async function notifyCustomer(email: string, productName: string, liveUrl: string, whatsapp: string | undefined, resend: Resend) {
   try {
     await resend.emails.send({
@@ -97,73 +162,100 @@ export async function POST(req: Request) {
   }
 
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session
-    const redis = getRedis()
-    const raw = redis ? await redis.get(`order:${session.id}`) : null
-    const order: any = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null
+    try {
+      const session = event.data.object as Stripe.Checkout.Session
+      const redis = getRedis()
+      const raw = redis ? await redis.get(`order:${session.id}`) : null
+      const order: any = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null
 
-    const customerEmail = session.customer_details?.email || order?.contact?.email
-    const productName = order?.productName || session.metadata?.productName || 'Your product'
-    const html = order?.selectedHtml
-    const whatsapp = order?.contact?.whatsapp || session.metadata?.whatsapp
-
-    // Legacy one-time checkout path (plan-based). Keep the old confirmation email.
-    if (!html) {
-      const { plan, brief } = session.metadata || {}
+      const customerEmail = session.customer_details?.email || order?.contact?.email
+      const brief = session.metadata?.brief || order?.brief || ''
+      const plan = session.metadata?.plan || order?.plan || 'starter'
       const amountPaid = (session.amount_total || 0) / 100
-      if (customerEmail && brief) {
+      const productName = order?.productName || session.metadata?.productName || extractProductName(brief)
+      const whatsapp = order?.contact?.whatsapp || session.metadata?.whatsapp
+
+      // Get or generate HTML
+      let html: string | null = order?.selectedHtml || null
+      if (!html && brief) html = await generateHtmlFromBrief(brief, productName)
+
+      // Deploy if we have HTML
+      const projectSlug = slugify(productName)
+      const liveUrl = html ? await deployToVercel(projectSlug, html) : null
+
+      // Track referral conversion
+      const refCode = session.metadata?.ref
+      if (redis && customerEmail && refCode) {
+        const referrerEmail = await redis.get(`refer:code:${refCode}`)
+        if (referrerEmail && String(referrerEmail) !== customerEmail) {
+          const alreadyUsed = await redis.get(`refer:used:${customerEmail}`)
+          if (!alreadyUsed) {
+            await redis.set(`refer:used:${customerEmail}`, refCode)
+            await redis.incr(`refer:conversions:${String(referrerEmail)}`)
+            const amount = session.amount_total || 0
+            await redis.incr(`reseller:sales:${refCode}`)
+            await redis.incrby(`reseller:revenue:${refCode}`, amount)
+          }
+        }
+      }
+
+      // Always record the order
+      if (redis) {
+        if (liveUrl) redis.incr('stats:deploys')
+        if (customerEmail) redis.set(`customer:${customerEmail}:order`, session.id)
+        await redis.set(`order:${session.id}`, JSON.stringify({
+          ...order,
+          sessionId: session.id,
+          customerEmail,
+          productName,
+          plan,
+          amount: amountPaid,
+          brief,
+          status: liveUrl ? 'deployed' : (html ? 'deploy_failed' : 'needs_manual_build'),
+          projectSlug,
+          liveUrl,
+          createdAt: Date.now(),
+          deployedAt: liveUrl ? Date.now() : null,
+        }), { ex: 60 * 60 * 24 * 90 })
+      }
+
+      // Notify customer
+      if (customerEmail && liveUrl) {
+        await notifyCustomer(customerEmail, productName, liveUrl, whatsapp, resend)
+      } else if (customerEmail) {
         await resend.emails.send({
           from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
           to: customerEmail,
-          subject: '✦ Your product is in the kitchen — idea2Lunch',
-          html: `<p>Thanks! Plan: ${plan}. Amount: $${amountPaid.toFixed(2)}. Building now.</p>`,
+          subject: `✦ Your ${productName} order is in — idea2Lunch`,
+          html: `<div style="font-family:-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px">
+            <h1 style="font-size:24px">Order received.</h1>
+            <p>Thanks — we've got your ${plan} order for <strong>${productName}</strong> ($${amountPaid.toFixed(2)}).</p>
+            <p>We're finalising your site and will email the live URL within 24 hours.</p>
+            <p style="color:#666;font-size:13px">Reply to this email with any tweaks.</p>
+          </div>`,
+        }).catch(() => {})
+      }
+
+      // Admin alert — always fires so you never miss a sale
+      if (customerEmail) {
+        await alertAdmin(resend, {
+          customerEmail, productName, plan, amount: amountPaid,
+          sessionId: session.id,
+          liveUrl,
+          deployFailed: !!html && !liveUrl,
         })
       }
-      return new Response('OK', { status: 200 })
-    }
-
-    // New pick-and-pay path: deploy the selected HTML to Vercel.
-    const projectSlug = slugify(productName)
-    const liveUrl = await deployToVercel(projectSlug, html)
-
-    // Track referral conversion
-    const refCode = session.metadata?.ref
-    if (redis && customerEmail && refCode) {
-      const referrerEmail = await redis.get(`refer:code:${refCode}`)
-      if (referrerEmail && String(referrerEmail) !== customerEmail) {
-        const alreadyUsed = await redis.get(`refer:used:${customerEmail}`)
-        if (!alreadyUsed) {
-          await redis.set(`refer:used:${customerEmail}`, refCode)
-          await redis.incr(`refer:conversions:${String(referrerEmail)}`)
-          // Track reseller revenue
-          const amount = session.amount_total || 0
-          await redis.incr(`reseller:sales:${refCode}`)
-          await redis.incrby(`reseller:revenue:${refCode}`, amount)
-        }
-      }
-    }
-
-    if (redis) {
-      if (liveUrl) redis.incr('stats:deploys')
-      if (customerEmail) redis.set(`customer:${customerEmail}:order`, session.id)
-      await redis.set(`order:${session.id}`, JSON.stringify({
-        ...order,
-        status: liveUrl ? 'deployed' : 'deploy_failed',
-        projectSlug,
-        liveUrl,
-        deployedAt: Date.now(),
-      }), { ex: 60 * 60 * 24 * 30 })
-    }
-
-    if (customerEmail && liveUrl) {
-      await notifyCustomer(customerEmail, productName, liveUrl, whatsapp, resend)
-    } else if (customerEmail) {
-      await resend.emails.send({
-        from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
-        to: customerEmail,
-        subject: `Your ${productName} order — building now`,
-        html: `<p>Order received. We're finalising your deploy and will send the live URL shortly.</p>`,
-      }).catch(() => {})
+    } catch (e) {
+      console.error('webhook handler error', e)
+      // Always email admin on failure so money never lands silently
+      try {
+        await resend.emails.send({
+          from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
+          to: process.env.ADMIN_EMAIL || 'eddie@bannermanmenson.com',
+          subject: `⚠️ Webhook handler threw — check Stripe event ${event.id}`,
+          html: `<p>Handler crashed. Stripe event <code>${event.id}</code> returned 200 but processing failed.</p><pre>${String(e).slice(0, 2000)}</pre>`,
+        })
+      } catch {}
     }
   }
 
