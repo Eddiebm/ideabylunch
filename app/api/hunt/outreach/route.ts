@@ -46,14 +46,40 @@ async function sendSMS(to: string, businessName: string, previewUrl: string): Pr
   } catch { return false }
 }
 
-// ── Find business email via Hunter.io ─────────────────────────────────────────
+// ── Scrape mailto: + contact page emails directly from the business site ─────
+async function scrapeSiteEmails(website: string): Promise<string[]> {
+  const found = new Set<string>()
+  const base = website.startsWith('http') ? website : `https://${website}`
+  const re = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g
+  const urls = [base, `${base.replace(/\/$/, '')}/contact`, `${base.replace(/\/$/, '')}/contact-us`, `${base.replace(/\/$/, '')}/about`]
+  for (const u of urls) {
+    try {
+      const res = await fetch(u, { signal: AbortSignal.timeout(6000), redirect: 'follow' })
+      if (!res.ok) continue
+      const html = await res.text()
+      const matches = html.match(re) || []
+      for (const m of matches) {
+        const lc = m.toLowerCase()
+        if (lc.endsWith('.png') || lc.endsWith('.jpg') || lc.endsWith('.svg') || lc.includes('wixpress') || lc.includes('sentry') || lc.includes('example.com')) continue
+        found.add(lc)
+      }
+    } catch { /* ignore */ }
+  }
+  return Array.from(found)
+}
+
+// ── Find business email: Hunter.io first, site scrape fallback ───────────────
 async function findEmail(website: string, businessName: string): Promise<{
   email: string | null
   confidence: number
   source: string
 } | null> {
   const hunterKey = process.env.HUNTER_API_KEY
-  if (!hunterKey) return null
+  if (!hunterKey) {
+    const scraped = await scrapeSiteEmails(website)
+    if (scraped.length) return { email: scraped[0], confidence: 60, source: 'site-scrape' }
+    return null
+  }
 
   try {
     // Extract domain from website URL
@@ -85,6 +111,8 @@ async function findEmail(website: string, businessName: string): Promise<{
           }
         }
       }
+      const scraped = await scrapeSiteEmails(website)
+      if (scraped.length) return { email: scraped[0], confidence: 60, source: 'site-scrape' }
       return null
     }
 
