@@ -20,7 +20,7 @@ type Question = { id: string; q: string; type: 'tiles' | 'text'; options?: strin
 const QUESTIONS: Record<BuildType, Question[]> = {
   website: [
     { id: 'industry', q: 'What type of business?', type: 'tiles', options: ['Salon / Barbershop', 'Restaurant / Food', 'Clinic / Health', 'Legal / Finance', 'Retail / Shop', 'Trades / Services', 'Other'] },
-    { id: 'goal',     q: 'What's the main goal?',  type: 'tiles', options: ['Get calls & bookings', 'Showcase my work', 'Sell products online', 'Just be found online'] },
+    { id: 'goal',     q: "What's the main goal?",  type: 'tiles', options: ['Get calls & bookings', 'Showcase my work', 'Sell products online', 'Just be found online'] },
     { id: 'location', q: 'City or region?',         type: 'text'  },
     { id: 'extras',   q: 'Anything else to know?',  type: 'text'  },
   ],
