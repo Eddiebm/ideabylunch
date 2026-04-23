@@ -79,24 +79,41 @@ function extractName(text: string): string {
 }
 
 // ── Launch Modal ───────────────────────────────────────────────────────────────
+const EXPRESS_FEES: Record<string, { fee: number; label: string; delivery: string }> = {
+  starter:      { fee: 49,  label: '+$49', delivery: '4 hours' },
+  professional: { fee: 79,  label: '+$79', delivery: '2 hours' },
+  premium:      { fee: 99,  label: '+$99', delivery: '1 hour'  },
+  full:         { fee: 149, label: '+$149', delivery: 'Same day' },
+}
+
+const STANDARD_DELIVERY: Record<string, string> = {
+  starter: '48 hours', professional: '24 hours', premium: '12 hours', full: '5–7 days',
+}
+
 function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void }) {
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState('professional')
+  const [express, setExpress] = useState(false)
   const [error, setError] = useState('')
 
   const plans = [
-    { id: 'starter',      name: 'Starter',      price: '$149',   desc: '3-page website',                        note: 'Good'         },
-    { id: 'professional', name: 'Professional',  price: '$299',   desc: '5 pages + custom copy & colors',        note: 'Most popular' },
-    { id: 'premium',      name: 'Premium',       price: '$499',   desc: '8 pages + booking & payments',          note: 'Best'         },
-    { id: 'full',         name: 'Full Product',  price: '$1,499', desc: 'Mobile app or SaaS, fully built',       note: 'Apps & SaaS'  },
+    { id: 'starter',      name: 'Starter',      price: 149,   note: 'Good'         },
+    { id: 'professional', name: 'Professional',  price: 299,   note: 'Most popular' },
+    { id: 'premium',      name: 'Premium',       price: 499,   note: 'Best'         },
+    { id: 'full',         name: 'Full Product',  price: 1499,  note: 'Apps & SaaS'  },
   ]
 
   const features: Record<string, string[]> = {
-    starter:      ['3 pages (Home, About, Contact)', 'Mobile-responsive', 'Deployed to your domain', 'Free brief included', '48-hour delivery'],
-    professional: ['5 pages including Services', 'Custom brand colors & fonts', 'SEO-optimised copy', 'Contact form wired up', '1 round of revisions', '24-hour delivery'],
-    premium:      ['8 pages + blog or gallery', 'Online booking or payments', 'Custom design system', 'Analytics dashboard', '3 rounds of revisions', 'Priority 12-hour delivery'],
+    starter:      ['3 pages (Home, About, Contact)', 'Mobile-responsive', 'Deployed to your domain', 'Free brief included'],
+    professional: ['5 pages including Services', 'Custom brand colors & fonts', 'SEO-optimised copy', 'Contact form wired up', '1 round of revisions'],
+    premium:      ['8 pages + blog or gallery', 'Online booking or payments', 'Custom design system', 'Analytics dashboard', '3 rounds of revisions'],
     full:         ['Everything in Premium', 'Authentication (Clerk)', 'Stripe payments wired up', 'Database (Supabase)', '30 days of support'],
   }
+
+  const exp = EXPRESS_FEES[selected]
+  const basePlan = plans.find(p => p.id === selected)!
+  const totalPrice = express ? basePlan.price + exp.fee : basePlan.price
+  const delivery = express ? exp.delivery : STANDARD_DELIVERY[selected]
 
   const handleCheckout = async () => {
     setLoading(true); setError('')
@@ -104,7 +121,7 @@ function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void })
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: selected, brief }),
+        body: JSON.stringify({ plan: selected, brief, express }),
       })
       const data = await res.json()
       if (data.url) window.location.href = data.url
@@ -129,19 +146,44 @@ function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void })
           </div>
 
           {/* Plan picker */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 20 }}>
             {plans.map(p => (
-              <button key={p.id} onClick={() => setSelected(p.id)} style={{ background: selected === p.id ? '#1D1D1F' : 'rgba(0,0,0,.03)', border: selected === p.id ? '1.5px solid #1D1D1F' : '1.5px solid rgba(0,0,0,.08)', borderRadius: 12, padding: '14px 16px', cursor: 'pointer', textAlign: 'left' as const, transition: 'all .2s' }}>
+              <button key={p.id} onClick={() => { setSelected(p.id); setExpress(false) }} style={{ background: selected === p.id ? '#1D1D1F' : 'rgba(0,0,0,.03)', border: selected === p.id ? '1.5px solid #1D1D1F' : '1.5px solid rgba(0,0,0,.08)', borderRadius: 12, padding: '14px 16px', cursor: 'pointer', textAlign: 'left' as const, transition: 'all .2s' }}>
                 <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '.04em', color: selected === p.id ? 'rgba(255,255,255,.5)' : '#6E6E73', marginBottom: 4, textTransform: 'uppercase' as const }}>{p.note}</div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: selected === p.id ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-.3px', marginBottom: 2 }}>{p.name}</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: selected === p.id ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-.5px' }}>{p.price}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: selected === p.id ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-.3px', marginBottom: 2 }}>{p.name}</div>
+                <div style={{ fontSize: 19, fontWeight: 700, color: selected === p.id ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-.5px' }}>${p.price}</div>
               </button>
             ))}
           </div>
 
+          {/* Express toggle */}
+          <button
+            onClick={() => setExpress(e => !e)}
+            style={{ width: '100%', background: express ? '#FFF9E6' : 'rgba(0,0,0,.03)', border: express ? '1.5px solid #FFB800' : '1.5px solid rgba(0,0,0,.08)', borderRadius: 12, padding: '14px 18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, transition: 'all .2s' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 18 }}>⚡</span>
+              <div style={{ textAlign: 'left' as const }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F' }}>Express delivery — {exp.delivery}</div>
+                <div style={{ fontSize: 13, color: '#6E6E73' }}>Skip the queue. Get it done today.</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: express ? '#B8860B' : '#1D1D1F' }}>{exp.label}</span>
+              <div style={{ width: 20, height: 20, borderRadius: 6, background: express ? '#FFB800' : 'rgba(0,0,0,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s' }}>
+                {express && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              </div>
+            </div>
+          </button>
+
           {/* Features */}
-          <div style={{ background: 'rgba(0,0,0,.03)', borderRadius: 12, padding: '16px 20px', marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase' as const, color: '#6E6E73', marginBottom: 12 }}>What's included</div>
+          <div style={{ background: 'rgba(0,0,0,.03)', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase' as const, color: '#6E6E73' }}>What's included</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: express ? '#B8860B' : '#6E6E73', background: express ? '#FFF9E6' : 'transparent', borderRadius: 6, padding: express ? '3px 8px' : '0' }}>
+                {express ? `⚡ ${exp.delivery}` : `${delivery} delivery`}
+              </div>
+            </div>
             {features[selected].map((f, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: i < features[selected].length - 1 ? 10 : 0 }}>
                 <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#1D1D1F', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -158,9 +200,11 @@ function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void })
         {/* Footer */}
         <div style={{ padding: '0 40px 36px' }}>
           <button onClick={handleCheckout} disabled={loading} style={{ width: '100%', background: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 17, fontWeight: 600, letterSpacing: '-.2px', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? .7 : 1, transition: 'all .2s', marginBottom: 10 }}>
-            {loading ? 'Redirecting…' : `${plans.find(p => p.id === selected)?.name} — ${plans.find(p => p.id === selected)?.price} →`}
+            {loading ? 'Redirecting…' : `${basePlan.name}${express ? ' + Express' : ''} — $${totalPrice} →`}
           </button>
-          <p style={{ textAlign: 'center' as const, fontSize: 12, color: '#6E6E73', margin: 0 }}>Secure checkout via Stripe · Full code ownership · 48-hour delivery</p>
+          <p style={{ textAlign: 'center' as const, fontSize: 12, color: '#6E6E73', margin: 0 }}>
+            Secure checkout via Stripe · Full code ownership · Delivered in {delivery}
+          </p>
         </div>
       </div>
     </div>
