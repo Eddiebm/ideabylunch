@@ -127,6 +127,8 @@ export async function POST(req: Request) {
     const liveUrl = await deployToVercel(projectSlug, html)
 
     if (redis) {
+      if (liveUrl) redis.incr('stats:deploys')
+      if (customerEmail) redis.set(`customer:${customerEmail}:order`, session.id)
       await redis.set(`order:${session.id}`, JSON.stringify({
         ...order,
         status: liveUrl ? 'deployed' : 'deploy_failed',

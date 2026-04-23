@@ -1,0 +1,55 @@
+# idea2lunch.com — Cursor Rules
+
+## Stack
+- Next.js 15 App Router, TypeScript, Tailwind CSS
+- Vercel (project: mamapromptangel, team: eddiebms-projects)
+- Upstash Redis (orders, sessions, stats)
+- Stripe + Paystack (dual-processor — Paystack for African countries)
+- Resend (email + magic-link auth)
+- OpenRouter → Gemini 2.5 Flash (brief gen, taglines, support agent)
+- OpenAI gpt-image-1 (logo starter)
+- Recraft API (logo pro, SVG vector)
+- Hetzner server 5.78.183.141 (AGE worker, cron agents)
+
+## Code rules
+- Every route must export `export const runtime = 'edge'` unless it uses Node.js-only libs
+- Use `@upstash/redis` not raw fetch for Redis
+- All Stripe calls use apiVersion: '2024-06-20'
+- African countries list already defined in app/api/order/route.ts — import it, don't redefine
+- Redis key conventions:
+  - `order:{sessionId}` — full order object
+  - `customer:{email}:order` — index by email
+  - `auth:token:{token}` — magic-link token (15min TTL)
+  - `pro:{email}` — Pro editor subscriber flag
+  - `edits:{email}:{weekISO}` — free-tier edit counter
+  - `stats:deploys` — running deploy counter
+  - `leads:{YYYY-MM-DD}` — daily lead gen log
+  - `brandrefresh:{email}` — brand refresh subscriber
+- deployToVercel() helper already exists in app/api/webhook/route.ts — import don't rewrite
+- slugify() helper already exists in app/api/webhook/route.ts — import don't rewrite
+- notifyCustomer() helper already exists in app/api/webhook/route.ts — import don't rewrite
+
+## Env vars (all set in Vercel production)
+STRIPE_SECRET_KEY | STRIPE_WEBHOOK_SECRET | STRIPE_LAUNCH_PRICE_ID
+STRIPE_DESIGN_PRICE_ID | STRIPE_FULL_PRICE_ID
+PAYSTACK_SECRET_KEY | UPSTASH_REDIS_REST_URL | UPSTASH_REDIS_REST_TOKEN
+RESEND_API_KEY | OPENAI_API_KEY | OPENROUTER_API_KEY
+VERCEL_DEPLOY_TOKEN | NEXT_PUBLIC_APP_URL=https://idea2lunch.com
+
+## Env vars to add (do not use until added)
+RECRAFT_API_KEY | STRIPE_PRO_EDITOR_PRICE_ID | STRIPE_BRAND_REFRESH_PRICE_ID
+STRIPE_WHITE_LABEL_PRICE_ID | STRIPE_TAGLINE_PRICE_ID
+STRIPE_LOGO_STARTER_PRICE_ID | STRIPE_LOGO_PRO_PRICE_ID
+STRIPE_BRAND_KIT_PRICE_ID | STRIPE_REDESIGN_PRICE_ID
+STRIPE_EDIT_PRICE_ID | STRIPE_SEO_PRICE_ID
+
+## Never do
+- Never stage or commit .vercel/ output artifacts
+- Never re-implement deployToVercel, slugify, notifyCustomer — they exist
+- Never hardcode prices — always use env var Price IDs
+- Never bypass Stripe signature verification in webhooks
+- Never store raw card data — Stripe/Paystack handle all PII
+- Never use `any` unless casting Stripe/Paystack API responses
+
+## Deploy command
+cd ~/Documents/lunch2idea && git push && npx vercel --prod

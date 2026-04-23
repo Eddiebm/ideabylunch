@@ -1,6 +1,17 @@
 import Link from 'next/link'
 
-export default function HomePage() {
+async function getDeployCount(): Promise<number> {
+  try {
+    const base = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const res = await fetch(`${base}/api/stats`, { next: { revalidate: 60 } })
+    const data = await res.json()
+    return data.deploys || 0
+  } catch { return 0 }
+}
+
+export default async function HomePage() {
+  const deployCount = await getDeployCount()
+
   return (
     <>
       <style>{`
@@ -26,8 +37,23 @@ export default function HomePage() {
           </div>
         </nav>
 
+        {/* Trust bar */}
+        <div style={{ background: '#1D1D1F', padding: '10px 24px', textAlign: 'center', marginTop: 52 }}>
+          <div style={{ maxWidth: 980, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 32, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)', fontWeight: 500 }}>
+              <span style={{ color: '#30D158', fontWeight: 700 }}>{deployCount.toLocaleString()}</span> sites built
+            </span>
+            <span style={{ color: 'rgba(255,255,255,.2)' }}>·</span>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)' }}>7-day money-back guarantee</span>
+            <span style={{ color: 'rgba(255,255,255,.2)' }}>·</span>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)' }}>Live in 48 hours</span>
+            <span style={{ color: 'rgba(255,255,255,.2)' }}>·</span>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)' }}>Powered by Vercel · Stripe · Cloudflare</span>
+          </div>
+        </div>
+
         {/* Hero */}
-        <div style={{ maxWidth: 680, margin: '0 auto', padding: '120px 24px 80px', textAlign: 'center', animation: 'fadeUp .6s ease both' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto', padding: '80px 24px 80px', textAlign: 'center', animation: 'fadeUp .6s ease both' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FFFFFF', border: '0.5px solid rgba(0,0,0,.08)', borderRadius: 100, padding: '5px 14px', marginBottom: 28, boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#30D158' }} />
             <span style={{ fontSize: 13, fontWeight: 500, color: '#1D1D1F' }}>Brief in 60 seconds · Live product in 48 hours</span>
@@ -184,11 +210,13 @@ export default function HomePage() {
         </div>
 
         {/* Footer */}
-        <div style={{ borderTop: '0.5px solid rgba(0,0,0,.08)', padding: '24px', textAlign: 'center' }}>
-          <p style={{ fontSize: 13, color: '#6E6E73', margin: 0 }}>
-            © 2026 idea2Lunch · Your idea, fully cooked. ·{' '}
-            <Link href="/terms" style={{ color: '#6E6E73', textDecoration: 'underline' }}>Terms of Service</Link>
-          </p>
+        <div style={{ borderTop: '0.5px solid rgba(0,0,0,.08)', padding: '32px 24px', textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap', marginBottom: 16 }}>
+            <Link href="/taglines" style={{ fontSize: 14, color: '#6E6E73' }}>Tagline Generator</Link>
+            <Link href="/logo" style={{ fontSize: 14, color: '#6E6E73' }}>Logo Generator</Link>
+            <Link href="/terms" style={{ fontSize: 14, color: '#6E6E73' }}>Terms of Service</Link>
+          </div>
+          <p style={{ fontSize: 13, color: '#AEAEB2', margin: 0 }}>© 2026 idea2Lunch · Your idea, fully cooked.</p>
         </div>
       </div>
     </>
