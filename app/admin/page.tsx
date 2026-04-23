@@ -1,4 +1,5 @@
 'use client'
+export const runtime = 'edge'
 import { useState, useEffect } from 'react'
 
 function fmt$(n: number) { return '$' + (n / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }

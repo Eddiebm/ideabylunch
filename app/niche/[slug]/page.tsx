@@ -1,3 +1,4 @@
+export const runtime = 'edge'
 import type { Metadata } from 'next'
 
 const NICHES: Record<string, { title: string; headline: string; sub: string; examples: string[] }> = {

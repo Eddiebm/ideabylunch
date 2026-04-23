@@ -1,4 +1,5 @@
 'use client'
+export const runtime = 'edge'
 import { useState, useEffect } from 'react'
 
 type Slot = 'heroHeadline' | 'aboutText' | 'servicesList' | 'contactInfo' | 'footerTagline'

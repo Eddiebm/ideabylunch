@@ -1,3 +1,4 @@
+export const runtime = 'edge'
 import { getRedis } from '@/app/lib/redis'
 
 export const revalidate = 300

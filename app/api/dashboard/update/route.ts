@@ -1,7 +1,7 @@
 import { getRedis } from '@/app/lib/redis'
 import { deployToVercel, applySlots } from '@/app/lib/deploy'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 
 const SLOTS = ['heroHeadline', 'aboutText', 'servicesList', 'contactInfo', 'footerTagline'] as const
 type Slot = typeof SLOTS[number]

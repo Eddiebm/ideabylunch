@@ -1,7 +1,7 @@
 import OpenAI from 'openai'
 import { Redis } from '@upstash/redis'
 
-export const runtime = "nodejs"
+export const runtime = 'edge'
 
 function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL

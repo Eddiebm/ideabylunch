@@ -1,4 +1,4 @@
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 
 import OpenAI from 'openai'
 import { Redis } from '@upstash/redis'

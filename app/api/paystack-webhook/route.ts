@@ -1,3 +1,4 @@
+export const runtime = 'nodejs'
 import { Redis } from '@upstash/redis'
 import { Resend } from 'resend'
 

@@ -87,6 +87,31 @@ function extractProductName(brief: string): string {
   return m?.[1] || 'Your Product'
 }
 
+async function generateTaglines(productName: string, industry: string): Promise<string[]> {
+  const apiKey = process.env.OPENROUTER_API_KEY
+  if (!apiKey) return []
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [{
+          role: 'user',
+          content: `Generate exactly 10 short, punchy taglines for a ${industry} business called "${productName}".
+Rules: under 8 words each · no clichés · specific to industry · mix benefit-led, emotional, witty, bold · one per line · no numbering · no quotes.
+Return exactly 10 lines.`,
+        }],
+        max_tokens: 400,
+      }),
+    })
+    if (!res.ok) return []
+    const data: any = await res.json()
+    const text: string = data.choices?.[0]?.message?.content ?? ''
+    return text.split('\n').map(l => l.trim().replace(/^[-*\d.)\s]+/, '')).filter(Boolean).slice(0, 10)
+  } catch { return [] }
+}
+
 async function fetchPhotos(query: string, count: number): Promise<string[]> {
   const key = process.env.UNSPLASH_ACCESS_KEY
   if (!key) return []
