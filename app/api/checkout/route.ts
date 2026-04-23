@@ -4,9 +4,13 @@ import { NextRequest } from 'next/server'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
 const PRICES: Record<string, { amount: number; name: string; priceId?: string }> = {
-  launch:  { amount: 29900,  name: 'idea2Lunch — Launch',         priceId: process.env.STRIPE_LAUNCH_PRICE_ID },
-  design:  { amount: 69900,  name: 'idea2Lunch — Launch + Design', priceId: process.env.STRIPE_DESIGN_PRICE_ID },
-  full:    { amount: 149900, name: 'idea2Lunch — Full Product',    priceId: process.env.STRIPE_FULL_PRICE_ID },
+  starter:      { amount: 14900,  name: 'idea2Lunch — Starter Website',      priceId: process.env.STRIPE_STARTER_PRICE_ID },
+  professional: { amount: 29900,  name: 'idea2Lunch — Professional Website',  priceId: process.env.STRIPE_PROFESSIONAL_PRICE_ID },
+  premium:      { amount: 49900,  name: 'idea2Lunch — Premium Website',       priceId: process.env.STRIPE_PREMIUM_PRICE_ID },
+  full:         { amount: 149900, name: 'idea2Lunch — Full Product',           priceId: process.env.STRIPE_FULL_PRICE_ID },
+  // Legacy aliases
+  launch:       { amount: 29900,  name: 'idea2Lunch — Launch',                priceId: process.env.STRIPE_LAUNCH_PRICE_ID },
+  design:       { amount: 69900,  name: 'idea2Lunch — Launch + Design',        priceId: process.env.STRIPE_DESIGN_PRICE_ID },
 }
 
 export async function POST(req: NextRequest) {

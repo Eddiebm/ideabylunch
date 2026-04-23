@@ -81,19 +81,21 @@ function extractName(text: string): string {
 // ── Launch Modal ───────────────────────────────────────────────────────────────
 function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void }) {
   const [loading, setLoading] = useState(false)
-  const [selected, setSelected] = useState('design')
+  const [selected, setSelected] = useState('professional')
   const [error, setError] = useState('')
 
   const plans = [
-    { id: 'launch', name: 'Launch',           price: '$299',    desc: 'Built and deployed.',              note: '48 hr delivery' },
-    { id: 'design', name: 'Launch + Design',  price: '$699',    desc: 'Built, designed, and polished.',   note: 'Most popular'   },
-    { id: 'full',   name: 'Full Product',     price: '$1,499',  desc: 'Complete SaaS, ready to charge.',  note: 'Everything'     },
+    { id: 'starter',      name: 'Starter',      price: '$149',   desc: '3-page website',                        note: 'Good'         },
+    { id: 'professional', name: 'Professional',  price: '$299',   desc: '5 pages + custom copy & colors',        note: 'Most popular' },
+    { id: 'premium',      name: 'Premium',       price: '$499',   desc: '8 pages + booking & payments',          note: 'Best'         },
+    { id: 'full',         name: 'Full Product',  price: '$1,499', desc: 'Mobile app or SaaS, fully built',       note: 'Apps & SaaS'  },
   ]
 
   const features: Record<string, string[]> = {
-    launch: ['Complete codebase from your brief', 'Deployed to Vercel', 'GitHub repository', 'Custom subdomain', 'Delivered within 48 hours'],
-    design: ['Everything in Launch', 'Custom design system', 'Branded landing page', 'Typography & color guide', 'Figma file'],
-    full:   ['Everything in Launch + Design', 'Authentication (Clerk)', 'Stripe payments wired up', 'Database (Supabase)', '30 days of support'],
+    starter:      ['3 pages (Home, About, Contact)', 'Mobile-responsive', 'Deployed to your domain', 'Free brief included', '48-hour delivery'],
+    professional: ['5 pages including Services', 'Custom brand colors & fonts', 'SEO-optimised copy', 'Contact form wired up', '1 round of revisions', '24-hour delivery'],
+    premium:      ['8 pages + blog or gallery', 'Online booking or payments', 'Custom design system', 'Analytics dashboard', '3 rounds of revisions', 'Priority 12-hour delivery'],
+    full:         ['Everything in Premium', 'Authentication (Clerk)', 'Stripe payments wired up', 'Database (Supabase)', '30 days of support'],
   }
 
   const handleCheckout = async () => {
@@ -127,7 +129,7 @@ function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void })
           </div>
 
           {/* Plan picker */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 28 }}>
             {plans.map(p => (
               <button key={p.id} onClick={() => setSelected(p.id)} style={{ background: selected === p.id ? '#1D1D1F' : 'rgba(0,0,0,.03)', border: selected === p.id ? '1.5px solid #1D1D1F' : '1.5px solid rgba(0,0,0,.08)', borderRadius: 12, padding: '14px 16px', cursor: 'pointer', textAlign: 'left' as const, transition: 'all .2s' }}>
                 <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '.04em', color: selected === p.id ? 'rgba(255,255,255,.5)' : '#6E6E73', marginBottom: 4, textTransform: 'uppercase' as const }}>{p.note}</div>
@@ -156,7 +158,7 @@ function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void })
         {/* Footer */}
         <div style={{ padding: '0 40px 36px' }}>
           <button onClick={handleCheckout} disabled={loading} style={{ width: '100%', background: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 17, fontWeight: 600, letterSpacing: '-.2px', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? .7 : 1, transition: 'all .2s', marginBottom: 10 }}>
-            {loading ? 'Redirecting…' : `Continue — ${plans.find(p => p.id === selected)?.price}`}
+            {loading ? 'Redirecting…' : `${plans.find(p => p.id === selected)?.name} — ${plans.find(p => p.id === selected)?.price} →`}
           </button>
           <p style={{ textAlign: 'center' as const, fontSize: 12, color: '#6E6E73', margin: 0 }}>Secure checkout via Stripe · Full code ownership · 48-hour delivery</p>
         </div>
@@ -553,7 +555,7 @@ export default function BriefGenerator() {
                 <button
                   onClick={() => setShowLaunch(true)}
                   style={{ background: '#FFFFFF', color: '#1D1D1F', border: 'none', borderRadius: 12, padding: '13px 24px', fontSize: 16, fontWeight: 600, letterSpacing: '-.2px', cursor: 'pointer', flex: 1, minWidth: 160 }}>
-                  Launch from $299
+                  Build it — from $149
                 </button>
                 <button
                   onClick={() => { navigator.clipboard.writeText(output); setCopiedAll(true); setTimeout(() => setCopiedAll(false), 1800) }}

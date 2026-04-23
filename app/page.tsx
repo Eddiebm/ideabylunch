@@ -163,38 +163,73 @@ export default async function HomePage() {
         </div>
 
         {/* Pricing */}
-        <div id="pricing" style={{ maxWidth: 780, margin: '0 auto 80px', padding: '0 24px' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <div id="pricing" style={{ maxWidth: 900, margin: '0 auto 80px', padding: '0 24px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: '#6E6E73', marginBottom: 10 }}>Pricing</div>
-            <h2 style={{ fontSize: 36, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1px', margin: '0 0 8px' }}>The brief is free.</h2>
-            <p style={{ fontSize: 17, color: '#6E6E73', margin: 0 }}>Pay only when you want us to build it.</p>
+            <h2 style={{ fontSize: 36, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1px', margin: '0 0 8px' }}>Pick your level.</h2>
+            <p style={{ fontSize: 17, color: '#6E6E73', margin: 0 }}>Brief is always free. Pay only when you want us to build it.</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
-            {[
-              { name: 'Brief', price: 'Free', desc: 'Always free', features: ['Complete 7-section brief', 'Market intelligence', 'Marketing copy', 'Master build prompt', 'Copy and use anywhere'], cta: 'Cook my idea →', href: '/app', primary: false },
-              { name: 'Launch', price: '$299', desc: 'One time', features: ['Everything in Brief', 'Complete codebase', 'Deployed to Vercel', 'GitHub repository', 'Delivered in 48 hours'], cta: 'Launch my product →', href: '/app', primary: true },
-              { name: 'Full Product', price: '$1,499', desc: 'One time', features: ['Everything in Launch', 'Custom design system', 'Auth + payments', 'Database (Supabase)', '30 days support'], cta: 'Build my SaaS →', href: '/app', primary: false },
-            ].map(p => (
-              <div key={p.name} style={{ background: p.primary ? '#1D1D1F' : '#FFFFFF', borderRadius: 16, padding: '24px', boxShadow: p.primary ? '0 8px 32px rgba(0,0,0,.2)' : '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                {p.primary && <div style={{ position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)', background: '#0066CC', color: '#FFFFFF', fontSize: 11, fontWeight: 600, letterSpacing: '.04em', padding: '4px 14px', borderRadius: '0 0 8px 8px' }}>Most popular</div>}
-                <div style={{ fontSize: 13, fontWeight: 600, color: p.primary ? 'rgba(255,255,255,.5)' : '#6E6E73', marginBottom: 8, letterSpacing: '.02em' }}>{p.name}</div>
-                <div style={{ fontSize: 40, fontWeight: 700, color: p.primary ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-1.5px', lineHeight: 1, marginBottom: 4 }}>{p.price}</div>
-                <div style={{ fontSize: 13, color: p.primary ? 'rgba(255,255,255,.4)' : '#AEAEB2', marginBottom: 20 }}>{p.desc}</div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', flex: 1 }}>
-                  {p.features.map(f => (
-                    <li key={f} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
-                      <div style={{ width: 16, height: 16, borderRadius: '50%', background: p.primary ? 'rgba(255,255,255,.15)' : '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                        <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke={p.primary ? 'white' : '#1D1D1F'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </div>
-                      <span style={{ fontSize: 14, color: p.primary ? 'rgba(255,255,255,.8)' : '#1D1D1F', lineHeight: 1.4 }}>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href={p.href} style={{ background: p.primary ? '#FFFFFF' : '#1D1D1F', color: p.primary ? '#1D1D1F' : '#FFFFFF', borderRadius: 10, padding: '12px', fontSize: 15, fontWeight: 600, letterSpacing: '-.2px', textAlign: 'center', display: 'block' }}>
-                  {p.cta}
-                </Link>
-              </div>
-            ))}
+
+          {/* Website tiers */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#AEAEB2', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 14, paddingLeft: 4 }}>Websites</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+              {[
+                {
+                  name: 'Starter', price: '$149', tag: 'Good', primary: false,
+                  desc: '3-page site, live in 48 hours',
+                  features: ['3 pages (Home, About, Contact)', 'Mobile-responsive', 'Deployed to your domain', 'Free brief included', '48-hour delivery'],
+                  cta: 'Get started →',
+                },
+                {
+                  name: 'Professional', price: '$299', tag: 'Better', primary: true,
+                  desc: '5 pages + custom copy & colors',
+                  features: ['5 pages including Services', 'Custom brand colors & fonts', 'SEO-optimised copy', 'Contact form wired up', '1 round of revisions', '24-hour delivery'],
+                  cta: 'Most popular →',
+                },
+                {
+                  name: 'Premium', price: '$499', tag: 'Best', primary: false,
+                  desc: '8 pages + booking & payments',
+                  features: ['8 pages + blog or gallery', 'Online booking or payments', 'Custom design system', 'Analytics dashboard', '3 rounds of revisions', 'Priority 12-hour delivery'],
+                  cta: 'Go premium →',
+                },
+              ].map(p => (
+                <div key={p.name} style={{ background: p.primary ? '#1D1D1F' : '#FFFFFF', borderRadius: 16, padding: '24px', boxShadow: p.primary ? '0 8px 32px rgba(0,0,0,.18)' : '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                  {p.primary && <div style={{ position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)', background: '#0066CC', color: '#FFF', fontSize: 11, fontWeight: 600, letterSpacing: '.04em', padding: '4px 14px', borderRadius: '0 0 8px 8px' }}>Most popular</div>}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: p.primary ? 'rgba(255,255,255,.5)' : '#6E6E73', letterSpacing: '.02em' }}>{p.name}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, background: p.primary ? 'rgba(255,255,255,.12)' : '#F2F2F7', color: p.primary ? 'rgba(255,255,255,.7)' : '#6E6E73', borderRadius: 6, padding: '3px 8px', letterSpacing: '.04em' }}>{p.tag}</div>
+                  </div>
+                  <div style={{ fontSize: 38, fontWeight: 700, color: p.primary ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-1.5px', lineHeight: 1, marginBottom: 4 }}>{p.price}</div>
+                  <div style={{ fontSize: 13, color: p.primary ? 'rgba(255,255,255,.4)' : '#AEAEB2', marginBottom: 20 }}>{p.desc}</div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', flex: 1 }}>
+                    {p.features.map(f => (
+                      <li key={f} style={{ display: 'flex', gap: 10, marginBottom: 9, alignItems: 'flex-start' }}>
+                        <div style={{ width: 16, height: 16, borderRadius: '50%', background: p.primary ? 'rgba(255,255,255,.15)' : '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                          <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke={p.primary ? 'white' : '#1D1D1F'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </div>
+                        <span style={{ fontSize: 14, color: p.primary ? 'rgba(255,255,255,.8)' : '#1D1D1F', lineHeight: 1.4 }}>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href="/app" style={{ background: p.primary ? '#FFFFFF' : '#1D1D1F', color: p.primary ? '#1D1D1F' : '#FFFFFF', borderRadius: 10, padding: '12px', fontSize: 15, fontWeight: 600, letterSpacing: '-.2px', textAlign: 'center', display: 'block', textDecoration: 'none' }}>
+                    {p.cta}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* SaaS / apps tier */}
+          <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', boxShadow: '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#AEAEB2', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>Mobile App or SaaS</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', marginBottom: 4 }}>Full Product — from $1,499</div>
+              <div style={{ fontSize: 14, color: '#6E6E73' }}>Auth, payments, database, custom design. Delivered in 5–7 days.</div>
+            </div>
+            <Link href="/app" style={{ background: '#1D1D1F', color: '#fff', borderRadius: 10, padding: '12px 24px', fontSize: 15, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              Build my product →
+            </Link>
           </div>
         </div>
 
