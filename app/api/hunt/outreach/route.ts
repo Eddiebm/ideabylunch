@@ -60,7 +60,8 @@ async function scrapeSiteEmails(website: string): Promise<string[]> {
       const matches = html.match(re) || []
       for (const m of matches) {
         const lc = m.toLowerCase()
-        if (lc.endsWith('.png') || lc.endsWith('.jpg') || lc.endsWith('.svg') || lc.includes('wixpress') || lc.includes('sentry') || lc.includes('example.com')) continue
+        if (lc.endsWith('.png') || lc.endsWith('.jpg') || lc.endsWith('.jpeg') || lc.endsWith('.gif') || lc.endsWith('.svg') || lc.endsWith('.webp')) continue
+        if (lc.includes('wixpress') || lc.includes('sentry') || lc.includes('example.com') || lc.includes('domain.com') || lc.includes('yoursite') || lc.includes('yourcompany') || lc.includes('@email.com') || lc.startsWith('example@') || lc.startsWith('test@') || lc.startsWith('you@') || lc.startsWith('someone@') || lc.startsWith('u003')) continue
         found.add(lc)
       }
     } catch { /* ignore */ }
