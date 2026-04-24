@@ -2,6 +2,20 @@ import { getRedis } from '@/app/lib/redis'
 
 export const runtime = 'edge'
 
+async function verifyAdminSecret(provided: string | null): Promise<boolean> {
+  const expected = process.env.ADMIN_SECRET
+  if (!provided || !expected) return false
+  const enc = new TextEncoder()
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(provided)),
+    crypto.subtle.digest('SHA-256', enc.encode(expected)),
+  ])
+  const av = new Uint8Array(a), bv = new Uint8Array(b)
+  let diff = av.length ^ bv.length
+  for (let i = 0; i < av.length; i++) diff |= av[i] ^ bv[i]
+  return diff === 0
+}
+
 // POST — create or update reseller account
 // GET  — get reseller stats by code
 
@@ -30,8 +44,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const secret = req.headers.get('x-admin-secret')
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!(await verifyAdminSecret(req.headers.get('x-admin-secret')))) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

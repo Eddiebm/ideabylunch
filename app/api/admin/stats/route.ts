@@ -2,14 +2,24 @@ import { getRedis } from '@/app/lib/redis'
 
 export const runtime = 'edge'
 
-function auth(req: Request) {
+async function auth(req: Request) {
   const secret = req.headers.get('x-admin-secret')
     || new URL(req.url).searchParams.get('secret')
-  return secret === process.env.ADMIN_SECRET
+  const expected = process.env.ADMIN_SECRET
+  if (!secret || !expected) return false
+  const enc = new TextEncoder()
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(secret)),
+    crypto.subtle.digest('SHA-256', enc.encode(expected)),
+  ])
+  const av = new Uint8Array(a), bv = new Uint8Array(b)
+  let diff = av.length ^ bv.length
+  for (let i = 0; i < av.length; i++) diff |= av[i] ^ bv[i]
+  return diff === 0
 }
 
 export async function GET(req: Request) {
-  if (!auth(req)) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await auth(req))) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const redis = getRedis()
   if (!redis) return Response.json({ error: 'unavailable' }, { status: 503 })
