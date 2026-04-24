@@ -11,6 +11,38 @@ function getRedis() {
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
+async function createPaystackEditSession(siteId: string, appUrl: string, productName: string): Promise<string> {
+  const paystackKey = process.env.PAYSTACK_SECRET_KEY
+  if (!paystackKey) throw new Error('Paystack not configured')
+
+  const ref = `edit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+
+  const res = await fetch('https://api.paystack.co/transaction/initialize', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${paystackKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email: 'edit@idea2lunch.com',
+      amount: 5000, // GHS 50.00 in pesewas
+      currency: 'GHS',
+      reference: ref,
+      callback_url: `${appUrl}/dashboard/${siteId}/edit?paid=1&edit_ref=${ref}`,
+      channels: ['card', 'mobile_money', 'bank', 'ussd', 'qr'],
+      metadata: {
+        type: 'edit_unlock',
+        siteId,
+        productName,
+      },
+    }),
+  })
+
+  const data: any = await res.json()
+  if (!data.status || !data.data?.authorization_url) throw new Error('Paystack init failed')
+  return data.data.authorization_url
+}
+
 function escapeHtml(text: string): string {
   const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }
   return text.replace(/[&<>"']/g, (m) => map[m])
@@ -98,34 +130,46 @@ export async function POST(req: Request, { params }: { params: Promise<{ siteId:
 
     // Check if they've exceeded free edits
     if (editCount >= 3) {
-      // Need payment
+      // Need payment — route through Paystack for GHS, Stripe for USD
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        payment_method_types: ['card'],
-        customer_email: auth.email || 'customer@example.com',
-        line_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              unit_amount: 799, // $7.99
-              product_data: { name: 'Unlimited edits for ' + order.productName },
+      const currency = order.currency || 'USD'
+      const isGHS = currency === 'GHS'
+
+      let paymentUrl: string
+
+      if (isGHS) {
+        // Paystack for GHS 50.00
+        paymentUrl = await createPaystackEditSession(siteId, appUrl, order.productName)
+      } else {
+        // Stripe for USD $7.99
+        const session = await stripe.checkout.sessions.create({
+          mode: 'payment',
+          payment_method_types: ['card'],
+          customer_email: auth.email || 'customer@example.com',
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                unit_amount: 799,
+                product_data: { name: 'Unlimited edits for ' + order.productName },
+              },
+              quantity: 1,
             },
-            quantity: 1,
+          ],
+          success_url: `${appUrl}/dashboard/${siteId}/edit?token=${body.token}&paid=1`,
+          cancel_url: `${appUrl}/dashboard/${siteId}/edit?token=${body.token}`,
+          metadata: {
+            siteId,
+            type: 'edit_unlock',
           },
-        ],
-        success_url: `${appUrl}/dashboard/${siteId}/edit?token=${body.token}&paid=1`,
-        cancel_url: `${appUrl}/dashboard/${siteId}/edit?token=${body.token}`,
-        metadata: {
-          siteId,
-          type: 'edit_unlock',
-        },
-      })
+        })
+        paymentUrl = session.url || ''
+      }
 
       return Response.json({
         needsPayment: true,
-        paymentUrl: session.url,
-        amount: 799,
+        paymentUrl,
+        currency,
       })
     }
 

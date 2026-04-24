@@ -78,7 +78,7 @@ export default function EditForm({ siteId, token, initialContent, editCount, pro
           Unlock unlimited edits
         </h2>
         <p style={{ fontSize: 15, color: '#6E6E73', marginBottom: 24 }}>
-          You've used all 3 free edits. Pay $7.99 to continue editing your site.
+          You've used all 3 free edits. Pay to continue editing your site.
         </p>
         <a
           href={paymentUrl}
@@ -93,7 +93,7 @@ export default function EditForm({ siteId, token, initialContent, editCount, pro
             display: 'inline-block',
           }}
         >
-          Pay $7.99 to edit
+          Proceed to payment
         </a>
       </div>
     )
@@ -212,7 +212,7 @@ export default function EditForm({ siteId, token, initialContent, editCount, pro
           opacity: loading ? 0.6 : 1,
         }}
       >
-        {loading ? 'Saving...' : editsRemaining > 0 ? `Save changes (${editsRemaining} free left)` : 'Pay $7.99 to save'}
+        {loading ? 'Saving...' : editsRemaining > 0 ? `Save changes (${editsRemaining} free left)` : 'Pay to save'}
       </button>
     </form>
   )
