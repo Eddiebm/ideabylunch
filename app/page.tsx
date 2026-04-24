@@ -37,6 +37,10 @@ export default async function HomePage({
   const fullProductPrice = isGhana ? 'GHS 18,000' : '$1,499'
   const toggleHref = isGhana ? '/?currency=USD' : '/?currency=GHS'
 
+  // For Ghana visitors: tier CTA routes to brief → checkout flow (needs cart state)
+  // For now, both go to /app; checkout routing happens client-side
+  const getTierHref = () => '/app'
+
   return (
     <>
       <style>{`

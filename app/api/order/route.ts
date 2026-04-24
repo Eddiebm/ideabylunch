@@ -58,14 +58,25 @@ async function createStripeSession(body: any, appUrl: string) {
   return { url: session.url, sessionId: session.id }
 }
 
-async function createPaystackSession(body: any, appUrl: string) {
+async function createPaystackSession(body: any, appUrl: string, currency: 'USD' | 'GHS' = 'USD') {
   const { selectedStyle, calculatedPrice, productName, contact } = body
-  // Charge build fee + first month ($97) as a single transaction in cents
-  const totalCents = Math.round(calculatedPrice * 100) + 9700
   const paystackKey = process.env.PAYSTACK_SECRET_KEY
   if (!paystackKey) throw new Error('Paystack not configured')
 
   const ref = `i2l_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+
+  let amount: number
+  let monthlySubscription: number
+  if (currency === 'GHS') {
+    // Convert USD to GHS at ~1:12 ratio, then add first month
+    // $X → GHS (X * 12), $97 → GHS 1,164 → round to 1200 (20 GHS)
+    amount = Math.round(calculatedPrice * 100 * 12) + 18000 // pesewas: build fee + 180 GHS (18000 pesewas)
+    monthlySubscription = 18000
+  } else {
+    // USD: cents
+    amount = Math.round(calculatedPrice * 100) + 9700 // cents: build fee + $97
+    monthlySubscription = 9700
+  }
 
   const res = await fetch('https://api.paystack.co/transaction/initialize', {
     method: 'POST',
@@ -75,15 +86,18 @@ async function createPaystackSession(body: any, appUrl: string) {
     },
     body: JSON.stringify({
       email: contact.email,
-      amount: totalCents,       // in cents (USD)
-      currency: 'USD',
+      amount,
+      currency,
       reference: ref,
       callback_url: `${appUrl}/app?paid=1&ref=${ref}`,
+      channels: currency === 'GHS' ? ['card', 'mobile_money', 'bank', 'ussd', 'qr'] : undefined,
       metadata: {
+        currency,
         productName: productName.slice(0, 80),
         selectedStyle,
         whatsapp: contact.whatsapp || '',
-        buildFeeCents: Math.round(calculatedPrice * 100),
+        buildFee: calculatedPrice,
+        monthlySubscription,
         cancel_action: `${appUrl}/app`,
       },
     }),
@@ -111,17 +125,21 @@ export async function POST(req: Request) {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
-    const usePaystack = AFRICAN_COUNTRIES.has((contact.country || '').toUpperCase())
+    const countryCode = (contact.country || '').toUpperCase()
+    const isGhana = countryCode === 'GH'
+    const usePaystack = AFRICAN_COUNTRIES.has(countryCode)
 
     const { url, sessionId } = usePaystack
-      ? await createPaystackSession(body, appUrl)
+      ? await createPaystackSession(body, appUrl, isGhana ? 'GHS' : 'USD')
       : await createStripeSession(body, appUrl)
 
     const redis = getRedis()
     if (redis) {
+      const currency = usePaystack && isGhana ? 'GHS' : 'USD'
       await redis.set(`order:${sessionId}`, JSON.stringify({
         sessionId,
         processor: usePaystack ? 'paystack' : 'stripe',
+        currency,
         productName,
         selectedStyle: body.selectedStyle,
         selectedHtml,
@@ -133,7 +151,7 @@ export async function POST(req: Request) {
       }), { ex: 60 * 60 * 24 * 14 })
     }
 
-    return Response.json({ url, sessionId, processor: usePaystack ? 'paystack' : 'stripe' })
+    return Response.json({ url, sessionId, processor: usePaystack ? 'paystack' : 'stripe', currency: usePaystack && isGhana ? 'GHS' : 'USD' })
   } catch (err: any) {
     console.error('order error', err)
     return Response.json({ error: err.message || 'order failed' }, { status: 500 })
