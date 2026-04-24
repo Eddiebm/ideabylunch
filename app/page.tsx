@@ -1,5 +1,7 @@
 export const runtime = 'edge'
 import Link from 'next/link'
+import { headers } from 'next/headers'
+import { resolveCurrency, type Currency } from './lib/pricing'
 
 async function getDeployCount(): Promise<number> {
   try {
@@ -10,8 +12,30 @@ async function getDeployCount(): Promise<number> {
   } catch { return 0 }
 }
 
-export default async function HomePage() {
+// USD → GHS tier conversion (hand-set from master pricing: Professional $299 → GHS 3,600).
+const GHS_TIERS: Record<string, { oneTime: string; monthly: string; full: string }> = {
+  starter:      { oneTime: 'GHS 1,800', monthly: 'GHS 180/mo', full: 'GHS 18,000' },
+  professional: { oneTime: 'GHS 3,600', monthly: 'GHS 180/mo', full: 'GHS 18,000' },
+  premium:      { oneTime: 'GHS 6,000', monthly: 'GHS 180/mo', full: 'GHS 18,000' },
+}
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ currency?: string }>
+}) {
+  const headersList = await headers()
+  const sp = (await (searchParams ?? Promise.resolve({}))) as { currency?: string }
+  const currencyParam = sp.currency
   const deployCount = await getDeployCount()
+  const country = headersList.get('x-vercel-ip-country')
+  const currency: Currency = resolveCurrency({ country, override: currencyParam })
+  const isGhana = currency === 'GHS'
+
+  const tierPrice = (key: 'starter' | 'professional' | 'premium', usd: string) =>
+    isGhana ? GHS_TIERS[key].oneTime : usd
+  const fullProductPrice = isGhana ? 'GHS 18,000' : '$1,499'
+  const toggleHref = isGhana ? '/?currency=USD' : '/?currency=GHS'
 
   return (
     <>
@@ -31,6 +55,9 @@ export default async function HomePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
               <a href="#how" style={{ fontSize: 14, color: '#6E6E73', fontWeight: 400 }}>How it works</a>
               <a href="#pricing" style={{ fontSize: 14, color: '#6E6E73', fontWeight: 400 }}>Pricing</a>
+              <a href={toggleHref} style={{ fontSize: 12, color: '#6E6E73', fontWeight: 500, border: '0.5px solid rgba(0,0,0,.15)', borderRadius: 6, padding: '4px 8px' }}>
+                {isGhana ? '🇬🇭 GHS' : '🌍 USD'}
+              </a>
               <Link href="/app" style={{ background: '#1D1D1F', color: '#FFFFFF', borderRadius: 8, padding: '7px 16px', fontSize: 14, fontWeight: 500, letterSpacing: '-.1px' }}>
                 Cook my idea
               </Link>
@@ -177,19 +204,19 @@ export default async function HomePage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
               {[
                 {
-                  name: 'Starter', price: '$149', tag: 'Good', primary: false,
+                  name: 'Starter', price: tierPrice('starter', '$149'), tag: 'Good', primary: false,
                   desc: '3-page site, live in 48 hours',
                   features: ['3 pages (Home, About, Contact)', 'Mobile-responsive', 'Deployed to your domain', 'Free brief included', '48-hour delivery'],
                   cta: 'Get started →',
                 },
                 {
-                  name: 'Professional', price: '$299', tag: 'Better', primary: true,
+                  name: 'Professional', price: tierPrice('professional', '$299'), tag: 'Better', primary: true,
                   desc: '5 pages + custom copy & colors',
                   features: ['5 pages including Services', 'Custom brand colors & fonts', 'SEO-optimised copy', 'Contact form wired up', '1 round of revisions', '24-hour delivery'],
                   cta: 'Most popular →',
                 },
                 {
-                  name: 'Premium', price: '$499', tag: 'Best', primary: false,
+                  name: 'Premium', price: tierPrice('premium', '$499'), tag: 'Best', primary: false,
                   desc: '8 pages + booking & payments',
                   features: ['8 pages + blog or gallery', 'Online booking or payments', 'Custom design system', 'Analytics dashboard', '3 rounds of revisions', 'Priority 12-hour delivery'],
                   cta: 'Go premium →',
@@ -225,7 +252,7 @@ export default async function HomePage() {
           <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', boxShadow: '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#AEAEB2', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>Mobile App or SaaS</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', marginBottom: 4 }}>Full Product — from $1,499</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', marginBottom: 4 }}>Full Product — from {fullProductPrice}</div>
               <div style={{ fontSize: 14, color: '#6E6E73' }}>Auth, payments, database, custom design. Delivered in 5–7 days.</div>
             </div>
             <Link href="/app" style={{ background: '#1D1D1F', color: '#fff', borderRadius: 10, padding: '12px 24px', fontSize: 15, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>

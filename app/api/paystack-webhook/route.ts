@@ -46,12 +46,22 @@ function slugify(name: string) {
     + '-' + Math.random().toString(36).slice(2, 7)
 }
 
-async function createPaystackSubscription(customerCode: string, authCode: string, secret: string) {
-  // Get or create monthly $97 plan
+async function createPaystackSubscription(
+  customerCode: string,
+  authCode: string,
+  secret: string,
+  currency: 'USD' | 'GHS' = 'USD',
+) {
+  const amount = currency === 'GHS' ? 18000 : 9700 // 180 GHS or $97
   const planRes = await fetch('https://api.paystack.co/plan', {
     method: 'POST',
     headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'idea2Lunch — Domain + Hosting + Maintenance', amount: 9700, interval: 'monthly', currency: 'USD' }),
+    body: JSON.stringify({
+      name: `idea2Lunch — Domain + Hosting + Maintenance (${currency})`,
+      amount,
+      interval: 'monthly',
+      currency,
+    }),
   })
   const planData: any = await planRes.json()
   const planCode = planData.data?.plan_code
@@ -90,9 +100,10 @@ export async function POST(req: Request) {
   const html = order?.selectedHtml
   const whatsapp = order?.contact?.whatsapp || meta.whatsapp
 
-  // Set up recurring $97/mo subscription starting next month
+  // Set up recurring subscription starting next month — currency follows the charged tx
+  const txCurrency: 'USD' | 'GHS' = data.currency === 'GHS' || meta.currency === 'GHS' ? 'GHS' : 'USD'
   if (customerCode && authCode) {
-    createPaystackSubscription(customerCode, authCode, secret).catch(() => {})
+    createPaystackSubscription(customerCode, authCode, secret, txCurrency).catch(() => {})
   }
 
   if (!html) {
