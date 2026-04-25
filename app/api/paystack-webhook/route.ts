@@ -1,6 +1,7 @@
 export const runtime = 'nodejs'
 import { Redis } from '@upstash/redis'
 import { Resend } from 'resend'
+import { createDashboardToken } from '@/app/lib/auth'
 
 function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL
@@ -124,6 +125,10 @@ export async function POST(req: Request) {
   }
 
   if (email && liveUrl) {
+    const token = await createDashboardToken(ref, email)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const editLink = token ? `${appUrl}/dashboard/${ref}/edit?token=${token}` : null
+
     const resend = new Resend(process.env.RESEND_API_KEY)
     await resend.emails.send({
       from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
@@ -133,8 +138,11 @@ export async function POST(req: Request) {
         <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:20px;padding:32px">
           <h1 style="font-size:28px;margin:0 0 12px">Your site is live.</h1>
           <p style="font-size:17px;color:#3C3C43;line-height:1.6">${productName} has been built and deployed.</p>
-          <p><a href="${liveUrl}" style="background:#0066CC;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Visit ${liveUrl}</a></p>
-          <p style="font-size:14px;color:#6E6E73">Your subscription ($97/mo) starts next month. Reply with any tweaks.</p>
+          <div style="margin:24px 0">
+            <p style="margin:0 0 8px"><a href="https://${liveUrl}" style="background:#0066CC;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Visit your site</a></p>
+            ${editLink ? `<p style="margin:0"><a href="${editLink}" style="background:#1D1D1F;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Edit your content</a></p>` : ''}
+          </div>
+          <p style="font-size:14px;color:#6E6E73">Your subscription (${txCurrency === 'GHS' ? 'GHS 180' : '$97'}/mo) starts next month. Questions? Reply to this email.</p>
         </div></body></html>`,
     }).catch(() => {})
     if (whatsapp) console.log(`[WA-STUB] → ${whatsapp}: "${productName} is live at ${liveUrl}"`)

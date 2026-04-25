@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { headers } from 'next/headers'
 import { Resend } from 'resend'
 import { Redis } from '@upstash/redis'
+import { createDashboardToken } from '@/app/lib/auth'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
@@ -274,8 +275,12 @@ async function alertAdmin(resend: Resend, data: {
   }
 }
 
-async function notifyCustomer(email: string, productName: string, liveUrl: string, whatsapp: string | undefined, resend: Resend) {
+async function notifyCustomer(email: string, productName: string, liveUrl: string, whatsapp: string | undefined, resend: Resend, siteId?: string) {
   try {
+    const token = siteId ? await createDashboardToken(siteId, email) : null
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const editLink = token && siteId ? `${appUrl}/dashboard/${siteId}/edit?token=${token}` : null
+
     await resend.emails.send({
       from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
       to: email,
@@ -284,7 +289,10 @@ async function notifyCustomer(email: string, productName: string, liveUrl: strin
         <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:20px;padding:32px">
           <h1 style="font-size:28px;margin:0 0 12px">Your site is live.</h1>
           <p style="font-size:17px;color:#3C3C43;line-height:1.6">${productName} has been built and deployed.</p>
-          <p><a href="${liveUrl}" style="background:#0066CC;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Visit ${liveUrl}</a></p>
+          <div style="margin:24px 0">
+            <p style="margin:0 0 8px"><a href="https://${liveUrl}" style="background:#0066CC;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Visit your site</a></p>
+            ${editLink ? `<p style="margin:0"><a href="${editLink}" style="background:#1D1D1F;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Edit your content</a></p>` : ''}
+          </div>
           <p style="font-size:14px;color:#6E6E73">A custom domain will be connected within 24 hours. Reply with any tweaks you want.</p>
         </div></body></html>`,
     })
@@ -376,7 +384,7 @@ export async function POST(req: Request) {
 
       // Notify customer
       if (customerEmail && liveUrl) {
-        await notifyCustomer(customerEmail, productName, liveUrl, whatsapp, resend)
+        await notifyCustomer(customerEmail, productName, liveUrl, whatsapp, resend, session.id)
       } else if (customerEmail) {
         await resend.emails.send({
           from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
