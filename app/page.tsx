@@ -1,22 +1,15 @@
 export const runtime = 'edge'
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { resolveCurrency, type Currency } from './lib/pricing'
+import { resolveMarket, MARKET_PRICING } from './lib/pricing'
 
 async function getDeployCount(): Promise<number> {
   try {
-    const base = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const base = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
     const res = await fetch(`${base}/api/stats`, { next: { revalidate: 60 } })
     const data = await res.json()
     return data.deploys || 0
   } catch { return 0 }
-}
-
-// USD → GHS tier conversion (hand-set from master pricing: Professional $299 → GHS 3,600).
-const GHS_TIERS: Record<string, { oneTime: string; monthly: string; full: string }> = {
-  starter:      { oneTime: 'GHS 1,800', monthly: 'GHS 180/mo', full: 'GHS 18,000' },
-  professional: { oneTime: 'GHS 3,600', monthly: 'GHS 180/mo', full: 'GHS 18,000' },
-  premium:      { oneTime: 'GHS 6,000', monthly: 'GHS 180/mo', full: 'GHS 18,000' },
 }
 
 export default async function HomePage({
@@ -25,21 +18,13 @@ export default async function HomePage({
   searchParams?: Promise<{ currency?: string }>
 }) {
   const headersList = await headers()
-  const sp = (await (searchParams ?? Promise.resolve({}))) as { currency?: string }
-  const currencyParam = sp.currency
+  const sp = (await (searchParams ?? Promise.resolve({}))) as { market?: string }
   const deployCount = await getDeployCount()
   const country = headersList.get('x-vercel-ip-country')
-  const currency: Currency = resolveCurrency({ country, override: currencyParam })
-  const isGhana = currency === 'GHS'
-
-  const tierPrice = (key: 'starter' | 'professional' | 'premium', usd: string) =>
-    isGhana ? GHS_TIERS[key].oneTime : usd
-  const fullProductPrice = isGhana ? 'GHS 18,000' : '$1,499'
-  const toggleHref = isGhana ? '/?currency=USD' : '/?currency=GHS'
-
-  // For Ghana visitors: tier CTA routes to brief → checkout flow (needs cart state)
-  // For now, both go to /app; checkout routing happens client-side
-  const getTierHref = () => '/app'
+  const marketCode = resolveMarket({ country, override: sp.market })
+  const p = MARKET_PRICING[marketCode]
+  const isUS = marketCode === 'US'
+  const toggleHref = isUS ? '' : '/?market=US'
 
   return (
     <>
@@ -55,13 +40,15 @@ export default async function HomePage({
         {/* Nav */}
         <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(242,242,247,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '0.5px solid rgba(0,0,0,.08)' }}>
           <div style={{ maxWidth: 980, margin: '0 auto', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 17, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-.3px' }}>idea2Lunch</div>
+            <div style={{ fontSize: 17, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-.3px' }}>IdeaByLunch</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
               <a href="#how" style={{ fontSize: 14, color: '#6E6E73', fontWeight: 400 }}>How it works</a>
               <a href="#pricing" style={{ fontSize: 14, color: '#6E6E73', fontWeight: 400 }}>Pricing</a>
-              <a href={toggleHref} style={{ fontSize: 12, color: '#6E6E73', fontWeight: 500, border: '0.5px solid rgba(0,0,0,.15)', borderRadius: 6, padding: '4px 8px' }}>
-                {isGhana ? '🇬🇭 GHS' : '🌍 USD'}
-              </a>
+              {!isUS && (
+                <a href={toggleHref} style={{ fontSize: 12, color: '#6E6E73', fontWeight: 500, border: '0.5px solid rgba(0,0,0,.15)', borderRadius: 6, padding: '4px 8px' }}>
+                  {p.flag} {marketCode} → USD
+                </a>
+              )}
               <Link href="/app" style={{ background: '#1D1D1F', color: '#FFFFFF', borderRadius: 8, padding: '7px 16px', fontSize: 14, fontWeight: 500, letterSpacing: '-.1px' }}>
                 Cook my idea
               </Link>
@@ -119,13 +106,13 @@ export default async function HomePage({
                 {['#FF5F57', '#FFBD2E', '#28C840'].map(c => <div key={c} style={{ width: 12, height: 12, borderRadius: '50%', background: c }} />)}
               </div>
               <div style={{ background: '#FFFFFF', borderRadius: 6, padding: '4px 14px', fontSize: 12, color: '#6E6E73', margin: '0 auto', border: '0.5px solid rgba(0,0,0,.08)' }}>
-                idea2lunch.com/app
+                ideabylunch.com/app
               </div>
             </div>
             {/* App UI preview */}
             <div style={{ padding: '32px 40px' }}>
-              <h2 style={{ fontSize: 36, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1.5px', margin: '0 0 8px' }}>Your idea,</h2>
-              <h2 style={{ fontSize: 36, fontWeight: 700, color: '#0066CC', letterSpacing: '-1.5px', margin: '0 0 24px' }}>fully cooked.</h2>
+              <h2 style={{ fontSize: 36, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1.5px', margin: '0 0 4px' }}>IdeaByLunch</h2>
+              <h2 style={{ fontSize: 22, fontWeight: 500, color: '#0066CC', letterSpacing: '-.5px', margin: '0 0 24px' }}>Your idea, fully cooked.</h2>
               <div style={{ background: '#F2F2F7', borderRadius: 12, padding: '16px 20px', marginBottom: 12 }}>
                 <div style={{ fontSize: 15, color: '#AEAEB2' }}>Describe your idea — e.g. a website for Mike's Plumbing in St. Louis</div>
               </div>
@@ -208,44 +195,45 @@ export default async function HomePage({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
               {[
                 {
-                  name: 'Starter', price: tierPrice('starter', '$149'), tag: 'Good', primary: false,
+                  name: 'Starter', price: p.starter, monthly: p.monthly, tag: 'Good', primary: false,
                   desc: '3-page site, live in 48 hours',
                   features: ['3 pages (Home, About, Contact)', 'Mobile-responsive', 'Deployed to your domain', 'Free brief included', '48-hour delivery'],
                   cta: 'Get started →',
                 },
                 {
-                  name: 'Professional', price: tierPrice('professional', '$299'), tag: 'Better', primary: true,
+                  name: 'Professional', price: p.professional, monthly: p.monthly, tag: 'Better', primary: true,
                   desc: '5 pages + custom copy & colors',
                   features: ['5 pages including Services', 'Custom brand colors & fonts', 'SEO-optimised copy', 'Contact form wired up', '1 round of revisions', '24-hour delivery'],
                   cta: 'Most popular →',
                 },
                 {
-                  name: 'Premium', price: tierPrice('premium', '$499'), tag: 'Best', primary: false,
+                  name: 'Premium', price: p.premium, monthly: p.monthly, tag: 'Best', primary: false,
                   desc: '8 pages + booking & payments',
                   features: ['8 pages + blog or gallery', 'Online booking or payments', 'Custom design system', 'Analytics dashboard', '3 rounds of revisions', 'Priority 12-hour delivery'],
                   cta: 'Go premium →',
                 },
-              ].map(p => (
-                <div key={p.name} style={{ background: p.primary ? '#1D1D1F' : '#FFFFFF', borderRadius: 16, padding: '24px', boxShadow: p.primary ? '0 8px 32px rgba(0,0,0,.18)' : '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                  {p.primary && <div style={{ position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)', background: '#0066CC', color: '#FFF', fontSize: 11, fontWeight: 600, letterSpacing: '.04em', padding: '4px 14px', borderRadius: '0 0 8px 8px' }}>Most popular</div>}
+              ].map(tier => (
+                <div key={tier.name} style={{ background: tier.primary ? '#1D1D1F' : '#FFFFFF', borderRadius: 16, padding: '24px', boxShadow: tier.primary ? '0 8px 32px rgba(0,0,0,.18)' : '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                  {tier.primary && <div style={{ position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)', background: '#0066CC', color: '#FFF', fontSize: 11, fontWeight: 600, letterSpacing: '.04em', padding: '4px 14px', borderRadius: '0 0 8px 8px' }}>Most popular</div>}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: p.primary ? 'rgba(255,255,255,.5)' : '#6E6E73', letterSpacing: '.02em' }}>{p.name}</div>
-                    <div style={{ fontSize: 11, fontWeight: 600, background: p.primary ? 'rgba(255,255,255,.12)' : '#F2F2F7', color: p.primary ? 'rgba(255,255,255,.7)' : '#6E6E73', borderRadius: 6, padding: '3px 8px', letterSpacing: '.04em' }}>{p.tag}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: tier.primary ? 'rgba(255,255,255,.5)' : '#6E6E73', letterSpacing: '.02em' }}>{tier.name}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, background: tier.primary ? 'rgba(255,255,255,.12)' : '#F2F2F7', color: tier.primary ? 'rgba(255,255,255,.7)' : '#6E6E73', borderRadius: 6, padding: '3px 8px', letterSpacing: '.04em' }}>{tier.tag}</div>
                   </div>
-                  <div style={{ fontSize: 38, fontWeight: 700, color: p.primary ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-1.5px', lineHeight: 1, marginBottom: 4 }}>{p.price}</div>
-                  <div style={{ fontSize: 13, color: p.primary ? 'rgba(255,255,255,.4)' : '#AEAEB2', marginBottom: 20 }}>{p.desc}</div>
+                  <div style={{ fontSize: 38, fontWeight: 700, color: tier.primary ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-1.5px', lineHeight: 1, marginBottom: 2 }}>{tier.price}</div>
+                  <div style={{ fontSize: 13, color: tier.primary ? 'rgba(255,255,255,.45)' : '#AEAEB2', marginBottom: 4 }}>then {tier.monthly}</div>
+                  <div style={{ fontSize: 13, color: tier.primary ? 'rgba(255,255,255,.4)' : '#AEAEB2', marginBottom: 20 }}>{tier.desc}</div>
                   <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', flex: 1 }}>
-                    {p.features.map(f => (
+                    {tier.features.map(f => (
                       <li key={f} style={{ display: 'flex', gap: 10, marginBottom: 9, alignItems: 'flex-start' }}>
-                        <div style={{ width: 16, height: 16, borderRadius: '50%', background: p.primary ? 'rgba(255,255,255,.15)' : '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                          <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke={p.primary ? 'white' : '#1D1D1F'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <div style={{ width: 16, height: 16, borderRadius: '50%', background: tier.primary ? 'rgba(255,255,255,.15)' : '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                          <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke={tier.primary ? 'white' : '#1D1D1F'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </div>
-                        <span style={{ fontSize: 14, color: p.primary ? 'rgba(255,255,255,.8)' : '#1D1D1F', lineHeight: 1.4 }}>{f}</span>
+                        <span style={{ fontSize: 14, color: tier.primary ? 'rgba(255,255,255,.8)' : '#1D1D1F', lineHeight: 1.4 }}>{f}</span>
                       </li>
                     ))}
                   </ul>
-                  <Link href="/app" style={{ background: p.primary ? '#FFFFFF' : '#1D1D1F', color: p.primary ? '#1D1D1F' : '#FFFFFF', borderRadius: 10, padding: '12px', fontSize: 15, fontWeight: 600, letterSpacing: '-.2px', textAlign: 'center', display: 'block', textDecoration: 'none' }}>
-                    {p.cta}
+                  <Link href="/app" style={{ background: tier.primary ? '#FFFFFF' : '#1D1D1F', color: tier.primary ? '#1D1D1F' : '#FFFFFF', borderRadius: 10, padding: '12px', fontSize: 15, fontWeight: 600, letterSpacing: '-.2px', textAlign: 'center', display: 'block', textDecoration: 'none' }}>
+                    {tier.cta}
                   </Link>
                 </div>
               ))}
@@ -256,7 +244,7 @@ export default async function HomePage({
           <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', boxShadow: '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#AEAEB2', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>Mobile App or SaaS</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', marginBottom: 4 }}>Full Product — from {fullProductPrice}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', marginBottom: 4 }}>Full Product — from {p.fullProduct}</div>
               <div style={{ fontSize: 14, color: '#6E6E73' }}>Auth, payments, database, custom design. Delivered in 5–7 days.</div>
             </div>
             <Link href="/app" style={{ background: '#1D1D1F', color: '#fff', borderRadius: 10, padding: '12px 24px', fontSize: 15, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
@@ -283,7 +271,7 @@ export default async function HomePage({
             <Link href="/logo" style={{ fontSize: 14, color: '#6E6E73' }}>Logo Generator</Link>
             <Link href="/terms" style={{ fontSize: 14, color: '#6E6E73' }}>Terms of Service</Link>
           </div>
-          <p style={{ fontSize: 13, color: '#AEAEB2', margin: 0 }}>© 2026 idea2Lunch · Your idea, fully cooked.</p>
+          <p style={{ fontSize: 13, color: '#AEAEB2', margin: 0 }}>© 2026 IdeaByLunch · Your idea, fully cooked.</p>
         </div>
       </div>
     </>
