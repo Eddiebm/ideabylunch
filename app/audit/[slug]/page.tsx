@@ -205,14 +205,89 @@ export default async function AuditResultsPage({ params }: { params: Promise<{ s
       </div>
 
       {/* Upsell */}
-      <div style={{ maxWidth: 780, margin: '0 auto 80px', padding: '0 24px' }}>
-        <div style={{ background: '#1D1D1F', borderRadius: 20, padding: '48px 36px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,59,48,.6), transparent)' }} />
-          <h2 style={{ fontSize: 32, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-1.2px', margin: '0 0 14px', lineHeight: 1.1 }}>Want this rewrite as ready-to-paste code?</h2>
-          <p style={{ fontSize: 16, color: 'rgba(255,255,255,.6)', margin: '0 0 28px', lineHeight: 1.5, maxWidth: 480, marginInline: 'auto' }}>Get the hero, FAQ, JSON-LD, and pricing tier code as Next.js TSX patches you can paste straight into your repo. Plus a step-by-step implementation guide.</p>
-          <UpgradeButton slug={slug} />
-        </div>
-      </div>
+      {/* Score + stack-aware upsell */}
+      {(() => {
+        const stack = data.current.stack || 'unknown'
+        const score = a.convictionScore
+        const stackLabel = ({
+          nextjs: 'Next.js', wix: 'Wix', squarespace: 'Squarespace', webflow: 'Webflow',
+          wordpress: 'WordPress', shopify: 'Shopify', framer: 'Framer', astro: 'Astro',
+          react: 'React (custom)', unknown: 'your current stack',
+        } as const)[stack]
+
+        // Decision tree
+        const isNextjs = stack === 'nextjs'
+        const showPatches = isNextjs && score >= 65
+        const emergencyRebuild = score < 30
+        const wrongStack = !isNextjs
+
+        // Three possible offers
+        const offer = emergencyRebuild
+          ? {
+              kind: 'rebuild-emergency',
+              eyebrow: 'Patches won\'t save this',
+              h2: 'Your site needs a rebuild — not a patch.',
+              body: `${stackLabel} site at ${score}/100 conviction. The structural problems above can't be fixed with code snippets. Let us rebuild from your brief on Vercel — same week, you own everything.`,
+              ctaLabel: 'Rebuild it for me — from $299',
+              ctaHref: '/app',
+              accent: '#FF3B30',
+            }
+          : wrongStack
+          ? {
+              kind: 'rebuild-stack',
+              eyebrow: `${stackLabel.toUpperCase()} DETECTED`,
+              h2: 'The patches won\'t apply to your stack.',
+              body: `Your site is on ${stackLabel}. Our $49 ship-the-rewrite is Next.js-specific. The fix that actually moves your score: rebuild on Vercel. We do it from the brief above — live in 48 hours, you own the code, the domain, everything.`,
+              ctaLabel: 'Rebuild on Vercel — from $299',
+              ctaHref: '/app',
+              accent: '#FF6B35',
+            }
+          : showPatches
+          ? {
+              kind: 'patches',
+              eyebrow: 'Next.js · Score 65+',
+              h2: 'Want this rewrite as ready-to-paste code?',
+              body: 'Get the hero, FAQ, JSON-LD, and pricing tier code as Next.js TSX patches you can paste straight into your repo. Plus a step-by-step implementation guide.',
+              ctaLabel: 'Ship the rewrite — $49',
+              ctaHref: null,
+              accent: '#FF3B30',
+            }
+          : {
+              // Next.js + score 30–64: offer rebuild as the better path, patches as fallback
+              kind: 'rebuild-soft',
+              eyebrow: 'Next.js · Below 65',
+              h2: 'Patches will help. A rebuild will move the number.',
+              body: `Score ${score}/100 means systemic positioning issues, not just copy. We can ship $49 patches if you want to apply them yourself — but the bigger lift is a full rebuild on Vercel from the brief above. Up to you.`,
+              ctaLabel: 'Rebuild it for me — from $299',
+              ctaHref: '/app',
+              accent: '#FF6B35',
+            }
+
+        return (
+          <div style={{ maxWidth: 780, margin: '0 auto 32px', padding: '0 24px' }}>
+            <div style={{ background: '#1D1D1F', borderRadius: 20, padding: '48px 36px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: offer.accent }} />
+              <div style={{ fontSize: 11, fontWeight: 700, color: offer.accent, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 14 }}>{offer.eyebrow}</div>
+              <h2 style={{ fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-1.2px', margin: '0 0 14px', lineHeight: 1.15 }}>{offer.h2}</h2>
+              <p style={{ fontSize: 15, color: 'rgba(255,255,255,.65)', margin: '0 0 26px', lineHeight: 1.55, maxWidth: 560, marginInline: 'auto' }}>{offer.body}</p>
+              {offer.ctaHref ? (
+                <Link href={offer.ctaHref} style={{ background: offer.accent, color: '#FFFFFF', borderRadius: 12, padding: '14px 32px', fontSize: 16, fontWeight: 600, display: 'inline-block', boxShadow: `0 4px 24px ${offer.accent}66` }}>
+                  {offer.ctaLabel} →
+                </Link>
+              ) : (
+                <UpgradeButton slug={slug} />
+              )}
+            </div>
+            {/* Secondary offer for the soft-rebuild case — also offer patches */}
+            {offer.kind === 'rebuild-soft' && (
+              <div style={{ textAlign: 'center', marginTop: 18 }}>
+                <span style={{ fontSize: 13, color: '#6E6E73' }}>Or just want the code? </span>
+                <UpgradeButton slug={slug} />
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Footer */}
       <div style={{ borderTop: '0.5px solid rgba(0,0,0,.08)', padding: '24px', textAlign: 'center' }}>

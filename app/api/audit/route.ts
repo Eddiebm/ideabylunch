@@ -43,6 +43,22 @@ function pick(html: string, regex: RegExp): string | null {
   return m ? m[1].trim() : null
 }
 
+export type Stack = 'nextjs' | 'wix' | 'squarespace' | 'webflow' | 'wordpress' | 'shopify' | 'framer' | 'astro' | 'react' | 'unknown'
+
+function detectStack(html: string): Stack {
+  // Order matters — most specific first
+  if (/_next\/static|__NEXT_DATA__|<meta\s+name=["']next-head-count["']/i.test(html)) return 'nextjs'
+  if (/wixstatic\.com|<meta\s+name=["']generator["']\s+content=["']Wix\.com/i.test(html)) return 'wix'
+  if (/static1\.squarespace\.com|<meta\s+name=["']generator["']\s+content=["']Squarespace/i.test(html)) return 'squarespace'
+  if (/webflow\.com\/?[^"]*?\.js|<meta\s+name=["']generator["']\s+content=["']Webflow|webflow\.io/i.test(html)) return 'webflow'
+  if (/wp-content\/|wp-includes\/|<meta\s+name=["']generator["']\s+content=["']WordPress/i.test(html)) return 'wordpress'
+  if (/cdn\.shopify\.com|\.myshopify\.com|Shopify\.theme/i.test(html)) return 'shopify'
+  if (/framer\.com\/m\/|<meta\s+name=["']generator["']\s+content=["']Framer/i.test(html)) return 'framer'
+  if (/astro-island|<astro-|astro:[a-z]+/i.test(html)) return 'astro'
+  if (/react-dom|reactroot|data-reactid/i.test(html)) return 'react'
+  return 'unknown'
+}
+
 function extractContext(html: string) {
   const title = pick(html, /<title[^>]*>([^<]*)<\/title>/i)
   const description = pick(html, /<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i)
@@ -50,6 +66,7 @@ function extractContext(html: string) {
   const ogImage = pick(html, /<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i)
   const h1 = pick(html, /<h1[^>]*>([\s\S]*?)<\/h1>/i)
   const hasJsonLd = /<script[^>]*type=["']application\/ld\+json["'][^>]*>/i.test(html)
+  const stack = detectStack(html)
   const text = stripTags(html).slice(0, 6000)
   return {
     title,
@@ -58,6 +75,7 @@ function extractContext(html: string) {
     ogImage,
     h1: h1 ? stripTags(h1) : null,
     hasJsonLd,
+    stack,
     bodyExcerpt: text,
   }
 }
