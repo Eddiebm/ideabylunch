@@ -48,7 +48,7 @@ export default function AdminPage() {
     <div style={{ minHeight: '100vh', background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '-apple-system, sans-serif' }}>
       <div style={{ background: '#fff', borderRadius: 20, padding: 36, width: 340, boxShadow: '0 1px 3px rgba(0,0,0,.08)' }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', margin: '0 0 6px' }}>Admin</h1>
-        <p style={{ fontSize: 14, color: '#6E6E73', margin: '0 0 20px' }}>idea2Lunch command center</p>
+        <p style={{ fontSize: 14, color: '#6E6E73', margin: '0 0 20px' }}>IdeaByLunch command center</p>
         <input
           type="password"
           value={secret}
@@ -89,7 +89,7 @@ export default function AdminPage() {
       {/* Nav */}
       <nav style={{ background: '#fff', borderBottom: '0.5px solid rgba(0,0,0,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: '#1D1D1F' }}>idea2Lunch Admin</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#1D1D1F' }}>IdeaByLunch Admin</span>
           <div style={{ display: 'flex', gap: 4 }}>
             {TABS.map(t => (
               <button key={t} onClick={() => setTab(t)} style={{ background: tab === t ? '#1D1D1F' : 'transparent', color: tab === t ? '#fff' : '#6E6E73', border: 'none', borderRadius: 8, padding: '5px 12px', fontSize: 13, fontWeight: 500, cursor: 'pointer', textTransform: 'capitalize' }}>

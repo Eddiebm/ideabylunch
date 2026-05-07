@@ -216,7 +216,7 @@ export default function WebsitePreview({ brief, productName, tagline, vision, is
             ))}
           </div>
           <div style={{ marginTop: 14, padding: '10px 14px', background: '#1a2236', border: '1px solid rgba(168,192,255,.06)', borderRadius: 4, fontFamily: 'var(--mono)', fontSize: 10, color: '#4a6080', lineHeight: 1.7 }}>
-            ✦ Photos from <a href="https://unsplash.com?utm_source=idea2lunch&utm_medium=referral" target="_blank" rel="noopener noreferrer" style={{ color: '#c8ff00', textDecoration: 'none' }}>Unsplash</a> — free for commercial use.
+            ✦ Photos from <a href="https://unsplash.com?utm_source=ideabylunch&utm_medium=referral" target="_blank" rel="noopener noreferrer" style={{ color: '#c8ff00', textDecoration: 'none' }}>Unsplash</a> — free for commercial use.
           </div>
         </div>
       )}

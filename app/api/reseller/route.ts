@@ -39,7 +39,7 @@ export async function GET(req: Request) {
     sales,
     revenue,
     commission: Math.round(revenue * reseller.commissionRate),
-    link: `https://idea2lunch.com/?ref=${code}`,
+    link: `https://ideabylunch.com/?ref=${code}`,
   })
 }
 
@@ -59,12 +59,12 @@ export async function POST(req: Request) {
 
   const reseller = {
     code, name, email, commissionRate,
-    products: products || ['idea2lunch', 'medos', 'lexos', 'busos'],
+    products: products || ['ideabylunch', 'medos', 'lexos', 'busos'],
     createdAt: Date.now(),
   }
 
   await redis.set(`reseller:${code}`, JSON.stringify(reseller))
   await redis.set(`refer:code:${code}`, email, { ex: 60 * 60 * 24 * 365 * 5 })
 
-  return Response.json({ ok: true, reseller, link: `https://idea2lunch.com/?ref=${code}` })
+  return Response.json({ ok: true, reseller, link: `https://ideabylunch.com/?ref=${code}` })
 }

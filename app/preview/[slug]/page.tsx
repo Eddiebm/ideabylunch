@@ -30,7 +30,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ slug: 
 
   if (!data) notFound()
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
   const checkoutUrl = `${appUrl}/app?preview=${slug}&business=${encodeURIComponent(data.businessName)}`
 
   return (
@@ -79,7 +79,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ slug: 
           fontSize: 11, color: 'rgba(255,255,255,.45)',
           borderTop: '1px solid rgba(255,255,255,.04)', flexWrap: 'wrap',
         }}>
-          <span>✦ Built in 60 seconds by idea2Lunch AI</span>
+          <span>✦ Built in 60 seconds by IdeaByLunch AI</span>
           <span>✦ Custom domain included</span>
           <span>✦ Live in 48 hours</span>
           <span>✦ You own all the code</span>
@@ -114,7 +114,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ slug: 
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
           <a
-            href={`mailto:hello@idea2lunch.com?subject=Question about my preview — ${encodeURIComponent(data.businessName)}`}
+            href={`mailto:hello@ideabylunch.com?subject=Question about my preview — ${encodeURIComponent(data.businessName)}`}
             style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textDecoration: 'none', padding: '8px 14px' }}
           >
             Ask a question

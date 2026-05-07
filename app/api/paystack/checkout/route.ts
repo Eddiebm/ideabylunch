@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Paystack not configured' }, { status: 503 })
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
     const gh = PRICING.GHS
     // Charge one-time build fee + first month up-front in pesewas.
     const amount = gh.oneTime + gh.monthly
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         channels: ['card', 'mobile_money', 'bank', 'ussd', 'qr', 'bank_transfer'],
         metadata: {
           currency: 'GHS',
-          productName: (body.productName || 'idea2Lunch').slice(0, 80),
+          productName: (body.productName || 'IdeaByLunch').slice(0, 80),
           selectedStyle: body.selectedStyle || '',
           whatsapp: body.whatsapp || '',
           ref: body.ref || '',

@@ -1,7 +1,7 @@
-# idea2lunch.com — Full Autonomous SaaS Build Plan
+# ideabylunch.com — Full Autonomous SaaS Build Plan
 
 ## Current State
-- Site live at https://idea2lunch.com (Vercel, mamapromptangel project)
+- Site live at https://ideabylunch.com (Vercel, ideabylunch project)
 - Brief generator working (OpenRouter → Gemini 2.5 Flash)
 - Stripe checkout exists (3 tiers)
 - Website builder API exists (generates HTML)
@@ -54,7 +54,7 @@
 ### Agent 3: Sales Agent
 - Follows up with leads (WhatsApp Business API)
 - Answers questions about pricing
-- Sends them to idea2lunch.com
+- Sends them to ideabylunch.com
 
 ### Agent 4: Build Agent
 - Receives paid orders from Stripe webhook

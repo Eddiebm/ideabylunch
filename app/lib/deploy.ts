@@ -48,11 +48,11 @@ export function applySlots(html: string, slots: OrderSlots): string {
   if (slots.contactInfo)  out = out.replace(/{{contactInfo}}/g, slots.contactInfo)
   if (slots.footerTagline) out = out.replace(/{{footerTagline}}/g, slots.footerTagline)
   // Inject branded backlink before </body> if not already present
-  if (!out.includes('idea2lunch.com') && out.includes('</body>')) {
+  if (!out.includes('ideabylunch.com') && out.includes('</body>')) {
     out = out.replace(
       '</body>',
       `<div style="text-align:center;padding:12px;font-size:12px;color:#AEAEB2;font-family:-apple-system,sans-serif">
-        Built with <a href="https://idea2lunch.com" style="color:#0066CC;text-decoration:none" target="_blank">idea2Lunch</a>
+        Built with <a href="https://ideabylunch.com" style="color:#0066CC;text-decoration:none" target="_blank">IdeaByLunch</a>
       </div></body>`
     )
   }

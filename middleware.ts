@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Validate session exists in Redis via API
-    const base = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const base = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
     try {
       const res = await fetch(`${base}/api/auth/session?token=${session}`)
       if (!res.ok) {

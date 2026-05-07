@@ -24,7 +24,7 @@ async function createPaystackEditSession(siteId: string, appUrl: string, product
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      email: 'edit@idea2lunch.com',
+      email: 'edit@ideabylunch.com',
       amount: 5000, // GHS 50.00 in pesewas
       currency: 'GHS',
       reference: ref,
@@ -131,7 +131,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ siteId:
     // Check if they've exceeded free edits
     if (editCount >= 3) {
       // Need payment — route through Paystack for GHS, Stripe for USD
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
       const currency = order.currency || 'USD'
       const isGHS = currency === 'GHS'
 

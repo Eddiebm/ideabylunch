@@ -11,7 +11,7 @@ function generateSession(): string {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const token = searchParams.get('token')
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
 
   if (!token) return Response.redirect(`${appUrl}/login?error=missing_token`, 302)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * idea2Lunch — Pre-deploy validation
+ * ideaByLunch — Pre-deploy validation
  * 
  * Run: node scripts/validate.js
  * Runs automatically before every deploy via package.json vercel-deploy script
@@ -33,7 +33,7 @@ function ok(msg) {
   console.log(`\x1b[32m✓\x1b[0m ${msg}`)
 }
 
-console.log('\n\x1b[1midea2Lunch — Pre-deploy validation\x1b[0m\n')
+console.log('\n\x1b[1mideaByLunch — Pre-deploy validation\x1b[0m\n')
 
 // ── 1. Check BriefGenerator.tsx has required components ──────────────────────
 const briefGenPath = path.join(ROOT, 'app/app/BriefGenerator.tsx')

@@ -65,11 +65,11 @@ async function deployToVercel(projectSlug: string, html: string): Promise<string
 
 function watermark(html: string, meta: { sessionId: string; customerEmail: string; plan: string }): string {
   const banner = `<!--
-  Built by idea2Lunch — https://idea2lunch.com
+  Built by IdeaByLunch — https://ideabylunch.com
   Licensed for exclusive use by: ${meta.customerEmail}
   Order: ${meta.sessionId} · Plan: ${meta.plan} · Built: ${new Date().toISOString()}
   Redistribution, resale, or use for other businesses is prohibited.
-  Questions? hello@idea2lunch.com
+  Questions? hello@ideabylunch.com
 -->
 `
   return html.replace(/^<!DOCTYPE[^>]*>/i, m => `${banner}${m}`)
@@ -257,7 +257,7 @@ async function alertAdmin(resend: Resend, data: {
       : ''
   try {
     await resend.emails.send({
-      from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
+      from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
       to: adminEmail,
       subject: `💰 $${data.amount} — ${data.plan} — ${data.customerEmail}`,
       html: `<div style="font-family:-apple-system,sans-serif">
@@ -278,11 +278,11 @@ async function alertAdmin(resend: Resend, data: {
 async function notifyCustomer(email: string, productName: string, liveUrl: string, whatsapp: string | undefined, resend: Resend, siteId?: string) {
   try {
     const token = siteId ? await createDashboardToken(siteId, email) : null
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
     const editLink = token && siteId ? `${appUrl}/dashboard/${siteId}/edit?token=${token}` : null
 
     await resend.emails.send({
-      from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
+      from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
       to: email,
       subject: `✦ ${productName} is live — ${liveUrl}`,
       html: `<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;background:#F2F2F7;padding:40px">
@@ -302,7 +302,7 @@ async function notifyCustomer(email: string, productName: string, liveUrl: strin
 
   // WhatsApp stub
   if (whatsapp) {
-    console.log(`[WA-STUB] → ${whatsapp}: "Hi! ${productName} is live at ${liveUrl}. — idea2Lunch"`)
+    console.log(`[WA-STUB] → ${whatsapp}: "Hi! ${productName} is live at ${liveUrl}. — IdeaByLunch"`)
   }
 }
 
@@ -387,9 +387,9 @@ export async function POST(req: Request) {
         await notifyCustomer(customerEmail, productName, liveUrl, whatsapp, resend, session.id)
       } else if (customerEmail) {
         await resend.emails.send({
-          from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
+          from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
           to: customerEmail,
-          subject: `✦ Your ${productName} order is in — idea2Lunch`,
+          subject: `✦ Your ${productName} order is in — IdeaByLunch`,
           html: `<div style="font-family:-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px">
             <h1 style="font-size:24px">Order received.</h1>
             <p>Thanks — we've got your ${plan} order for <strong>${productName}</strong> ($${amountPaid.toFixed(2)}).</p>
@@ -413,7 +413,7 @@ export async function POST(req: Request) {
       // Always email admin on failure so money never lands silently
       try {
         await resend.emails.send({
-          from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
+          from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
           to: process.env.ADMIN_EMAIL || 'eddie@bannermanmenson.com',
           subject: `⚠️ Webhook handler threw — check Stripe event ${event.id}`,
           html: `<p>Handler crashed. Stripe event <code>${event.id}</code> returned 200 but processing failed.</p><pre>${String(e).slice(0, 2000)}</pre>`,

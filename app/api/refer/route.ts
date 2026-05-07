@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   const conversions = Number(await redis.get(`refer:conversions:${email}`)) || 0
   return Response.json({
     code,
-    link: `https://idea2lunch.com/?ref=${code}`,
+    link: `https://ideabylunch.com/?ref=${code}`,
     conversions,
     credit: conversions * 20,
   })

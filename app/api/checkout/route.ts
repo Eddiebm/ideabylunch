@@ -17,13 +17,13 @@ function makeToken() {
 }
 
 const PRICES: Record<string, { amount: number; name: string; priceId?: string }> = {
-  starter:      { amount: 14900,  name: 'idea2Lunch — Starter Website',     priceId: process.env.STRIPE_STARTER_PRICE_ID },
-  professional: { amount: 29900,  name: 'idea2Lunch — Professional Website', priceId: process.env.STRIPE_PROFESSIONAL_PRICE_ID },
-  premium:      { amount: 49900,  name: 'idea2Lunch — Premium Website',      priceId: process.env.STRIPE_PREMIUM_PRICE_ID },
-  full:         { amount: 149900, name: 'idea2Lunch — Full Product',          priceId: process.env.STRIPE_FULL_PRICE_ID },
+  starter:      { amount: 14900,  name: 'IdeaByLunch — Starter Website',     priceId: process.env.STRIPE_STARTER_PRICE_ID },
+  professional: { amount: 29900,  name: 'IdeaByLunch — Professional Website', priceId: process.env.STRIPE_PROFESSIONAL_PRICE_ID },
+  premium:      { amount: 49900,  name: 'IdeaByLunch — Premium Website',      priceId: process.env.STRIPE_PREMIUM_PRICE_ID },
+  full:         { amount: 149900, name: 'IdeaByLunch — Full Product',          priceId: process.env.STRIPE_FULL_PRICE_ID },
   // Legacy
-  launch:       { amount: 29900,  name: 'idea2Lunch — Launch',               priceId: process.env.STRIPE_LAUNCH_PRICE_ID },
-  design:       { amount: 69900,  name: 'idea2Lunch — Launch + Design',       priceId: process.env.STRIPE_DESIGN_PRICE_ID },
+  launch:       { amount: 29900,  name: 'IdeaByLunch — Launch',               priceId: process.env.STRIPE_LAUNCH_PRICE_ID },
+  design:       { amount: 69900,  name: 'IdeaByLunch — Launch + Design',       priceId: process.env.STRIPE_DESIGN_PRICE_ID },
 }
 
 const EXPRESS_FEES: Record<string, number> = {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const planMeta = PRICES[plan]
     if (!planMeta) return Response.json({ error: 'Invalid plan' }, { status: 400 })
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
 

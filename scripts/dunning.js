@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * idea2Lunch Dunning Agent
+ * ideaByLunch Dunning Agent
  * Polls Stripe for past-due / failed invoices, sends personalized
  * chase emails via Resend (copy drafted by OpenRouter).
  *
@@ -9,7 +9,7 @@
  *   Day 4 after fail  → clearer nudge ("your site may go offline")
  *   Day 8 after fail  → final notice (cancel subscription)
  *
- * Cron: 0 10 * * * cd /opt/idea2lunch && node --env-file=.env scripts/dunning.js >> logs/dunning.log 2>&1
+ * Cron: 0 10 * * * cd /opt/ideabylunch && node --env-file=.env scripts/dunning.js >> logs/dunning.log 2>&1
  */
 
 const STRIPE_KEY   = process.env.STRIPE_SECRET_KEY
@@ -59,7 +59,7 @@ Amount: $${(amount / 100).toFixed(2)}
 Days past due: ${daysPastDue}
 Tone: ${tone}
 Include a clear call-to-action to update their card at: ${invoiceUrl}
-Sign off as "— Eddie, idea2Lunch"
+Sign off as "— Eddie, ideaByLunch"
 Return just the email body (plain text, no subject line, no HTML).`
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -78,15 +78,15 @@ Return just the email body (plain text, no subject line, no HTML).`
 
 async function sendEmail(to, subject, body) {
   const html = `<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#1c1510;font-size:16px;line-height:1.7">
-    <div style="font-family:monospace;font-size:11px;color:#c9a84c;letter-spacing:.2em;text-transform:uppercase;margin-bottom:32px">\u2726 idea2Lunch</div>
+    <div style="font-family:monospace;font-size:11px;color:#c9a84c;letter-spacing:.2em;text-transform:uppercase;margin-bottom:32px">\u2726 ideaByLunch</div>
     ${body.split('\n').map(p => `<p>${p}</p>`).join('')}
   </div>`
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'Eddie at idea2Lunch <hello@idea2lunch.com>',
-      to, subject, html, reply_to: 'hello@idea2lunch.com',
+      from: 'Eddie at ideaByLunch <hello@ideabylunch.com>',
+      to, subject, html, reply_to: 'hello@ideabylunch.com',
     }),
   })
   return res.ok
@@ -101,7 +101,7 @@ async function cancelSubscription(subId) {
 }
 
 async function run() {
-  log('=== idea2Lunch Dunning starting ===')
+  log('=== ideaByLunch Dunning starting ===')
   if (!STRIPE_KEY) { log('STRIPE_SECRET_KEY missing — aborting'); return }
 
   let chased = 0, cancelled = 0, skipped = 0
@@ -125,9 +125,9 @@ async function run() {
     if (daysPastDue >= 8 && inv.subscription) {
       const ok = await cancelSubscription(inv.subscription)
       if (ok) {
-        await sendEmail(email, `Your idea2Lunch subscription has been cancelled`,
-          `Hi ${name || 'there'},\n\nWe weren't able to process your payment after multiple attempts, so your subscription has been cancelled and the site will go offline in 24 hours.\n\nIf this is a mistake — or you want to reactivate — just reply to this email.\n\n— Eddie, idea2Lunch`)
-        await sendEmail(ADMIN_EMAIL, `[idea2Lunch] Cancelled: ${name || email}`,
+        await sendEmail(email, `Your ideaByLunch subscription has been cancelled`,
+          `Hi ${name || 'there'},\n\nWe weren't able to process your payment after multiple attempts, so your subscription has been cancelled and the site will go offline in 24 hours.\n\nIf this is a mistake — or you want to reactivate — just reply to this email.\n\n— Eddie, ideaByLunch`)
+        await sendEmail(ADMIN_EMAIL, `[ideaByLunch] Cancelled: ${name || email}`,
           `Subscription ${inv.subscription} cancelled after ${daysPastDue}d past due.\nInvoice: ${inv.hosted_invoice_url}`)
         await redisSet(key, '1')
         cancelled++
@@ -136,11 +136,11 @@ async function run() {
     }
 
     const body = await draftChaseEmail(name, inv.amount_due, daysPastDue, inv.hosted_invoice_url)
-      || `Hi ${name || 'there'},\n\nYour last idea2Lunch payment of $${(inv.amount_due/100).toFixed(2)} didn't go through. You can update your card here: ${inv.hosted_invoice_url}\n\n— Eddie, idea2Lunch`
+      || `Hi ${name || 'there'},\n\nYour last ideaByLunch payment of $${(inv.amount_due/100).toFixed(2)} didn't go through. You can update your card here: ${inv.hosted_invoice_url}\n\n— Eddie, ideaByLunch`
 
     const subject = daysPastDue <= 2 ? `Quick nudge — card needs updating`
-      : daysPastDue <= 5 ? `Your idea2Lunch site — payment update needed`
-      : `Final notice — idea2Lunch will cancel in 48h`
+      : daysPastDue <= 5 ? `Your ideaByLunch site — payment update needed`
+      : `Final notice — ideaByLunch will cancel in 48h`
 
     const sent = await sendEmail(email, subject, body)
     if (sent) {
@@ -153,7 +153,7 @@ async function run() {
   }
 
   if (chased > 0 || cancelled > 0) {
-    await sendEmail(ADMIN_EMAIL, `[idea2Lunch] Dunning: ${chased} chased, ${cancelled} cancelled`,
+    await sendEmail(ADMIN_EMAIL, `[ideaByLunch] Dunning: ${chased} chased, ${cancelled} cancelled`,
       `Chased: ${chased}\nCancelled: ${cancelled}\nSkipped (already processed today): ${skipped}`)
   }
   log(`=== Done. Chased: ${chased}, Cancelled: ${cancelled}, Skipped: ${skipped} ===`)

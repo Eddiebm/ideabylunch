@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * idea2Lunch Lead Hunter
+ * ideaByLunch Lead Hunter
  * Runs nightly on Hetzner. Finds businesses without websites,
  * builds a free preview site for each, stores in Redis.
  *
  * Usage: node scripts/hunter.js --query "plumber" --city "Austin TX" --limit 20
- * Cron:  0 2 * * * cd /opt/idea2lunch && node scripts/hunter.js >> logs/hunter.log 2>&1
+ * Cron:  0 2 * * * cd /opt/ideabylunch && node scripts/hunter.js >> logs/hunter.log 2>&1
  */
 
-const BASE_URL = process.env.APP_URL || 'https://idea2lunch.com'
+const BASE_URL = process.env.APP_URL || 'https://ideabylunch.com'
 const API_KEY  = process.env.HUNTER_SECRET || process.env.CRON_SECRET || ''
 
 // Default targets — rotate these to avoid SerpAPI quota limits
@@ -104,7 +104,7 @@ async function storeOutreachJob(business, preview) {
 }
 
 async function run() {
-  log('=== idea2Lunch Hunter starting ===')
+  log('=== ideaByLunch Hunter starting ===')
 
   const targets = cliQuery
     ? [{ query: cliQuery, city: cliCity || 'Austin TX' }]

@@ -184,7 +184,7 @@ export default function HuntMode() {
             address: b.address,
             city,
             industry,
-            previewUrl: buildData.previewUrl || `https://idea2lunch.com/preview/${buildData.token}`,
+            previewUrl: buildData.previewUrl || `https://ideabylunch.com/preview/${buildData.token}`,
             checkEmailOnly: false,
           })
         })
@@ -235,7 +235,7 @@ export default function HuntMode() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', background: '#0A0E1A', borderBottom: '1px solid #1B2A3E' }}>
             <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#C9A84C' }}>Preview — {previewEntry.name}</span>
             <div style={{ display: 'flex', gap: 10 }}>
-              <a href={`mailto:hello@idea2lunch.com?subject=Keep my site - ${previewEntry.name}`}
+              <a href={`mailto:hello@ideabylunch.com?subject=Keep my site - ${previewEntry.name}`}
                 style={{ background: '#C9A84C', color: '#070B14', padding: '6px 16px', borderRadius: 3, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textDecoration: 'none' }}>
                 Send Outreach →
               </a>
@@ -259,7 +259,7 @@ export default function HuntMode() {
         {/* Header */}
         <div style={{ marginBottom: 36, borderBottom: '1px solid rgba(201,168,76,.15)', paddingBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase' as const, color: '#C9A84C' }}>idea2Lunch</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase' as const, color: '#C9A84C' }}>IdeaByLunch</span>
             <span style={{ color: '#1B2A3E' }}>·</span>
             <span style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase' as const, color: '#4a6080' }}>Hunt Mode — Outbound</span>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(200,255,0,.06)', border: '1px solid rgba(200,255,0,.2)', borderRadius: 3, padding: '3px 10px' }}>

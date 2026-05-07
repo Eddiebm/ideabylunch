@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   if (!key || !tier) return Response.json({ error: 'key and tier required' }, { status: 400 })
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
 
   const prices: Record<string, number> = { starter: 9900, pro: 19900 }
   const names: Record<string, string> = {

@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       {
         price_data: {
           currency: 'usd',
-          product_data: { name: 'idea2Lunch Pro — Unlimited Edits' },
+          product_data: { name: 'IdeaByLunch Pro — Unlimited Edits' },
           unit_amount: 1900,
           recurring: { interval: 'month' },
         },

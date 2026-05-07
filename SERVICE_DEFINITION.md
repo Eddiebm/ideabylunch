@@ -1,4 +1,4 @@
-# idea2Lunch — Service Definition
+# ideaByLunch — Service Definition
 *Internal reference. Not published.*
 
 ---

@@ -4,7 +4,7 @@
  * Run: ADMIN_SECRET=xxx node scripts/setup-resellers.js
  */
 
-const BASE = process.env.APP_URL || 'https://idea2lunch.com'
+const BASE = process.env.APP_URL || 'https://ideabylunch.com'
 const SECRET = process.env.ADMIN_SECRET
 
 if (!SECRET) { console.error('ADMIN_SECRET required'); process.exit(1) }
@@ -15,7 +15,7 @@ const resellers = [
     name: 'AblaVie',
     email: 'reseller@ablavie.com',
     commissionRate: 0.25,
-    products: ['idea2lunch', 'medos', 'lexos', 'busos'],
+    products: ['ideabylunch', 'medos', 'lexos', 'busos'],
   },
   {
     code: 'NAAAYELE',

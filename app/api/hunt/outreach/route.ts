@@ -31,7 +31,7 @@ async function sendSMS(to: string, businessName: string, previewUrl: string): Pr
   const from = process.env.TWILIO_PHONE_NUMBER
   if (!sid || !token || !from) return false
 
-  const body = `Hi! I found ${businessName} on Google Maps and built you a free website. See it here: ${previewUrl}\n\nTo go live: $299 one-time. Reply STOP to opt out. — idea2Lunch`
+  const body = `Hi! I found ${businessName} on Google Maps and built you a free website. See it here: ${previewUrl}\n\nTo go live: $299 one-time. Reply STOP to opt out. — IdeaByLunch`
 
   try {
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
@@ -163,7 +163,7 @@ function buildOutreachEmail(
 </style>
 </head>
 <body><div class="wrap">
-  <div class="logo">✦ idea2Lunch</div>
+  <div class="logo">✦ IdeaByLunch</div>
 
   <h1>I rebuilt ${shortName}'s website.</h1>
 
@@ -186,12 +186,12 @@ function buildOutreachEmail(
 
   <p>Just reply to this email and I'll set it up under your domain within 24 hours.</p>
 
-  <p style="margin-top:32px">— Eddie Bannerman-Menson<br/>idea2Lunch · idea2lunch.com</p>
+  <p style="margin-top:32px">— Eddie Bannerman-Menson<br/>IdeaByLunch · ideabylunch.com</p>
 
   <hr/>
   <div class="footer">
     You're receiving this because ${businessName} came up in a search for ${industry} businesses in ${city}.<br/>
-    <a href="https://idea2lunch.com/unsubscribe">Unsubscribe</a> · idea2Lunch LLC · St. Louis, MO
+    <a href="https://ideabylunch.com/unsubscribe">Unsubscribe</a> · IdeaByLunch LLC · St. Louis, MO
   </div>
 </div></body></html>`
 }
@@ -300,17 +300,17 @@ export async function POST(req: Request) {
     )
 
     const sendResult = await resend.emails.send({
-      from: `Eddie at idea2Lunch <hello@idea2lunch.com>`,
+      from: `Eddie at IdeaByLunch <hello@ideabylunch.com>`,
       to: recipientEmail,
-      reply_to: 'hello@idea2lunch.com',
+      reply_to: 'hello@ideabylunch.com',
       subject,
       html,
     })
 
     // ── Step 4: Notify you internally ────────────────────────────────────────
     await resend.emails.send({
-      from: `idea2Lunch Hunt <hello@idea2lunch.com>`,
-      to: process.env.RESEND_FROM || 'hello@idea2lunch.com',
+      from: `IdeaByLunch Hunt <hello@ideabylunch.com>`,
+      to: process.env.RESEND_FROM || 'hello@ideabylunch.com',
       subject: `🎯 Outreach sent — ${businessName}`,
       html: `<div style="font-family:monospace;padding:24px;background:#07070d;color:#f0ece4">
         <h2 style="color:#c9a84c;margin:0 0 20px">Outreach sent</h2>

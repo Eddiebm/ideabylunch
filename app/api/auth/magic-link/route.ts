@@ -28,12 +28,12 @@ export async function POST(req: Request) {
     const token = generateToken()
     await redis.set(`auth:token:${token}`, email.toLowerCase(), { ex: 900 }) // 15 min
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
     const link = `${appUrl}/api/auth/verify?token=${token}`
 
     const resend = new Resend(process.env.RESEND_API_KEY)
     await resend.emails.send({
-      from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
+      from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
       to: email,
       subject: 'Your dashboard link',
       html: `<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;background:#F2F2F7;padding:40px">

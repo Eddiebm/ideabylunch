@@ -6,8 +6,9 @@ import PhotographySection from './PhotographySection'
 import IdeaWizard from './IdeaWizard'
 import EmailGate from './EmailGate'
 import VoiceInterview from './VoiceInterview'
+import ConceptVideoTab from './ConceptVideoTab'
 
-const SYSTEM_PROMPT = `You are idea2Lunch — an elite product studio AI. Transform a raw idea into a complete, actionable product brief.
+const SYSTEM_PROMPT = `You are IdeaByLunch — an elite product studio AI. Transform a raw idea into a complete, actionable product brief.
 
 Be specific, dense, and concrete. No fluff. Write as if every word costs $50. Make bold assumptions if the idea is vague and note them clearly.
 
@@ -409,6 +410,9 @@ export default function BriefGenerator() {
   const sectionTitles = sections.map(s => s.title)
   const isDone = !streaming && sections.length >= 7
   const selectedAgent = AGENTS.find(a => a.id === agent)!
+  const visionSection = sections.find(s => s.title === 'PRODUCT VISION')?.body || ''
+  const copySection   = sections.find(s => s.title === 'MARKETING COPY')?.body || ''
+  const firstTagline  = copySection.split('\n').find(l => /^\d/.test(l.trim()))?.replace(/^\d+[.)]\s*/, '') || ''
 
   return (
     <>
@@ -599,6 +603,15 @@ export default function BriefGenerator() {
           {/* Photography */}
           {isDone && (
             <PhotographySection brief={output} productName={productName || 'Your Product'} isDone={isDone} />
+          )}
+
+          {/* Concept Video */}
+          {isDone && (
+            <ConceptVideoTab
+              vision={visionSection}
+              tagline={firstTagline}
+              productName={productName || 'Your Product'}
+            />
           )}
 
           {/* Done CTA */}

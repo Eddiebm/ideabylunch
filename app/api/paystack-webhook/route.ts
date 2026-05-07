@@ -58,7 +58,7 @@ async function createPaystackSubscription(
     method: 'POST',
     headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      name: `idea2Lunch — Domain + Hosting + Maintenance (${currency})`,
+      name: `IdeaByLunch — Domain + Hosting + Maintenance (${currency})`,
       amount,
       interval: 'monthly',
       currency,
@@ -126,12 +126,12 @@ export async function POST(req: Request) {
 
   if (email && liveUrl) {
     const token = await createDashboardToken(ref, email)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
     const editLink = token ? `${appUrl}/dashboard/${ref}/edit?token=${token}` : null
 
     const resend = new Resend(process.env.RESEND_API_KEY)
     await resend.emails.send({
-      from: `idea2Lunch <${process.env.RESEND_FROM || 'hello@idea2lunch.com'}>`,
+      from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
       to: email,
       subject: `✦ ${productName} is live — ${liveUrl}`,
       html: `<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;background:#F2F2F7;padding:40px">

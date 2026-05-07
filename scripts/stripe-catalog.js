@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Phase 5: Stripe product catalog — 10 products across idea2Lunch, MedOS, LexOS, BUSOS.
+ * Phase 5: Stripe product catalog — 10 products across ideaByLunch, MedOS, LexOS, BUSOS.
  * Run: STRIPE_SECRET_KEY=sk_live_xxx node scripts/stripe-catalog.js
  * Outputs price IDs to add to .env
  */
@@ -11,14 +11,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 if (!process.env.STRIPE_SECRET_KEY) { console.error('STRIPE_SECRET_KEY required'); process.exit(1) }
 
 const PRODUCTS = [
-  // idea2Lunch
-  { id: 'i2l_site_starter',    name: 'idea2Lunch — Starter Site',       amount: 14900, mode: 'payment',      desc: '5-page website, live in 48h' },
-  { id: 'i2l_site_pro',        name: 'idea2Lunch — Pro Site',            amount: 29900, mode: 'payment',      desc: '10-page website + custom domain' },
-  { id: 'i2l_site_full',       name: 'idea2Lunch — Full Build',          amount: 49900, mode: 'payment',      desc: 'Full product site + SEO + analytics' },
-  { id: 'i2l_editor_pro',      name: 'idea2Lunch — Pro Editor',          amount: 1900,  mode: 'subscription', desc: 'Unlimited site edits, monthly' },
-  { id: 'i2l_taglines',        name: 'idea2Lunch — Tagline Pack',        amount: 2900,  mode: 'payment',      desc: '10 AI taglines for your brand' },
-  { id: 'i2l_logo_starter',    name: 'idea2Lunch — Logo Starter',        amount: 9900,  mode: 'payment',      desc: '3 AI logo concepts, PNG' },
-  { id: 'i2l_logo_pro',        name: 'idea2Lunch — Logo Pro',            amount: 19900, mode: 'payment',      desc: '3 vector SVG logos, brand guide' },
+  // ideaByLunch
+  { id: 'i2l_site_starter',    name: 'ideaByLunch — Starter Site',       amount: 14900, mode: 'payment',      desc: '5-page website, live in 48h' },
+  { id: 'i2l_site_pro',        name: 'ideaByLunch — Pro Site',            amount: 29900, mode: 'payment',      desc: '10-page website + custom domain' },
+  { id: 'i2l_site_full',       name: 'ideaByLunch — Full Build',          amount: 49900, mode: 'payment',      desc: 'Full product site + SEO + analytics' },
+  { id: 'i2l_editor_pro',      name: 'ideaByLunch — Pro Editor',          amount: 1900,  mode: 'subscription', desc: 'Unlimited site edits, monthly' },
+  { id: 'i2l_taglines',        name: 'ideaByLunch — Tagline Pack',        amount: 2900,  mode: 'payment',      desc: '10 AI taglines for your brand' },
+  { id: 'i2l_logo_starter',    name: 'ideaByLunch — Logo Starter',        amount: 9900,  mode: 'payment',      desc: '3 AI logo concepts, PNG' },
+  { id: 'i2l_logo_pro',        name: 'ideaByLunch — Logo Pro',            amount: 19900, mode: 'payment',      desc: '3 vector SVG logos, brand guide' },
   // MedOS
   { id: 'medos_clinic_monthly',name: 'MedOS — Clinic Plan',              amount: 4900,  mode: 'subscription', desc: 'AI clinical tools, monthly' },
   // LexOS

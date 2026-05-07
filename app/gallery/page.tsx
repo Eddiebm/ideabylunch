@@ -40,13 +40,13 @@ export default async function GalleryPage() {
     <>
       <style>{`* { box-sizing: border-box; } body { margin: 0; background: #F2F2F7; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }`}</style>
       <nav style={{ background: '#fff', borderBottom: '0.5px solid rgba(0,0,0,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <a href="/" style={{ fontSize: 17, fontWeight: 600, color: '#1D1D1F', textDecoration: 'none' }}>idea2Lunch</a>
+        <a href="/" style={{ fontSize: 17, fontWeight: 600, color: '#1D1D1F', textDecoration: 'none' }}>IdeaByLunch</a>
         <a href="/app" style={{ background: '#0066CC', color: '#fff', borderRadius: 8, padding: '7px 16px', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>Build my site →</a>
       </nav>
 
       <div style={{ maxWidth: 980, margin: '0 auto', padding: '48px 24px 80px' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h1 style={{ fontSize: 40, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1.5px', margin: '0 0 12px' }}>Sites built with idea2Lunch</h1>
+          <h1 style={{ fontSize: 40, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1.5px', margin: '0 0 12px' }}>Sites built with IdeaByLunch</h1>
           <p style={{ fontSize: 17, color: '#6E6E73', margin: 0 }}>{sites.length} live sites and counting — yours could be next.</p>
         </div>
 

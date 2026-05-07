@@ -117,14 +117,14 @@ CRITICAL:
 
     // Add preview banner to HTML
     const banner = `<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#1B3A2D;color:#C9A84C;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;box-shadow:0 2px 12px rgba(0,0,0,.4);">
-  <span>✦ Preview built by idea2Lunch — like what you see?</span>
-  <a href="mailto:hello@idea2lunch.com?subject=Keep my new website - ${encodeURIComponent(businessName)}&body=Hi Eddie, I'd like to keep the preview site you built for ${encodeURIComponent(businessName)}. Please set it up on our domain." style="background:#C9A84C;color:#1B3A2D;padding:6px 16px;border-radius:3px;text-decoration:none;font-weight:700;font-size:11px;letter-spacing:.08em;white-space:nowrap;margin-left:16px;">Keep This Site — $299 →</a>
+  <span>✦ Preview built by IdeaByLunch — like what you see?</span>
+  <a href="mailto:hello@ideabylunch.com?subject=Keep my new website - ${encodeURIComponent(businessName)}&body=Hi Eddie, I'd like to keep the preview site you built for ${encodeURIComponent(businessName)}. Please set it up on our domain." style="background:#C9A84C;color:#1B3A2D;padding:6px 16px;border-radius:3px;text-decoration:none;font-weight:700;font-size:11px;letter-spacing:.08em;white-space:nowrap;margin-left:16px;">Keep This Site — $299 →</a>
 </div>
 <div style="height:46px"></div>`
 
     const htmlWithBanner = html.replace(/<body([^>]*)>/i, `<body$1>${banner}`)
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
     const token = `${businessName.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 15)}-${Date.now().toString(36)}`
     const previewUrl = `${appUrl}/preview/${token}`
 

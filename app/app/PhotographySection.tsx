@@ -405,7 +405,7 @@ export default function PhotographySection({
                         <div className="photo-credit">
                           Photo by{' '}
                           <a
-                            href={photo.photographerUrl + '?utm_source=idea2lunch&utm_medium=referral'}
+                            href={photo.photographerUrl + '?utm_source=ideabylunch&utm_medium=referral'}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{ color: '#c8ff00', textDecoration: 'none' }}>
@@ -413,7 +413,7 @@ export default function PhotographySection({
                           </a>
                           {' '}on{' '}
                           <a
-                            href="https://unsplash.com?utm_source=idea2lunch&utm_medium=referral"
+                            href="https://unsplash.com?utm_source=ideabylunch&utm_medium=referral"
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{ color: '#4a6080', textDecoration: 'none' }}>
@@ -486,7 +486,7 @@ export default function PhotographySection({
                 color: '#4a6080',
                 lineHeight: 1.7
               }}>
-                ✦ All photos from <a href="https://unsplash.com?utm_source=idea2lunch&utm_medium=referral" target="_blank" rel="noopener noreferrer" style={{ color: '#c8ff00', textDecoration: 'none' }}>Unsplash</a> — free to use for commercial and personal projects. Please credit the photographer.
+                ✦ All photos from <a href="https://unsplash.com?utm_source=ideabylunch&utm_medium=referral" target="_blank" rel="noopener noreferrer" style={{ color: '#c8ff00', textDecoration: 'none' }}>Unsplash</a> — free to use for commercial and personal projects. Please credit the photographer.
               </div>
             </div>
           )}

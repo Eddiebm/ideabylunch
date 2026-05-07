@@ -2,7 +2,7 @@ export const runtime = 'edge'
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Terms of Service — idea2Lunch',
+  title: 'Terms of Service — IdeaByLunch',
   description: 'What you get, what we promise, and what happens if things go wrong.',
 }
 
@@ -67,7 +67,7 @@ export default function TermsPage() {
         {/* Nav */}
         <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(242,242,247,0.9)', backdropFilter: 'blur(20px)', borderBottom: '0.5px solid rgba(0,0,0,.08)' }}>
           <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Link href="/" style={{ fontSize: 17, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-.3px' }}>idea2Lunch</Link>
+            <Link href="/" style={{ fontSize: 17, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-.3px' }}>IdeaByLunch</Link>
             <Link href="/app" style={{ background: '#1D1D1F', color: '#fff', borderRadius: 8, padding: '7px 16px', fontSize: 14, fontWeight: 500 }}>Cook my idea</Link>
           </div>
         </nav>
@@ -93,7 +93,7 @@ export default function TermsPage() {
                 What we build,<br />what you own.
               </h1>
               <p style={{ fontSize: 17, color: '#6E6E73', lineHeight: 1.6, maxWidth: 520 }}>
-                Plain language. No legalese. By paying for an idea2Lunch service you agree to these terms.
+                Plain language. No legalese. By paying for an IdeaByLunch service you agree to these terms.
               </p>
             </div>
 
@@ -185,7 +185,7 @@ export default function TermsPage() {
             </Section>
 
             <Section id="liability" title="9. Liability">
-              <p>idea2Lunch is a trading name of Eddie Bannerman-Menson.</p>
+              <p>IdeaByLunch is a trading name of Eddie Bannerman-Menson.</p>
               <Rule>Our total liability for any claim is capped at the amount you paid us for the relevant service.</Rule>
               <Rule>We are not liable for indirect, incidental, or consequential losses (lost revenue, lost data, lost customers).</Rule>
               <Rule>We are not responsible for third-party service outages (Vercel, Stripe, Supabase, Clerk, Unsplash).</Rule>
@@ -194,13 +194,13 @@ export default function TermsPage() {
 
             <Section id="contact" title="10. Contact">
               <p>Questions about these terms or your order:</p>
-              <Rule>Email: <a href="mailto:hello@idea2lunch.com">hello@idea2lunch.com</a></Rule>
+              <Rule>Email: <a href="mailto:hello@ideabylunch.com">hello@ideabylunch.com</a></Rule>
               <Rule>WhatsApp: available via the number you used at checkout.</Rule>
               <p style={{ marginTop: 14 }}>We aim to respond within 1 business day.</p>
             </Section>
 
             <div style={{ borderTop: '0.5px solid rgba(0,0,0,.1)', paddingTop: 24, fontSize: 13, color: '#AEAEB2' }}>
-              Last updated: {LAST_UPDATED} · <Link href="/">idea2lunch.com</Link>
+              Last updated: {LAST_UPDATED} · <Link href="/">ideabylunch.com</Link>
             </div>
           </main>
         </div>

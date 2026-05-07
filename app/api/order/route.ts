@@ -124,7 +124,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://idea2lunch.com'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
     const countryCode = (contact.country || '').toUpperCase()
     const isGhana = countryCode === 'GH'
     const usePaystack = AFRICAN_COUNTRIES.has(countryCode)

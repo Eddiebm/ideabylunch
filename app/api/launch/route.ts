@@ -8,7 +8,7 @@ export async function POST(req: Request) {
 
     // Email to you (Eddie)
     await resend.emails.send({
-      from: 'idea2Lunch <onboarding@resend.dev>',
+      from: 'IdeaByLunch <onboarding@resend.dev>',
       to: ['eddiebannerman@gmail.com'],
       subject: `🚀 New Launch Request — ${plan} — ${name}`,
       html: `
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
             <pre style="color:#8fa8cc;font-size:12px;line-height:1.7;white-space:pre-wrap">${brief?.slice(0, 2000)}...</pre>
           </div>
           <div style="margin-top:24px;padding:16px;background:#1a2236;border-radius:6px;text-align:center">
-            <a href="mailto:${email}?subject=Your idea2Lunch order — ${plan}&body=Hi ${name},%0D%0A%0D%0AThanks for your interest in idea2Lunch! I'd love to build your product.%0D%0A%0D%0ALet's connect to discuss next steps." style="color:#c8ff00;font-size:13px">Reply to ${name} →</a>
+            <a href="mailto:${email}?subject=Your IdeaByLunch order — ${plan}&body=Hi ${name},%0D%0A%0D%0AThanks for your interest in IdeaByLunch! I'd love to build your product.%0D%0A%0D%0ALet's connect to discuss next steps." style="color:#c8ff00;font-size:13px">Reply to ${name} →</a>
           </div>
         </div>
       `
@@ -36,9 +36,9 @@ export async function POST(req: Request) {
 
     // Confirmation email to customer
     await resend.emails.send({
-      from: 'idea2Lunch <onboarding@resend.dev>',
+      from: 'IdeaByLunch <onboarding@resend.dev>',
       to: [email],
-      subject: `Your idea2Lunch request is in — we'll be in touch shortly`,
+      subject: `Your IdeaByLunch request is in — we'll be in touch shortly`,
       html: `
         <div style="font-family:monospace;max-width:600px;margin:0 auto;background:#0a0e1a;color:#e8ecf8;padding:32px;border-radius:8px">
           <h2 style="color:#c8ff00;margin-bottom:8px">✦ Request received.</h2>
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
             <div style="color:#e8ecf8;line-height:1.7">${idea}</div>
           </div>
           <p style="color:#4a6080;font-size:13px">Questions? Reply to this email and we'll get back to you.</p>
-          <p style="color:#4a6080;font-size:13px;margin-top:24px">— idea2Lunch</p>
+          <p style="color:#4a6080;font-size:13px;margin-top:24px">— IdeaByLunch</p>
         </div>
       `
     })

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * idea2Lunch Outreach Runner
+ * ideaByLunch Outreach Runner
  * Runs at 9am nightly on Hetzner. Reads queued leads from Redis,
  * sends email + SMS outreach with their preview URL.
  *
- * Cron: 0 9 * * * cd /opt/idea2lunch && node --env-file=.env scripts/outreach.js >> logs/outreach.log 2>&1
+ * Cron: 0 9 * * * cd /opt/ideabylunch && node --env-file=.env scripts/outreach.js >> logs/outreach.log 2>&1
  */
 
-const BASE_URL = process.env.APP_URL || 'https://idea2lunch.com'
+const BASE_URL = process.env.APP_URL || 'https://ideabylunch.com'
 const BATCH    = parseInt(process.env.OUTREACH_BATCH || '20', 10)  // max per run
 const DELAY_MS = parseInt(process.env.OUTREACH_DELAY || '4000', 10) // between sends
 
@@ -51,7 +51,7 @@ async function sendOutreach(job) {
 }
 
 async function run() {
-  log('=== idea2Lunch Outreach starting ===')
+  log('=== ideaByLunch Outreach starting ===')
 
   const jobs = await popQueue(BATCH)
   log(`Pulled ${jobs.length} jobs from queue`)
