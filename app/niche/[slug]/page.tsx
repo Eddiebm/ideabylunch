@@ -3,8 +3,84 @@ import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { resolveMarket, MARKET_PRICING } from '../../lib/pricing'
 
-const NICHES: Record<string, { title: string; headline: string; sub: string; examples: string[] }> = {
+type Niche = { title: string; headline: string; sub: string; examples: string[]; kind?: 'smb' | 'founder' }
+
+const NICHES: Record<string, Niche> = {
+  // Founder-target niches (AI startup builder lane)
+  'ai-saas': {
+    kind: 'founder',
+    title: 'AI Startup Builder for SaaS Founders | IdeaByLunch',
+    headline: 'Launch your AI SaaS by lunch.',
+    sub: 'Describe your idea. Get a complete founder brief — vision, ICP, GTM, master build prompt — and a live, deployed product. By lunch.',
+    examples: ['AI sales follow-up tool', 'AI customer support copilot', 'AI ops platform for vertical SaaS'],
+  },
+  'fintech': {
+    kind: 'founder',
+    title: 'AI Startup Builder for Fintech Founders | IdeaByLunch',
+    headline: 'Launch your fintech idea by lunch.',
+    sub: 'Founder brief, regulatory considerations, ICP, GTM, and a live product. From an idea to a live business in hours, not months.',
+    examples: ['Stripe-on-top-of-Paystack for African rideshare', 'B2B invoicing for African SMBs', 'Stablecoin payouts for creators'],
+  },
+  'b2b-saas': {
+    kind: 'founder',
+    title: 'AI Startup Builder for B2B SaaS Founders | IdeaByLunch',
+    headline: 'Launch your B2B SaaS by lunch.',
+    sub: 'Get a B2B-ready founder brief: ICP by job title, GTM through cold outbound + LinkedIn, pricing strategy, and a live product.',
+    examples: ['Vertical SaaS for clinics', 'AI for legal ops teams', 'Compliance copilot for fintech'],
+  },
+  'marketplace': {
+    kind: 'founder',
+    title: 'AI Startup Builder for Marketplace Founders | IdeaByLunch',
+    headline: 'Launch your marketplace by lunch.',
+    sub: 'Two-sided marketplace strategy, supply-side cold-start playbook, and a live transactable platform. From idea to first transaction.',
+    examples: ['Vetted AI engineers for African startups', 'Local-language tutors marketplace', 'Specialty food marketplace for diaspora'],
+  },
+  'edtech': {
+    kind: 'founder',
+    title: 'AI Startup Builder for Edtech Founders | IdeaByLunch',
+    headline: 'Launch your edtech idea by lunch.',
+    sub: 'Educational ICP analysis, distribution strategy (parent vs school vs student), and a live product. Tested by lunch.',
+    examples: ['WAEC/JAMB cram tutor', 'AI explainer for STEM concepts in pidgin', 'Language tutor for diaspora kids'],
+  },
+  'healthtech': {
+    kind: 'founder',
+    title: 'AI Startup Builder for Healthtech Founders | IdeaByLunch',
+    headline: 'Launch your healthtech idea by lunch.',
+    sub: 'Patient/provider ICP, regulatory awareness, distribution channel strategy, and a live deployment. Built for healthcare reality.',
+    examples: ['Asthma adherence app via phone mic', 'Clinic operations SaaS for Africa', 'Pharmacist-led patient education'],
+  },
+  'climate': {
+    kind: 'founder',
+    title: 'AI Startup Builder for Climate Founders | IdeaByLunch',
+    headline: 'Launch your climate startup by lunch.',
+    sub: 'Climate-specific ICP, distribution through aligned partners, and a live business. Built for climate-tech reality, not whitepapers.',
+    examples: ['Solar-payback calculator + financing', 'Carbon-credit marketplace for African farms', 'Plastic-recycling logistics in Lagos'],
+  },
+  'agency-replacement': {
+    kind: 'founder',
+    title: 'AI Startup Builder to Replace Agencies | IdeaByLunch',
+    headline: 'Replace a $40k agency engagement. By lunch.',
+    sub: 'AI-native services that compete with traditional agencies — content, design, growth, dev. Live, monetisable, scalable.',
+    examples: ['AI-rewritten landing pages weekly', 'AI logo + brand systems on demand', 'AI SEO content engines'],
+  },
+  'creator-economy': {
+    kind: 'founder',
+    title: 'AI Startup Builder for the Creator Economy | IdeaByLunch',
+    headline: 'Build the next creator tool by lunch.',
+    sub: 'Creator-specific ICP, distribution playbook through creators themselves, monetisation strategy, and a live product.',
+    examples: ['LinkedIn ghostwriter AI', 'Podcast clip generator', 'Newsletter monetisation tool'],
+  },
+  'vertical-saas': {
+    kind: 'founder',
+    title: 'AI Startup Builder for Vertical SaaS | IdeaByLunch',
+    headline: 'Launch your vertical SaaS by lunch.',
+    sub: 'Industry-deep ICP, regulatory awareness, sales motion (founder-led, channel, or product-led), and a live product.',
+    examples: ['Operations platform for private clinics', 'SaaS for African logistics SMEs', 'Compliance for vertical-specific accountants'],
+  },
+
+  // SMB niches (kept for SEO + service revenue)
   plumber: {
+    kind: 'smb',
     title: 'Plumber Websites | IdeaByLunch',
     headline: 'Get more plumbing jobs with a professional website.',
     sub: 'A fast, mobile-friendly site that shows up when local customers search for a plumber. Live in 48 hours.',
@@ -104,7 +180,7 @@ export default async function NichePage({ params }: { params: Promise<{ slug: st
       <style>{`* { box-sizing: border-box; } body { margin: 0; background: #F2F2F7; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }`}</style>
       <nav style={{ background: '#fff', borderBottom: '0.5px solid rgba(0,0,0,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <a href="/" style={{ fontSize: 17, fontWeight: 600, color: '#1D1D1F', textDecoration: 'none' }}>IdeaByLunch</a>
-        <a href="/app" style={{ background: '#0066CC', color: '#fff', borderRadius: 8, padding: '7px 16px', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>Build my site →</a>
+        <a href="/app" style={{ background: '#0066CC', color: '#fff', borderRadius: 8, padding: '7px 16px', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>Cook my idea →</a>
       </nav>
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '64px 24px 80px', textAlign: 'center' }}>
@@ -116,7 +192,7 @@ export default async function NichePage({ params }: { params: Promise<{ slug: st
           From {p.professional} setup · then {p.monthly}
         </p>
         <a href="/app" style={{ background: '#0066CC', color: '#fff', borderRadius: 12, padding: '14px 32px', fontSize: 17, fontWeight: 600, textDecoration: 'none', display: 'inline-block' }}>
-          Get my free brief →
+          Cook my idea — free →
         </a>
 
         <div style={{ marginTop: 64, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
