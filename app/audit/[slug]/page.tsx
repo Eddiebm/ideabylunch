@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { getRedis } from '@/app/lib/redis'
 import type { StoredAudit } from '@/app/api/audit/route'
 import UpgradeButton from './UpgradeButton'
+import ShareButtons from './ShareButtons'
 
 async function getAudit(slug: string): Promise<StoredAudit | null> {
   const redis = getRedis()
@@ -104,6 +105,11 @@ export default async function AuditResultsPage({ params }: { params: Promise<{ s
             <p style={{ fontSize: 15, color: '#6E6E73', lineHeight: 1.55, margin: 0 }}>{a.summary}</p>
           </div>
         </div>
+      </div>
+
+      {/* Share */}
+      <div style={{ maxWidth: 880, margin: '0 auto 32px', padding: '0 24px' }}>
+        <ShareButtons domain={data.domain} score={a.convictionScore} topFix={a.top3Fixes[0] || ''} slug={slug} />
       </div>
 
       {/* Top 3 fixes */}
