@@ -26,8 +26,46 @@ export default async function HomePage({
   const isUS = marketCode === 'US'
   const toggleHref = isUS ? '' : '/?market=US'
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://ideabylunch.com/#org',
+        name: 'IdeaByLunch',
+        url: 'https://ideabylunch.com',
+        logo: 'https://ideabylunch.com/opengraph-image',
+        sameAs: [],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': 'https://ideabylunch.com/#site',
+        url: 'https://ideabylunch.com',
+        name: 'IdeaByLunch',
+        publisher: { '@id': 'https://ideabylunch.com/#org' },
+      },
+      {
+        '@type': 'Product',
+        name: 'IdeaByLunch — Idea-to-Launch Service',
+        description: 'A complete product brief in 60 seconds, then a built and deployed product in 48 hours.',
+        brand: { '@id': 'https://ideabylunch.com/#org' },
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'USD',
+          price: '149',
+          availability: 'https://schema.org/InStock',
+          url: 'https://ideabylunch.com',
+        },
+      },
+    ],
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <style>{`
         @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
