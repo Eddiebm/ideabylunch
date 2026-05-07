@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getRedis } from '@/app/lib/redis'
 import type { StoredAudit } from '@/app/api/audit/route'
+import UpgradeButton from './UpgradeButton'
 
 async function getAudit(slug: string): Promise<StoredAudit | null> {
   const redis = getRedis()
@@ -201,11 +202,9 @@ export default async function AuditResultsPage({ params }: { params: Promise<{ s
       <div style={{ maxWidth: 780, margin: '0 auto 80px', padding: '0 24px' }}>
         <div style={{ background: '#1D1D1F', borderRadius: 20, padding: '48px 36px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,59,48,.6), transparent)' }} />
-          <h2 style={{ fontSize: 32, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-1.2px', margin: '0 0 14px', lineHeight: 1.1 }}>Want this rewrite shipped to your repo?</h2>
-          <p style={{ fontSize: 16, color: 'rgba(255,255,255,.6)', margin: '0 0 28px', lineHeight: 1.5, maxWidth: 480, marginInline: 'auto' }}>We open a PR with the new hero, FAQ, JSON-LD, and pricing tiers. You merge. Live in minutes.</p>
-          <Link href="/app" style={{ background: '#FF3B30', color: '#FFFFFF', borderRadius: 12, padding: '14px 32px', fontSize: 16, fontWeight: 600, display: 'inline-block', boxShadow: '0 4px 24px rgba(255,59,48,.4)' }}>
-            Ship the rewrite — coming soon →
-          </Link>
+          <h2 style={{ fontSize: 32, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-1.2px', margin: '0 0 14px', lineHeight: 1.1 }}>Want this rewrite as ready-to-paste code?</h2>
+          <p style={{ fontSize: 16, color: 'rgba(255,255,255,.6)', margin: '0 0 28px', lineHeight: 1.5, maxWidth: 480, marginInline: 'auto' }}>Get the hero, FAQ, JSON-LD, and pricing tier code as Next.js TSX patches you can paste straight into your repo. Plus a step-by-step implementation guide.</p>
+          <UpgradeButton slug={slug} />
         </div>
       </div>
 

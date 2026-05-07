@@ -1,7 +1,19 @@
 export const runtime = 'edge'
+import type { Metadata } from 'next'
 import { getRedis } from '@/app/lib/redis'
 
 export const revalidate = 300
+
+export const metadata: Metadata = {
+  title: 'Built by Lunch — real businesses launched today',
+  description: 'A live gallery of every startup and business launched through IdeaByLunch. Real founders, real domains, real customers.',
+  alternates: { canonical: '/gallery' },
+  openGraph: {
+    title: 'Built by Lunch — real businesses launched today',
+    description: 'Every business launched through IdeaByLunch.',
+    url: 'https://ideabylunch.com/gallery',
+  },
+}
 
 interface SiteCard {
   productName: string
