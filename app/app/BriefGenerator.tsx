@@ -433,16 +433,20 @@ export default function BriefGenerator() {
       `}</style>
 
       {showLaunch && <LaunchModal brief={output} onClose={() => setShowLaunch(false)} />}
-      {showEmailGate && (
-        <EmailGate onUnlock={email => {
-          setUserEmail(email)
-          setShowEmailGate(false)
-          handleGenerate(email)
-        }} />
-      )}
 
       <div style={{ background: '#F2F2F7', minHeight: '100vh', paddingTop: 68 }}>
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '52px 20px 120px' }}>
+
+          {showEmailGate && (
+            <EmailGate
+              onUnlock={email => {
+                setUserEmail(email)
+                setShowEmailGate(false)
+                handleGenerate(email)
+              }}
+              onDismiss={() => setShowEmailGate(false)}
+            />
+          )}
 
           {/* Voice interview */}
           {showVoice && !output && !loading && (

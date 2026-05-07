@@ -4,8 +4,8 @@ import { getRedis } from '@/app/lib/redis'
 
 export const runtime = 'edge'
 
-const FREE_LIMIT = 2      // anonymous IP limit
-const EMAIL_LIMIT = 7     // after email capture
+const FREE_LIMIT = 5      // anonymous IP limit — wow first, gate later
+const EMAIL_LIMIT = 12    // after email capture
 
 function getIp(req: NextRequest): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
