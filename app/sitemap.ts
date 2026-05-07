@@ -20,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const top: Array<{ path: string; priority: number; changeFrequency: Freq }> = [
     { path: '/', priority: 1.0, changeFrequency: 'weekly' },
+    { path: '/audit', priority: 0.95, changeFrequency: 'weekly' },
     { path: '/idea-generator', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/gallery', priority: 0.8, changeFrequency: 'weekly' },
     { path: '/hunt', priority: 0.7, changeFrequency: 'weekly' },
