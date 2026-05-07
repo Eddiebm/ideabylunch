@@ -4,7 +4,7 @@ import { getRedis } from '@/app/lib/redis'
 
 export const runtime = 'edge'
 
-const FREE_AUDITS_PER_IP_PER_DAY = 3
+const FREE_AUDITS_PER_IP_PER_DAY = 10
 
 function getIp(req: NextRequest): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()

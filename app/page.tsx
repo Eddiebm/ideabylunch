@@ -409,6 +409,7 @@ export default async function HomePage({
         <div style={{ borderTop: '0.5px solid rgba(0,0,0,.08)', padding: '32px 24px', textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap', marginBottom: 16 }}>
             <Link href="/audit" style={{ fontSize: 14, color: '#6E6E73' }}>Free Site Audit</Link>
+            <Link href="/empire" style={{ fontSize: 14, color: '#6E6E73' }}>The Empire</Link>
             <Link href="/idea-generator" style={{ fontSize: 14, color: '#6E6E73' }}>Free Idea Generator</Link>
             <Link href="/taglines" style={{ fontSize: 14, color: '#6E6E73' }}>Tagline Generator</Link>
             <Link href="/logo" style={{ fontSize: 14, color: '#6E6E73' }}>Logo Generator</Link>
