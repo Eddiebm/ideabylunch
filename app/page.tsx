@@ -225,6 +225,23 @@ export default async function HomePage({
           </div>
         </div>
 
+        {/* Founder's note — dogfooding signal */}
+        <div style={{ maxWidth: 780, margin: '0 auto 96px', padding: '0 24px' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '36px 40px', boxShadow: '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#0066CC', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 14 }}>From the founder</div>
+            <p style={{ fontSize: 19, fontWeight: 500, color: '#1D1D1F', lineHeight: 1.5, letterSpacing: '-.3px', margin: '0 0 14px' }}>
+              I&apos;m not just the founder of IdeaByLunch. I&apos;m also my own customer. I run an empire of products — and every one of them was launched, audited, and rewritten with this tool. If it doesn&apos;t work for me, it doesn&apos;t ship to you.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #FFCC80, #FF9500)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1D1D1F', fontSize: 14, fontWeight: 700 }}>EB</div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-.1px' }}>Eddie Bannerman-Menson</div>
+                <div style={{ fontSize: 13, color: '#6E6E73' }}>Founder, IdeaByLunch · Customer, IdeaByLunch</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* The transformation — time-stamped */}
         <div id="how" style={{ maxWidth: 780, margin: '0 auto 96px', padding: '0 24px' }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
