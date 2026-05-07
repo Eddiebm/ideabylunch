@@ -233,7 +233,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'analysis_failed', detail: String(err) }, { status: 500 })
   }
 
-  const slug = slugFromUrl(url)
   const stored: StoredAudit = {
     url,
     domain: new URL(url).hostname.replace(/^www\./, ''),
