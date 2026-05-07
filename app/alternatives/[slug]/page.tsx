@@ -114,10 +114,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-export async function generateStaticParams() {
-  return Object.keys(COMPARISONS).map(slug => ({ slug }))
-}
-
 export default async function AlternativePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const c = COMPARISONS[slug]
