@@ -18,13 +18,24 @@ export const metadata: Metadata = {
   },
 }
 
-// Edit this list to add/remove apps from the empire
-const EMPIRE = [
-  { domain: 'ideabylunch.com', name: 'IdeaByLunch', tagline: 'Become a founder by lunch', category: 'Founder activation' },
-  { domain: 'medos.health', name: 'MedOS', tagline: 'Clinical AI for African healthcare', category: 'Healthtech' },
-  { domain: 'ai-ceo.com', name: 'AI CEO', tagline: 'AI executive in your pocket', category: 'AI agent' },
-  { domain: 'ablavie.com', name: 'Ablavie', tagline: 'AI-powered consumer app', category: 'Consumer AI' },
-] as const
+// Edit this list to add/remove apps from the empire.
+// tier: 'flagship' = one product getting the 90-day distribution push (only ONE)
+//       'rotation' = up to 2 apps in active fortnightly maintenance + content cycling
+//       'cargo'    = live + indexed but no active work
+type Tier = 'flagship' | 'rotation' | 'cargo'
+
+const EMPIRE: Array<{ domain: string; name: string; tagline: string; category: string; tier: Tier }> = [
+  { domain: 'ideabylunch.com', name: 'IdeaByLunch', tagline: 'Become a founder by lunch', category: 'Founder activation', tier: 'flagship' },
+  { domain: 'medos.health', name: 'MedOS', tagline: 'Clinical AI for African healthcare', category: 'Healthtech', tier: 'rotation' },
+  { domain: 'ai-ceo.com', name: 'AI CEO', tagline: 'AI executive in your pocket', category: 'AI agent', tier: 'rotation' },
+  { domain: 'ablavie.com', name: 'Ablavie', tagline: 'AI-powered consumer app', category: 'Consumer AI', tier: 'cargo' },
+]
+
+const TIER_META: Record<Tier, { label: string; sublabel: string; color: string }> = {
+  flagship:  { label: 'Flagship',  sublabel: '90-day distribution push · all-in',                color: '#0066CC' },
+  rotation:  { label: 'Rotation',  sublabel: 'Fortnightly focus · maintenance + weekly content', color: '#FF9500' },
+  cargo:     { label: 'Cargo',     sublabel: 'Live · indexed · no active work right now',         color: '#6E6E73' },
+}
 
 function slugFromDomain(domain: string): string {
   return domain.replace(/^www\./, '').replace(/\./g, '-').toLowerCase()
@@ -32,25 +43,23 @@ function slugFromDomain(domain: string): string {
 
 async function getEmpireData() {
   const redis = getRedis()
-  if (!redis) return EMPIRE.map(app => ({ ...app, audit: null }))
+  const enrich = async (app: typeof EMPIRE[number]) => {
+    const slug = slugFromDomain(app.domain)
+    if (!redis) return { ...app, audit: null, slug }
+    const raw = await redis.get<StoredAudit | string>(`audit:${slug}`)
+    if (!raw) return { ...app, audit: null, slug }
+    const cached: StoredAudit = typeof raw === 'string' ? JSON.parse(raw) : raw
+    return { ...app, audit: cached, slug }
+  }
 
-  const results = await Promise.all(
-    EMPIRE.map(async app => {
-      const slug = slugFromDomain(app.domain)
-      const raw = await redis.get<StoredAudit | string>(`audit:${slug}`)
-      if (!raw) return { ...app, audit: null, slug }
-      const cached: StoredAudit = typeof raw === 'string' ? JSON.parse(raw) : raw
-      return { ...app, audit: cached, slug }
-    })
-  )
+  const all = await Promise.all(EMPIRE.map(enrich))
 
-  // Sort: audited first (by score asc — show worst first to make the "improve in public" arc obvious), unaudited last
-  return results.sort((a, b) => {
-    if (a.audit && !b.audit) return -1
-    if (!a.audit && b.audit) return 1
-    if (a.audit && b.audit) return a.audit.audit.convictionScore - b.audit.audit.convictionScore
-    return 0
-  })
+  return {
+    flagship:  all.filter(a => a.tier === 'flagship'),
+    rotation:  all.filter(a => a.tier === 'rotation'),
+    cargo:     all.filter(a => a.tier === 'cargo'),
+    all,
+  }
 }
 
 function ScoreBadge({ score }: { score: number }) {
@@ -64,9 +73,64 @@ function ScoreBadge({ score }: { score: number }) {
   )
 }
 
+type EnrichedApp = Awaited<ReturnType<typeof getEmpireData>>['all'][number]
+
+function EmpireCard({ app }: { app: EnrichedApp }) {
+  return (
+    <div style={{ background: '#FFFFFF', borderRadius: 18, padding: '24px 26px', boxShadow: '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#0066CC', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>{app.category}</div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', margin: '0 0 4px' }}>{app.name}</h2>
+          <p style={{ fontSize: 14, color: '#6E6E73', margin: '0 0 6px', lineHeight: 1.45 }}>{app.tagline}</p>
+          <a href={`https://${app.domain}`} target="_blank" rel="noreferrer noopener" style={{ fontSize: 13, color: '#0066CC', fontWeight: 500 }}>{app.domain} ↗</a>
+        </div>
+      </div>
+
+      {app.audit ? (
+        <>
+          <div style={{ borderTop: '0.5px solid rgba(0,0,0,.08)', paddingTop: 14 }}>
+            <ScoreBadge score={app.audit.audit.convictionScore} />
+            <p style={{ fontSize: 13, color: '#6E6E73', margin: '8px 0 0', lineHeight: 1.5 }}>{app.audit.audit.oneSentenceVerdict}</p>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 'auto' }}>
+            <span style={{ fontSize: 11, color: '#AEAEB2' }}>
+              Audited {new Date(app.audit.scrapedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+            <Link href={`/audit/${app.slug}`} style={{ fontSize: 13, color: '#0066CC', fontWeight: 600 }}>
+              Read the report →
+            </Link>
+          </div>
+        </>
+      ) : (
+        <div style={{ borderTop: '0.5px solid rgba(0,0,0,.08)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={{ fontSize: 13, color: '#AEAEB2', margin: 0, fontStyle: 'italic' }}>Audit pending</p>
+          <EmpireAuditButton url={`https://${app.domain}`} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TierSection({ tier, apps }: { tier: Tier; apps: EnrichedApp[] }) {
+  if (apps.length === 0) return null
+  const meta = TIER_META[tier]
+  return (
+    <div style={{ maxWidth: 880, margin: '0 auto 32px', padding: '0 24px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 14, paddingLeft: 4 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: meta.color, letterSpacing: '.08em', textTransform: 'uppercase' }}>{meta.label}</span>
+        <span style={{ fontSize: 13, color: '#AEAEB2', fontWeight: 500 }}>· {meta.sublabel}</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 14 }}>
+        {apps.map(app => <EmpireCard key={app.domain} app={app} />)}
+      </div>
+    </div>
+  )
+}
+
 export default async function EmpirePage() {
-  const apps = await getEmpireData()
-  const audited = apps.filter(a => a.audit)
+  const data = await getEmpireData()
+  const audited = data.all.filter(a => a.audit)
   const avg = audited.length > 0
     ? Math.round(audited.reduce((s, a) => s + a.audit!.audit.convictionScore, 0) / audited.length)
     : null
@@ -106,42 +170,11 @@ export default async function EmpirePage() {
         )}
       </div>
 
-      {/* Empire grid */}
-      <div style={{ maxWidth: 880, margin: '0 auto 64px', padding: '32px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 14 }}>
-        {apps.map(app => (
-          <div key={app.domain} style={{ background: '#FFFFFF', borderRadius: 18, padding: '24px 26px', boxShadow: '0 1px 3px rgba(0,0,0,.04), 0 0 0 0.5px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#0066CC', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>{app.category}</div>
-                <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', margin: '0 0 4px' }}>{app.name}</h2>
-                <p style={{ fontSize: 14, color: '#6E6E73', margin: '0 0 6px', lineHeight: 1.45 }}>{app.tagline}</p>
-                <a href={`https://${app.domain}`} target="_blank" rel="noreferrer noopener" style={{ fontSize: 13, color: '#0066CC', fontWeight: 500 }}>{app.domain} ↗</a>
-              </div>
-            </div>
-
-            {app.audit ? (
-              <>
-                <div style={{ borderTop: '0.5px solid rgba(0,0,0,.08)', paddingTop: 14 }}>
-                  <ScoreBadge score={app.audit.audit.convictionScore} />
-                  <p style={{ fontSize: 13, color: '#6E6E73', margin: '8px 0 0', lineHeight: 1.5 }}>{app.audit.audit.oneSentenceVerdict}</p>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 'auto' }}>
-                  <span style={{ fontSize: 11, color: '#AEAEB2' }}>
-                    Audited {new Date(app.audit.scrapedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </span>
-                  <Link href={`/audit/${app.slug}`} style={{ fontSize: 13, color: '#0066CC', fontWeight: 600 }}>
-                    Read the report →
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <div style={{ borderTop: '0.5px solid rgba(0,0,0,.08)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontSize: 13, color: '#AEAEB2', margin: 0, fontStyle: 'italic' }}>Audit pending</p>
-                <EmpireAuditButton url={`https://${app.domain}`} />
-              </div>
-            )}
-          </div>
-        ))}
+      {/* Empire grid — grouped by tier */}
+      <div style={{ paddingTop: 24, paddingBottom: 32 }}>
+        <TierSection tier="flagship" apps={data.flagship} />
+        <TierSection tier="rotation" apps={data.rotation} />
+        <TierSection tier="cargo" apps={data.cargo} />
       </div>
 
       {/* Founder note */}
