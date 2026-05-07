@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 const SITE = 'https://ideabylunch.com'
-const TITLE = 'IdeaByLunch — Your Idea, Fully Cooked.'
-const DESCRIPTION = 'Describe your idea. Get a complete product brief in 60 seconds — then we build and launch it for you in 48 hours.'
+const TITLE = 'IdeaByLunch — Become a founder by lunch.'
+const DESCRIPTION = 'Turn your startup idea into a live business by lunch. Describe it, get a founder brief, positioning, launch strategy, and a real, deployed website — in minutes. You own everything.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
