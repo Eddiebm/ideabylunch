@@ -147,15 +147,35 @@ export type StoredAudit = {
   audit: AuditResult
 }
 
+const CACHE_FRESH_MS = 60 * 60 * 24 * 1000 // 24h — same URL returns same audit
+
 export async function POST(req: NextRequest) {
-  let body: { url?: string }
+  let body: { url?: string; force?: boolean }
   try { body = await req.json() } catch { return Response.json({ error: 'invalid_json' }, { status: 400 }) }
 
   const url = body.url ? normaliseUrl(body.url) : null
   if (!url) return Response.json({ error: 'invalid_url' }, { status: 400 })
 
+  const slug = slugFromUrl(url)
   const redis = getRedis()
   const ip = getIp(req)
+
+  // Cache check — return existing audit if fresh and not forced
+  if (redis && !body.force) {
+    const raw = await redis.get<StoredAudit | string>(`audit:${slug}`)
+    if (raw) {
+      const cached: StoredAudit = typeof raw === 'string' ? JSON.parse(raw) : raw
+      if (Date.now() - cached.scrapedAt < CACHE_FRESH_MS) {
+        return Response.json({
+          slug,
+          audit: cached.audit,
+          current: cached.current,
+          domain: cached.domain,
+          cached: true,
+        })
+      }
+    }
+  }
 
   if (redis) {
     const rateKey = `audit:rate:${ip}`
