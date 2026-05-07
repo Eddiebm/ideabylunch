@@ -153,9 +153,9 @@ export default async function HomePage({
                   <strong style={{ color: '#30D158' }}>{deployCount.toLocaleString()}</strong> founders launched · live counter
                 </span>
                 <span style={{ color: 'rgba(255,255,255,.2)' }}>·</span>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)' }}>30-day refund if your idea isn&apos;t worth pursuing</span>
-                <span style={{ color: 'rgba(255,255,255,.2)' }}>·</span>
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)' }}>You own the code, the domain, the customers</span>
+                <span style={{ color: 'rgba(255,255,255,.2)' }}>·</span>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)' }}>Pay once · No subscription</span>
                 <span style={{ color: 'rgba(255,255,255,.2)' }}>·</span>
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)' }}>Brief free. Always.</span>
                 <span style={{ color: 'rgba(255,255,255,.2)' }}>·</span>
