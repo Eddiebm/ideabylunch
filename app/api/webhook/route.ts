@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { Resend } from 'resend'
 import { Redis } from '@upstash/redis'
 import { createDashboardToken } from '@/app/lib/auth'
+import { injectConceptVideo } from '@/app/lib/deploy'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
@@ -340,6 +341,12 @@ export async function POST(req: Request) {
       // Get or generate HTML
       let html: string | null = order?.selectedHtml || null
       if (!html && brief) html = await generateHtmlFromBrief(brief, productName, plan)
+
+      // Inject concept video if customer generated one
+      if (html && customerEmail && redis) {
+        const videoUrl = await redis.get<string>(`video:by_email:${customerEmail}`)
+        if (videoUrl) html = injectConceptVideo(html, videoUrl)
+      }
 
       // Watermark + deploy
       const projectSlug = slugify(productName)

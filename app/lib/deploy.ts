@@ -40,6 +40,16 @@ export function slugify(name: string): string {
     .slice(0, 40) + '-' + Math.random().toString(36).slice(2, 7)
 }
 
+export function injectConceptVideo(html: string, videoUrl: string): string {
+  if (!videoUrl || !html.includes('</body>')) return html
+  const snippet = `
+<div style="width:100%;overflow:hidden;line-height:0;max-height:520px">
+  <video src="${videoUrl}" autoplay loop muted playsinline style="width:100%;max-height:520px;object-fit:cover;display:block"></video>
+</div>`
+  // Insert as first child of <body> — before any nav or hero
+  return html.replace(/<body([^>]*)>/, `<body$1>${snippet}`)
+}
+
 export function applySlots(html: string, slots: OrderSlots): string {
   let out = html
   if (slots.heroHeadline) out = out.replace(/{{heroHeadline}}/g, slots.heroHeadline)

@@ -5,6 +5,7 @@ interface Props {
   vision: string
   tagline: string
   productName: string
+  email?: string | null
 }
 
 type Status = 'idle' | 'submitting' | 'pending' | 'processing' | 'complete' | 'failed' | 'timeout'
@@ -12,7 +13,7 @@ type Status = 'idle' | 'submitting' | 'pending' | 'processing' | 'complete' | 'f
 const POLL_MS = 8000
 const MAX_POLLS = 30
 
-export default function ConceptVideoTab({ vision, tagline, productName }: Props) {
+export default function ConceptVideoTab({ vision, tagline, productName, email }: Props) {
   const [status, setStatus] = useState<Status>('idle')
   const [taskId, setTaskId] = useState<string | null>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
@@ -60,7 +61,7 @@ export default function ConceptVideoTab({ vision, tagline, productName }: Props)
       const res = await fetch('/api/video/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vision, tagline, productName }),
+        body: JSON.stringify({ vision, tagline, productName, ...(email ? { email } : {}) }),
       })
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || `Failed: ${res.status}`) }
       const data = await res.json()

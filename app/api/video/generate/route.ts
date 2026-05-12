@@ -1,5 +1,5 @@
-// app/api/video/generate/route.ts
 export const runtime = 'edge'
+import { getRedis } from '@/app/lib/redis'
 
 function buildPrompt(vision: string, tagline: string, productName: string): string {
   const name = productName || 'a digital product'
@@ -18,12 +18,13 @@ Photorealistic, 16:9, cinematic color grade.
 
 export async function POST(req: Request) {
   try {
-    const { vision, tagline, productName } = await req.json()
+    const { vision, tagline, productName, email } = await req.json()
     if (!vision && !tagline && !productName) {
       return Response.json({ error: 'At least one brief field required' }, { status: 400 })
     }
     const apiKey = process.env.PIAPI_KEY
     if (!apiKey) return Response.json({ error: 'Video generation not configured' }, { status: 503 })
+
     const prompt = buildPrompt(vision, tagline, productName)
     const res = await fetch('https://api.piapi.ai/api/v1/task', {
       method: 'POST',
@@ -42,15 +43,23 @@ export async function POST(req: Request) {
       }),
     })
     if (!res.ok) {
-      const err = await res.text()
-      console.error('PiAPI error:', err)
+      console.error('PiAPI error:', await res.text())
       return Response.json({ error: 'Video service unavailable' }, { status: 502 })
     }
     const data = await res.json()
     if (data.code !== 200) {
       return Response.json({ error: data.message || 'Generation failed' }, { status: 502 })
     }
-    return Response.json({ task_id: data.data.task_id, status: 'pending' }, { status: 202 })
+
+    const task_id: string = data.data.task_id
+
+    // Store email keyed by task_id so status route can notify + index by email for deploy lookup
+    if (email) {
+      const redis = getRedis()
+      if (redis) await redis.set(`video:email:${task_id}`, email, { ex: 60 * 60 * 24 * 7 })
+    }
+
+    return Response.json({ task_id, status: 'pending' }, { status: 202 })
   } catch (err: any) {
     return Response.json({ error: err.message || 'Unknown error' }, { status: 500 })
   }

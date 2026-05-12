@@ -699,6 +699,7 @@ export default function BriefGenerator() {
               vision={visionSection}
               tagline={firstTagline}
               productName={productName || 'Your Product'}
+              email={userEmail}
             />
           )}
 
