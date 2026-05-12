@@ -9,251 +9,454 @@ interface Photos {
   cta: string | null
 }
 
+type DirectionKey = 'editorial' | 'minimal' | 'bold'
+type Phase = 'idle' | 'loading' | 'done' | 'error'
+
+interface DesignState {
+  phase: Phase
+  html: string
+  chars: number
+  error: string
+}
+
+const DIRECTION_META: Record<DirectionKey, { label: string; description: string; accent: string }> = {
+  editorial: {
+    label: 'Editorial',
+    description: 'Warm paper, italic serif, one decisive accent — considered and unhurried',
+    accent: 'oklch(60% 0.25 350)',
+  },
+  minimal: {
+    label: 'Minimal',
+    description: 'Clean, precise, generous whitespace — Stripe / Linear aesthetic',
+    accent: '#0A0A0A',
+  },
+  bold: {
+    label: 'Bold',
+    description: 'Oversized type, saturated color, high-energy — impossible to ignore',
+    accent: '#E85D04',
+  },
+}
+
+const DIRECTION_KEYS: DirectionKey[] = ['editorial', 'minimal', 'bold']
+
 interface WebsitePreviewProps {
   brief: string
   productName: string
   tagline?: string
   vision?: string
   isDone: boolean
+  onDesignSelected?: (style: string, html: string) => void
 }
 
-export default function WebsitePreview({ brief, productName, tagline, vision, isDone }: WebsitePreviewProps) {
-  const [phase, setPhase] = useState<'idle'|'photos'|'building'|'done'|'error'>('idle')
-  const [photos, setPhotos] = useState<Photos | null>(null)
-  const [aiPrompts, setAiPrompts] = useState<Record<string, string>>({})
-  const [htmlOutput, setHtmlOutput] = useState('')
-  const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState<'preview'|'photos'|'prompts'|'code'>('preview')
-  const [copied, setCopied] = useState(false)
-  const htmlRef = useRef('')
-  const runningRef = useRef(false) // Guard against double-fire in React 18 strict mode
-
-  useEffect(() => {
-    if (!isDone || !brief || phase !== 'idle') return
-    if (runningRef.current) return // Already running — don't fire twice
-    runningRef.current = true
-    startGeneration()
-  }, [isDone])
-
-  async function startGeneration() {
-    setPhase('photos')
-    setError('')
-    htmlRef.current = ''
-
-    try {
-      // Step 1: Get industry-specific photos and AI prompts
-      const imgRes = await fetch('/api/imagery', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brief, productName, tagline, vision })
-      })
-      if (!imgRes.ok) throw new Error('Failed to fetch imagery')
-      const imgData = await imgRes.json()
-      setPhotos(imgData.photos)
-      setAiPrompts(imgData.aiPrompts || {})
-
-      // Step 2: Build website using those photos
-      setPhase('building')
-
-      const buildRes = await fetch('/api/build-website', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          brief,
-          productName,
-          tagline,
-          vision,
-          photos: imgData.photos,
-          industry: imgData.industry
-        })
-      })
-      if (!buildRes.ok) throw new Error('Failed to build website')
-
-      const reader = buildRes.body!.getReader()
+function streamBuild(
+  payload: object,
+  style: string,
+  onChunk: (text: string) => void,
+  onDone: () => void,
+  onError: (msg: string) => void,
+  signal: AbortSignal,
+) {
+  fetch('/api/build-website', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, style }),
+    signal,
+  })
+    .then(async res => {
+      if (!res.ok) throw new Error('Build failed')
+      const reader = res.body!.getReader()
       const decoder = new TextDecoder()
-      let acc = ''
-
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         for (const line of decoder.decode(value, { stream: true }).split('\n')) {
           if (!line.startsWith('data: ')) continue
           const data = line.slice(6).trim()
-          if (data === '[DONE]') break
-          try {
-            const d = JSON.parse(data)?.delta?.text || ''
-            if (d) { acc += d; setHtmlOutput(acc) }
-          } catch {}
+          if (data === '[DONE]') { onDone(); return }
+          try { const t = JSON.parse(data)?.delta?.text || ''; if (t) onChunk(t) } catch {}
         }
       }
+      onDone()
+    })
+    .catch(err => { if (err.name !== 'AbortError') onError(err.message) })
+}
 
-      htmlRef.current = acc
-      setPhase('done')
-    } catch (e: any) {
-      setError(e.message)
-      setPhase('error')
-      runningRef.current = false // Allow retry
-    }
+export default function WebsitePreview({
+  brief, productName, tagline, vision, isDone, onDesignSelected,
+}: WebsitePreviewProps) {
+  // ── Phase 1: default design ──────────────────────────────────────────────
+  const [photos, setPhotos] = useState<Photos | null>(null)
+  const [defaultPhase, setDefaultPhase] = useState<Phase>('idle')
+  const [defaultHtml, setDefaultHtml] = useState('')
+  const [defaultError, setDefaultError] = useState('')
+  const defaultHtmlRef = useRef('')
+
+  // ── Phase 2: Impeccable directions ──────────────────────────────────────
+  const [showDirections, setShowDirections] = useState(false)
+  const [directions, setDirections] = useState<Record<DirectionKey, DesignState>>({
+    editorial: { phase: 'idle', html: '', chars: 0, error: '' },
+    minimal:   { phase: 'idle', html: '', chars: 0, error: '' },
+    bold:      { phase: 'idle', html: '', chars: 0, error: '' },
+  })
+  const dirHtmlRefs = useRef<Record<DirectionKey, string>>({ editorial: '', minimal: '', bold: '' })
+
+  // ── Shared ───────────────────────────────────────────────────────────────
+  const [expanded, setExpanded] = useState<'default' | DirectionKey | null>(null)
+  const [chosen, setChosen] = useState<'default' | DirectionKey | null>(null)
+
+  const runningRef = useRef(false)
+  const abortRef = useRef<AbortController | null>(null)
+
+  // Fire Phase 1 when brief is done
+  useEffect(() => {
+    if (!isDone || !brief || runningRef.current) return
+    runningRef.current = true
+    startDefault()
+    return () => { abortRef.current?.abort() }
+  }, [isDone])
+
+  async function startDefault() {
+    setDefaultPhase('loading')
+    setDefaultError('')
+    defaultHtmlRef.current = ''
+    let fetchedPhotos: Photos | null = null
+
+    try {
+      const imgRes = await fetch('/api/imagery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brief, productName, tagline, vision }),
+      })
+      if (!imgRes.ok) throw new Error('imagery failed')
+      const imgData = await imgRes.json()
+      fetchedPhotos = imgData.photos
+      setPhotos(fetchedPhotos)
+    } catch { /* continue without photos */ }
+
+    abortRef.current = new AbortController()
+    const payload = { brief, productName, tagline, vision, photos: fetchedPhotos }
+
+    streamBuild(
+      payload, 'default',
+      (text) => { defaultHtmlRef.current += text; setDefaultHtml(defaultHtmlRef.current) },
+      () => setDefaultPhase('done'),
+      (msg) => { setDefaultError(msg); setDefaultPhase('error') },
+      abortRef.current.signal,
+    )
   }
 
-  function downloadHTML() {
-    const html = htmlRef.current || htmlOutput
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${(productName || 'website').toLowerCase().replace(/\s+/g, '-')}.html`
-    a.click()
-    URL.revokeObjectURL(url)
+  // Fire Phase 2 when customer clicks "Explore directions"
+  function startDirections() {
+    if (!photos && defaultPhase !== 'done') return
+    setShowDirections(true)
+    const payload = { brief, productName, tagline, vision, photos }
+    abortRef.current = new AbortController()
+
+    DIRECTION_KEYS.forEach(key => {
+      dirHtmlRefs.current[key] = ''
+      patchDirection(key, { phase: 'loading', html: '', chars: 0, error: '' })
+
+      streamBuild(
+        payload, key,
+        (text) => {
+          dirHtmlRefs.current[key] += text
+          patchDirection(key, { html: dirHtmlRefs.current[key], chars: dirHtmlRefs.current[key].length })
+        },
+        () => patchDirection(key, { phase: 'done', html: dirHtmlRefs.current[key] }),
+        (msg) => patchDirection(key, { phase: 'error', error: msg }),
+        abortRef.current!.signal,
+      )
+    })
   }
 
-  const iframeSrcDoc = phase === 'done' ? (htmlRef.current || htmlOutput) : ''
-  const phaseColor = { idle: '#4a6080', photos: '#c8ff00', building: '#60a5fa', done: '#4ade80', error: '#f87171' }[phase]
-  const phaseLabel = { idle: '', photos: 'Sourcing photography…', building: 'Building website…', done: 'Website ready', error: 'Error' }[phase]
+  function patchDirection(key: DirectionKey, patch: Partial<DesignState>) {
+    setDirections(prev => ({ ...prev, [key]: { ...prev[key], ...patch } }))
+  }
+
+  function choose(key: 'default' | DirectionKey) {
+    setChosen(key)
+    const html = key === 'default' ? defaultHtmlRef.current : dirHtmlRefs.current[key as DirectionKey]
+    onDesignSelected?.(key, html)
+  }
+
+  function retryDefault() {
+    runningRef.current = false
+    setDefaultPhase('idle')
+    setTimeout(startDefault, 50)
+  }
 
   if (!isDone) return null
 
-  return (
-    <div style={{ background: '#111829', border: '1px solid rgba(168,192,255,.08)', borderRadius: 5, overflow: 'hidden', borderLeft: '3px solid #60a5fa', marginTop: 3 }}>
+  const anyDirectionLoading = DIRECTION_KEYS.some(k => directions[k].phase === 'loading')
+  const anyDirectionDone    = DIRECTION_KEYS.some(k => directions[k].phase === 'done')
+  const allDirectionsDone   = DIRECTION_KEYS.every(k => directions[k].phase === 'done')
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', background: '#1a2236', borderBottom: '1px solid rgba(168,192,255,.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <span style={{ fontSize: 14 }}>🌐</span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase' as const, color: '#60a5fa', opacity: .9 }}>WEBSITE PREVIEW</span>
-          {phase !== 'idle' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: `${phaseColor}12`, border: `1px solid ${phaseColor}33`, borderRadius: 3, padding: '2px 8px' }}>
-              {(phase === 'photos' || phase === 'building') && (
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: phaseColor, animation: 'pulse 1s ease infinite' }} />
-              )}
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: phaseColor }}>{phaseLabel}</span>
-            </div>
+  return (
+    <div style={{ marginTop: 3 }}>
+
+      {/* ── Phase 1: Default design ─────────────────────────────────────── */}
+      <div style={{ background: '#111829', border: '1px solid rgba(168,192,255,.08)', borderRadius: showDirections ? '5px 5px 0 0' : 5, overflow: 'hidden' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', background: '#1a2236', borderBottom: '1px solid rgba(168,192,255,.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <span style={{ fontSize: 14 }}>🌐</span>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase' as const, color: '#60a5fa' }}>
+              Website Preview
+            </span>
+            {defaultPhase === 'loading' && <Pill color="#60a5fa" label="Building your website…" pulse />}
+            {defaultPhase === 'done' && !chosen && <Pill color="#4ade80" label="Ready" />}
+            {chosen && <Pill color="#4ade80" label={`${chosen === 'default' ? 'This design' : DIRECTION_META[chosen as DirectionKey].label} selected`} />}
+          </div>
+          {defaultPhase === 'done' && (
+            <button
+              onClick={() => {
+                const blob = new Blob([defaultHtmlRef.current], { type: 'text/html' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a'); a.href = url
+                a.download = `${(productName || 'website').toLowerCase().replace(/\s+/g, '-')}-preview.html`
+                a.click(); URL.revokeObjectURL(url)
+              }}
+              style={{ background: 'none', border: '1px solid rgba(168,192,255,.12)', borderRadius: 3, padding: '4px 12px', fontFamily: 'var(--mono)', fontSize: 9, color: '#4a6080', cursor: 'pointer', letterSpacing: '.08em', textTransform: 'uppercase' as const }}
+            >
+              ↓ Download
+            </button>
           )}
         </div>
 
-        {phase === 'done' && (
-          <div style={{ display: 'flex', gap: 6 }}>
-            {(['preview', 'photos', 'prompts', 'code'] as const).map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                style={{ background: activeTab === tab ? 'rgba(96,165,250,.08)' : 'none', border: `1px solid ${activeTab === tab ? 'rgba(96,165,250,.3)' : 'rgba(168,192,255,.08)'}`, borderRadius: 3, padding: '4px 12px', fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: activeTab === tab ? '#60a5fa' : '#4a6080', cursor: 'pointer', transition: 'all .15s' }}>
-                {tab}
-              </button>
-            ))}
-            <button onClick={downloadHTML}
-              style={{ background: '#60a5fa', color: '#0a0e1a', border: 'none', borderRadius: 3, padding: '4px 14px', fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 500, letterSpacing: '.1em', textTransform: 'uppercase' as const, cursor: 'pointer', marginLeft: 4 }}>
-              ↓ Download
-            </button>
+        {/* Loading state */}
+        {defaultPhase === 'loading' && (
+          <div style={{ padding: '28px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#60a5fa', boxShadow: '0 0 8px #60a5fa', animation: 'pulse 1s ease infinite', flexShrink: 0 }} />
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: '#8fa8cc' }}>
+                {defaultHtml.length > 0 ? `Building… ${defaultHtml.length.toLocaleString()} characters` : 'Fetching photography and building your site…'}
+              </span>
+            </div>
           </div>
+        )}
+
+        {/* Error state */}
+        {defaultPhase === 'error' && (
+          <div style={{ padding: '18px 20px', fontFamily: 'var(--mono)', fontSize: 11, color: '#f87171', display: 'flex', alignItems: 'center', gap: 12 }}>
+            ⚠ {defaultError}
+            <button onClick={retryDefault} style={{ background: 'none', border: '1px solid rgba(248,113,113,.3)', borderRadius: 3, padding: '3px 10px', fontFamily: 'var(--mono)', fontSize: 9, color: '#f87171', cursor: 'pointer' }}>Retry</button>
+          </div>
+        )}
+
+        {/* Preview iframe */}
+        {defaultPhase === 'done' && (
+          <>
+            {/* Browser chrome */}
+            <div style={{ background: '#0a0e1a', borderBottom: '1px solid rgba(168,192,255,.08)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {['#f87171', '#fbbf24', '#4ade80'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c, opacity: .7 }} />)}
+              <div style={{ flex: 1, background: '#111829', border: '1px solid rgba(168,192,255,.08)', borderRadius: 4, padding: '4px 12px', fontFamily: 'var(--mono)', fontSize: 10, color: '#4a6080' }}>
+                {(productName || 'product').toLowerCase().replace(/\s+/g, '')}.com
+              </div>
+            </div>
+            <iframe
+              srcDoc={defaultHtml}
+              style={{ width: '100%', height: 620, border: 'none', display: 'block' }}
+              title="Website preview"
+              sandbox="allow-scripts allow-same-origin allow-popups"
+            />
+            {/* CTA bar below preview */}
+            <div style={{ background: '#0d1424', borderTop: '1px solid rgba(168,192,255,.08)', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <button
+                onClick={() => choose('default')}
+                style={{
+                  padding: '8px 20px',
+                  background: chosen === 'default' ? '#4ade80' : 'rgba(96,165,250,.08)',
+                  border: `1px solid ${chosen === 'default' ? '#4ade80' : 'rgba(96,165,250,.2)'}`,
+                  borderRadius: 4,
+                  fontFamily: 'var(--mono)',
+                  fontSize: 9,
+                  fontWeight: 600,
+                  letterSpacing: '.08em',
+                  textTransform: 'uppercase' as const,
+                  color: chosen === 'default' ? '#0a0e1a' : '#60a5fa',
+                  cursor: 'pointer',
+                  transition: 'all .15s',
+                }}
+              >
+                {chosen === 'default' ? '✓ This design selected' : 'Choose this design'}
+              </button>
+              {!showDirections && (
+                <button
+                  onClick={startDirections}
+                  style={{
+                    padding: '8px 20px',
+                    background: 'none',
+                    border: '1px solid rgba(168,192,255,.15)',
+                    borderRadius: 4,
+                    fontFamily: 'var(--mono)',
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: '.08em',
+                    textTransform: 'uppercase' as const,
+                    color: '#8fa8cc',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <span>Explore design directions</span>
+                  <span style={{ color: '#4a6080' }}>→</span>
+                </button>
+              )}
+            </div>
+          </>
         )}
       </div>
 
-      {/* Error */}
-      {error && (
-        <div style={{ padding: '18px 20px', fontFamily: 'var(--mono)', fontSize: 11, color: '#f87171' }}>
-          ⚠ {error}
-          <button onClick={() => { runningRef.current = false; setPhase('idle'); setTimeout(startGeneration, 100) }}
-            style={{ marginLeft: 12, background: 'none', border: '1px solid rgba(248,113,113,.3)', borderRadius: 3, padding: '3px 10px', fontFamily: 'var(--mono)', fontSize: 9, color: '#f87171', cursor: 'pointer' }}>
-            Retry
-          </button>
-        </div>
-      )}
+      {/* ── Phase 2: Impeccable directions ──────────────────────────────── */}
+      {showDirections && (
+        <div style={{ border: '1px solid rgba(168,192,255,.08)', borderTop: 'none', borderRadius: '0 0 5px 5px', overflow: 'hidden' }}>
 
-      {/* Loading */}
-      {(phase === 'photos' || phase === 'building') && (
-        <div style={{ padding: '28px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: phase === 'photos' ? '#c8ff00' : '#4ade80', boxShadow: phase === 'photos' ? '0 0 8px #c8ff00' : 'none', flexShrink: 0 }} />
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: '#8fa8cc' }}>
-              {phase === 'photos' ? 'Identifying industry · sourcing specific photography…' : '✓ Photography ready — industry-matched images loaded'}
+          {/* Directions header */}
+          <div style={{ background: '#111829', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: '1px solid rgba(168,192,255,.08)' }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase' as const, color: '#60a5fa' }}>
+              Design Directions
             </span>
+            {anyDirectionLoading && <Pill color="#60a5fa" label="Building 3 directions…" pulse />}
+            {allDirectionsDone && !anyDirectionLoading && <Pill color="#4ade80" label="All ready — pick one" />}
           </div>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', marginTop: 3, background: phase === 'building' ? '#60a5fa' : '#1a2236', boxShadow: phase === 'building' ? '0 0 8px #60a5fa' : 'none', flexShrink: 0 }} />
-            <div>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: phase === 'building' ? '#8fa8cc' : '#4a6080', display: 'block', marginBottom: 6 }}>
-                {phase === 'building' ? 'Building your photo-rich website…' : 'Waiting to build…'}
-              </span>
-              {phase === 'building' && htmlOutput.length > 0 && (
-                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: '#4a6080', background: '#0a0e1a', border: '1px solid rgba(168,192,255,.06)', borderRadius: 4, padding: '6px 10px' }}>
-                  {htmlOutput.length.toLocaleString()} characters generated…
+
+          {/* 3-column thumbnail grid */}
+          <div style={{ background: '#0d1424', padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            {DIRECTION_KEYS.map(key => {
+              const d = directions[key]
+              const meta = DIRECTION_META[key]
+              const isChosen = chosen === key
+              const isExpanded = expanded === key
+
+              return (
+                <div key={key} style={{
+                  background: isChosen ? 'rgba(96,165,250,.06)' : '#111829',
+                  border: `1px solid ${isChosen ? 'rgba(96,165,250,.4)' : isExpanded ? 'rgba(96,165,250,.2)' : 'rgba(168,192,255,.08)'}`,
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                  transition: 'all .2s',
+                }}>
+                  {/* Card header */}
+                  <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(168,192,255,.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: meta.accent, flexShrink: 0 }} />
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600, color: '#e2e8f0' }}>{meta.label}</span>
+                    </div>
+                    {d.phase === 'loading' && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#60a5fa', animation: 'pulse 1s ease infinite' }} />}
+                    {d.phase === 'done' && <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: '#4ade80' }}>✓ ready</span>}
+                    {d.phase === 'error' && <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: '#f87171' }}>✗</span>}
+                  </div>
+
+                  {/* Thumbnail */}
+                  <div
+                    style={{ position: 'relative', height: 180, overflow: 'hidden', background: '#0a0e1a', cursor: d.phase === 'done' ? 'pointer' : 'default' }}
+                    onClick={() => d.phase === 'done' && setExpanded(isExpanded ? null : key)}
+                  >
+                    {d.phase === 'done' && d.html ? (
+                      <iframe
+                        srcDoc={d.html}
+                        style={{ width: 1400, height: 900, border: 'none', transform: 'scale(0.257)', transformOrigin: 'top left', pointerEvents: 'none', display: 'block' }}
+                        title={`${meta.label} preview`}
+                        sandbox="allow-scripts allow-same-origin"
+                      />
+                    ) : d.phase === 'loading' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}>
+                        <div style={{ display: 'flex', gap: 5 }}>
+                          {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#60a5fa', opacity: .4, animation: `pulse 1.2s ease ${i * 0.2}s infinite` }} />)}
+                        </div>
+                        {d.chars > 0 && <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: '#4a6080' }}>{d.chars.toLocaleString()} chars…</span>}
+                      </div>
+                    ) : d.phase === 'error' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: '#f87171' }}>Build failed</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); patchDirection(key, { phase: 'loading', html: '', chars: 0, error: '' }); dirHtmlRefs.current[key] = ''; streamBuild({ brief, productName, tagline, vision, photos }, key, (t) => { dirHtmlRefs.current[key] += t; patchDirection(key, { html: dirHtmlRefs.current[key], chars: dirHtmlRefs.current[key].length }) }, () => patchDirection(key, { phase: 'done', html: dirHtmlRefs.current[key] }), (m) => patchDirection(key, { phase: 'error', error: m }), new AbortController().signal) }}
+                          style={{ background: 'none', border: '1px solid rgba(248,113,113,.3)', borderRadius: 3, padding: '3px 10px', fontFamily: 'var(--mono)', fontSize: 9, color: '#f87171', cursor: 'pointer' }}
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: '#4a6080' }}>Waiting…</span>
+                      </div>
+                    )}
+                    {d.phase === 'done' && (
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,.7))', padding: '16px 8px 6px', textAlign: 'center' as const }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: 8, color: '#8fa8cc', letterSpacing: '.1em' }}>
+                          {isExpanded ? 'CLICK TO COLLAPSE' : 'CLICK TO EXPAND'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Description + choose */}
+                  <div style={{ padding: '10px 12px' }}>
+                    <p style={{ fontFamily: 'var(--mono)', fontSize: 9, color: '#4a6080', lineHeight: 1.5, margin: '0 0 10px' }}>{meta.description}</p>
+                    {d.phase === 'done' && (
+                      <button
+                        onClick={() => choose(key)}
+                        style={{
+                          width: '100%', padding: '7px 0',
+                          background: isChosen ? '#4ade80' : 'rgba(96,165,250,.08)',
+                          border: `1px solid ${isChosen ? '#4ade80' : 'rgba(96,165,250,.2)'}`,
+                          borderRadius: 4, fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 600,
+                          letterSpacing: '.08em', textTransform: 'uppercase' as const,
+                          color: isChosen ? '#0a0e1a' : '#60a5fa', cursor: 'pointer', transition: 'all .15s',
+                        }}
+                      >
+                        {isChosen ? '✓ Selected' : 'Choose this design'}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
+              )
+            })}
           </div>
-        </div>
-      )}
 
-      {/* Preview tab */}
-      {phase === 'done' && activeTab === 'preview' && (
-        <div>
-          <div style={{ background: '#0a0e1a', borderBottom: '1px solid rgba(168,192,255,.08)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            {['#f87171', '#fbbf24', '#4ade80'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c, opacity: .7 }} />)}
-            <div style={{ flex: 1, background: '#111829', border: '1px solid rgba(168,192,255,.08)', borderRadius: 4, padding: '4px 12px', fontFamily: 'var(--mono)', fontSize: 10, color: '#4a6080' }}>
-              {(productName || 'product').toLowerCase().replace(/\s+/g, '')}.com — live preview
-            </div>
-          </div>
-          <iframe
-            srcDoc={iframeSrcDoc}
-            style={{ width: '100%', height: 620, border: 'none', display: 'block' }}
-            title="Website preview"
-            sandbox="allow-scripts allow-same-origin allow-popups"
-          />
-        </div>
-      )}
-
-      {/* Photos tab */}
-      {phase === 'done' && activeTab === 'photos' && photos && (
-        <div style={{ padding: '18px 20px' }}>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#4a6080', marginBottom: 14 }}>
-            Industry-matched photography embedded in your website
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-            {Object.entries(photos).filter(([_, url]) => url).map(([key, url]) => (
-              <div key={key} style={{ borderRadius: 4, overflow: 'hidden' }}>
-                <img src={url!} alt={key} style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }} />
-                <div style={{ padding: '5px 8px', fontFamily: 'var(--mono)', fontSize: 9, color: '#60a5fa', textTransform: 'uppercase' as const, letterSpacing: '.08em', background: '#1a2236' }}>{key}</div>
+          {/* Expanded full preview */}
+          {expanded && expanded !== 'default' && directions[expanded].phase === 'done' && (
+            <div style={{ borderTop: '1px solid rgba(168,192,255,.08)' }}>
+              <div style={{ background: '#0a0e1a', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                {['#f87171', '#fbbf24', '#4ade80'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c, opacity: .7 }} />)}
+                <div style={{ flex: 1, background: '#111829', border: '1px solid rgba(168,192,255,.08)', borderRadius: 4, padding: '4px 12px', fontFamily: 'var(--mono)', fontSize: 10, color: '#4a6080' }}>
+                  {(productName || 'product').toLowerCase().replace(/\s+/g, '')}.com — {DIRECTION_META[expanded].label}
+                </div>
+                <button
+                  onClick={() => choose(expanded)}
+                  style={{
+                    padding: '5px 16px',
+                    background: chosen === expanded ? '#4ade80' : '#60a5fa',
+                    border: 'none', borderRadius: 3, fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 600,
+                    letterSpacing: '.08em', textTransform: 'uppercase' as const,
+                    color: '#0a0e1a', cursor: 'pointer', whiteSpace: 'nowrap' as const,
+                  }}
+                >
+                  {chosen === expanded ? '✓ Selected' : `Choose ${DIRECTION_META[expanded].label} →`}
+                </button>
               </div>
-            ))}
-          </div>
-          <div style={{ marginTop: 14, padding: '10px 14px', background: '#1a2236', border: '1px solid rgba(168,192,255,.06)', borderRadius: 4, fontFamily: 'var(--mono)', fontSize: 10, color: '#4a6080', lineHeight: 1.7 }}>
-            ✦ Photos from <a href="https://unsplash.com?utm_source=ideabylunch&utm_medium=referral" target="_blank" rel="noopener noreferrer" style={{ color: '#c8ff00', textDecoration: 'none' }}>Unsplash</a> — free for commercial use.
-          </div>
-        </div>
-      )}
-
-      {/* Prompts tab */}
-      {phase === 'done' && activeTab === 'prompts' && (
-        <div style={{ padding: '18px 20px' }}>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#4a6080', marginBottom: 14 }}>
-            Custom AI image prompts — paste into Midjourney or DALL-E 3
-          </div>
-          {Object.entries(aiPrompts).map(([key, prompt]) => (
-            <div key={key} style={{ marginBottom: 14 }}>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: '#c8ff00', letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 6 }}>{key}</div>
-              <div style={{ background: '#0a0e1a', border: '1px solid rgba(168,192,255,.08)', borderRadius: 4, padding: '12px 14px', fontFamily: 'var(--body)', fontSize: 13, color: '#8fa8cc', lineHeight: 1.7 }}>{prompt}</div>
+              <iframe
+                srcDoc={directions[expanded].html}
+                style={{ width: '100%', height: 640, border: 'none', display: 'block' }}
+                title={`${DIRECTION_META[expanded].label} full preview`}
+                sandbox="allow-scripts allow-same-origin allow-popups"
+              />
             </div>
-          ))}
+          )}
         </div>
       )}
+    </div>
+  )
+}
 
-      {/* Code tab */}
-      {phase === 'done' && activeTab === 'code' && (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: '#0a0e1a', borderBottom: '1px solid rgba(168,192,255,.08)' }}>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: '#4a6080' }}>
-              {(productName || 'website').toLowerCase().replace(/\s+/g, '-')}.html · {Math.round((htmlRef.current || htmlOutput).length / 1024)}kb
-            </span>
-            <button onClick={() => { navigator.clipboard.writeText(htmlRef.current || htmlOutput); setCopied(true); setTimeout(() => setCopied(false), 1800) }}
-              style={{ background: copied ? 'rgba(74,222,128,.08)' : 'none', border: `1px solid ${copied ? '#4ade80' : 'rgba(168,192,255,.08)'}`, borderRadius: 3, padding: '4px 12px', fontFamily: 'var(--mono)', fontSize: 9, color: copied ? '#4ade80' : '#4a6080', cursor: 'pointer', transition: 'all .15s' }}>
-              {copied ? '✓ Copied' : 'Copy all'}
-            </button>
-          </div>
-          <div style={{ background: '#0a0e1a', fontFamily: 'var(--mono)', fontSize: 11, color: '#60a5fa', lineHeight: 1.7, padding: '16px 18px', maxHeight: 500, overflowY: 'auto', whiteSpace: 'pre-wrap' as const, wordBreak: 'break-all' as const }}>
-            {(htmlRef.current || htmlOutput).slice(0, 3000)}…
-          </div>
-        </div>
-      )}
-
+function Pill({ color, label, pulse }: { color: string; label: string; pulse?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: `${color}12`, border: `1px solid ${color}33`, borderRadius: 3, padding: '2px 8px' }}>
+      {pulse && <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, animation: 'pulse 1s ease infinite' }} />}
+      <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color }}>{label}</span>
     </div>
   )
 }

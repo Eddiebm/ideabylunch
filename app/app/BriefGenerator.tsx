@@ -7,6 +7,11 @@ import IdeaWizard from './IdeaWizard'
 import EmailGate from './EmailGate'
 import VoiceInterview from './VoiceInterview'
 import ConceptVideoTab from './ConceptVideoTab'
+import AgencyGate from './AgencyGate'
+import { detectComplexity } from '@/app/lib/complexity'
+import type { BuildType } from '@/app/lib/complexity'
+import { resolveMarket, MARKET_PRICING, STRIPE_MARKET_AMOUNTS } from '@/app/lib/pricing'
+import type { CountryCode, MarketPricing } from '@/app/lib/pricing'
 
 const SYSTEM_PROMPT = `You are IdeaByLunch — an elite product studio AI. Transform a raw idea into a complete, actionable product brief.
 
@@ -81,53 +86,82 @@ function extractName(text: string): string {
 }
 
 // ── Launch Modal ───────────────────────────────────────────────────────────────
-const EXPRESS_FEES: Record<string, { fee: number; label: string; delivery: string }> = {
-  starter:      { fee: 49,  label: '+$49', delivery: '4 hours' },
-  professional: { fee: 79,  label: '+$79', delivery: '2 hours' },
-  premium:      { fee: 99,  label: '+$99', delivery: '1 hour'  },
-  full:         { fee: 149, label: '+$149', delivery: 'Same day' },
+const USD_EXPRESS: Record<string, { label: string; delivery: string }> = {
+  starter:      { label: '+$49',  delivery: '4 hours'  },
+  professional: { label: '+$79',  delivery: '2 hours'  },
+  premium:      { label: '+$99',  delivery: '1 hour'   },
+  full:         { label: '+$149', delivery: 'Same day' },
 }
 
-const STANDARD_DELIVERY: Record<string, string> = {
+const DELIVERY: Record<string, string> = {
   starter: '48 hours', professional: '24 hours', premium: '12 hours', full: '5–7 days',
 }
 
-function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void }) {
+const FEATURES: Record<string, string[]> = {
+  starter:      ['3 pages (Home, About, Contact)', 'Mobile-responsive', 'Deployed to your domain', 'Free brief included'],
+  professional: ['5 pages including Services', 'Custom brand colors & fonts', 'SEO-optimised copy', 'Contact form wired up', '1 round of revisions'],
+  premium:      ['8 pages + blog or gallery', 'Online booking or payments', 'Custom design system', 'Analytics dashboard', '3 rounds of revisions'],
+  full:         ['Everything in Premium', 'Authentication (Clerk)', 'Stripe payments wired up', 'Database (Supabase)', '30 days of support'],
+}
+
+function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle, onClose }: {
+  brief: string
+  marketCode: CountryCode
+  marketPricing: MarketPricing
+  userEmail?: string | null
+  designStyle?: string
+  onClose: () => void
+}) {
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState('professional')
   const [express, setExpress] = useState(false)
+  const [email, setEmail] = useState(userEmail || '')
   const [error, setError] = useState('')
 
+  const isPaystack = marketCode === 'GH' || marketCode === 'NG'
+  const stripeRow = STRIPE_MARKET_AMOUNTS[marketCode]
+  const isUSD = !stripeRow || stripeRow.currency === 'usd'
+  const showExpress = isUSD && !isPaystack
+
+  // Build plans list from MARKET_PRICING labels
   const plans = [
-    { id: 'starter',      name: 'Starter',      price: 149,   note: 'Good'         },
-    { id: 'professional', name: 'Professional',  price: 299,   note: 'Most popular' },
-    { id: 'premium',      name: 'Premium',       price: 499,   note: 'Best'         },
-    { id: 'full',         name: 'Full Product',  price: 1499,  note: 'Apps & SaaS'  },
+    { id: 'starter',      name: 'Starter',      price: marketPricing.starter,      note: 'Good'         },
+    { id: 'professional', name: 'Professional',  price: marketPricing.professional, note: 'Most popular' },
+    { id: 'premium',      name: 'Premium',       price: marketPricing.premium,      note: 'Best'         },
+    ...(marketPricing.fullProduct !== 'Contact agency'
+      ? [{ id: 'full', name: 'Full Product', price: marketPricing.fullProduct, note: 'Apps & SaaS' }]
+      : []
+    ),
   ]
 
-  const features: Record<string, string[]> = {
-    starter:      ['3 pages (Home, About, Contact)', 'Mobile-responsive', 'Deployed to your domain', 'Free brief included'],
-    professional: ['5 pages including Services', 'Custom brand colors & fonts', 'SEO-optimised copy', 'Contact form wired up', '1 round of revisions'],
-    premium:      ['8 pages + blog or gallery', 'Online booking or payments', 'Custom design system', 'Analytics dashboard', '3 rounds of revisions'],
-    full:         ['Everything in Premium', 'Authentication (Clerk)', 'Stripe payments wired up', 'Database (Supabase)', '30 days of support'],
-  }
-
-  const exp = EXPRESS_FEES[selected]
-  const basePlan = plans.find(p => p.id === selected)!
-  const totalPrice = express ? basePlan.price + exp.fee : basePlan.price
-  const delivery = express ? exp.delivery : STANDARD_DELIVERY[selected]
+  const activePlan = plans.find(p => p.id === selected) ?? plans[1]
+  const exp = USD_EXPRESS[selected]
+  const delivery = showExpress && express ? exp.delivery : DELIVERY[selected]
+  const disabled = loading || (isPaystack && !email.trim())
 
   const handleCheckout = async () => {
+    if (isPaystack && !email.trim()) { setError('Email is required to checkout'); return }
     setLoading(true); setError('')
     try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: selected, brief, express }),
-      })
-      const data = await res.json()
-      if (data.url) window.location.href = data.url
-      else throw new Error(data.error || 'Checkout failed')
+      if (isPaystack) {
+        const res = await fetch('/api/paystack/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim(), country: marketCode, tier: selected }),
+        })
+        const data = await res.json()
+        if (data.url) window.location.href = data.url
+        else throw new Error(data.error || 'Checkout failed')
+      } else {
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan: selected, brief, express: showExpress && express, market: marketCode, designStyle }),
+        })
+        const data = await res.json()
+        if (data.url) window.location.href = data.url
+        else throw new Error(data.error || 'Checkout failed')
+      }
     } catch (err: any) {
       setError(err.message)
       setLoading(false)
@@ -148,46 +182,48 @@ function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void })
           </div>
 
           {/* Plan picker */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${plans.length},1fr)`, gap: 8, marginBottom: 20 }}>
             {plans.map(p => (
               <button key={p.id} onClick={() => { setSelected(p.id); setExpress(false) }} style={{ background: selected === p.id ? '#1D1D1F' : 'rgba(0,0,0,.03)', border: selected === p.id ? '1.5px solid #1D1D1F' : '1.5px solid rgba(0,0,0,.08)', borderRadius: 12, padding: '14px 16px', cursor: 'pointer', textAlign: 'left' as const, transition: 'all .2s' }}>
                 <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '.04em', color: selected === p.id ? 'rgba(255,255,255,.5)' : '#6E6E73', marginBottom: 4, textTransform: 'uppercase' as const }}>{p.note}</div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: selected === p.id ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-.3px', marginBottom: 2 }}>{p.name}</div>
-                <div style={{ fontSize: 19, fontWeight: 700, color: selected === p.id ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-.5px' }}>${p.price}</div>
+                <div style={{ fontSize: 19, fontWeight: 700, color: selected === p.id ? '#FFFFFF' : '#1D1D1F', letterSpacing: '-.5px' }}>{p.price}</div>
               </button>
             ))}
           </div>
 
-          {/* Express toggle */}
-          <button
-            onClick={() => setExpress(e => !e)}
-            style={{ width: '100%', background: express ? '#FFF9E6' : 'rgba(0,0,0,.03)', border: express ? '1.5px solid #FFB800' : '1.5px solid rgba(0,0,0,.08)', borderRadius: 12, padding: '14px 18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, transition: 'all .2s' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 18 }}>⚡</span>
-              <div style={{ textAlign: 'left' as const }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F' }}>Express delivery — {exp.delivery}</div>
-                <div style={{ fontSize: 13, color: '#6E6E73' }}>Skip the queue. Get it done today.</div>
+          {/* Express toggle — USD markets only */}
+          {showExpress && (
+            <button
+              onClick={() => setExpress(e => !e)}
+              style={{ width: '100%', background: express ? '#FFF9E6' : 'rgba(0,0,0,.03)', border: express ? '1.5px solid #FFB800' : '1.5px solid rgba(0,0,0,.08)', borderRadius: 12, padding: '14px 18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, transition: 'all .2s' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 18 }}>⚡</span>
+                <div style={{ textAlign: 'left' as const }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F' }}>Express delivery — {exp?.delivery}</div>
+                  <div style={{ fontSize: 13, color: '#6E6E73' }}>Skip the queue. Get it done today.</div>
+                </div>
               </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: express ? '#B8860B' : '#1D1D1F' }}>{exp.label}</span>
-              <div style={{ width: 20, height: 20, borderRadius: 6, background: express ? '#FFB800' : 'rgba(0,0,0,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s' }}>
-                {express && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: express ? '#B8860B' : '#1D1D1F' }}>{exp?.label}</span>
+                <div style={{ width: 20, height: 20, borderRadius: 6, background: express ? '#FFB800' : 'rgba(0,0,0,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s' }}>
+                  {express && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          )}
 
           {/* Features */}
           <div style={{ background: 'rgba(0,0,0,.03)', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase' as const, color: '#6E6E73' }}>What's included</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: express ? '#B8860B' : '#6E6E73', background: express ? '#FFF9E6' : 'transparent', borderRadius: 6, padding: express ? '3px 8px' : '0' }}>
-                {express ? `⚡ ${exp.delivery}` : `${delivery} delivery`}
+                {express ? `⚡ ${exp?.delivery}` : `${delivery} delivery`}
               </div>
             </div>
-            {features[selected].map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: i < features[selected].length - 1 ? 10 : 0 }}>
+            {FEATURES[selected]?.map((f, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: i < (FEATURES[selected]?.length ?? 0) - 1 ? 10 : 0 }}>
                 <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#1D1D1F', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </div>
@@ -196,16 +232,39 @@ function LaunchModal({ brief, onClose }: { brief: string; onClose: () => void })
             ))}
           </div>
 
+          {/* Email input — Paystack only (Stripe captures it in their checkout UI) */}
+          {isPaystack && (
+            <div style={{ marginBottom: 16 }}>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Your email address"
+                style={{ width: '100%', padding: '13px 16px', borderRadius: 12, border: '1px solid rgba(0,0,0,.1)', fontSize: 15, outline: 'none', boxSizing: 'border-box' as const }}
+              />
+            </div>
+          )}
+
+          {designStyle && (
+            <div style={{ background: 'rgba(0,0,0,.03)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#1D1D1F', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15 }}>🎨</span>
+              <span>Design: <strong style={{ textTransform: 'capitalize' }}>{designStyle}</strong></span>
+            </div>
+          )}
+
           {error && <div style={{ background: '#FFF2F2', borderRadius: 8, padding: '10px 14px', fontSize: 14, color: '#D70015', marginBottom: 16 }}>{error}</div>}
         </div>
 
         {/* Footer */}
         <div style={{ padding: '0 40px 36px' }}>
-          <button onClick={handleCheckout} disabled={loading} style={{ width: '100%', background: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 17, fontWeight: 600, letterSpacing: '-.2px', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? .7 : 1, transition: 'all .2s', marginBottom: 10 }}>
-            {loading ? 'Redirecting…' : `${basePlan.name}${express ? ' + Express' : ''} — $${totalPrice} →`}
+          <button onClick={handleCheckout} disabled={disabled} style={{ width: '100%', background: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 17, fontWeight: 600, letterSpacing: '-.2px', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? .7 : 1, transition: 'all .2s', marginBottom: 10 }}>
+            {loading ? 'Redirecting…' : `${activePlan.name}${showExpress && express ? ' + Express' : ''} — ${activePlan.price} →`}
           </button>
           <p style={{ textAlign: 'center' as const, fontSize: 12, color: '#6E6E73', margin: 0 }}>
-            Secure checkout via Stripe · Full code ownership · Delivered in {delivery}
+            {isPaystack
+              ? 'Secure checkout via Paystack · Full code ownership · Delivered in 24 hours'
+              : `Secure checkout via Stripe · Full code ownership · Delivered in ${delivery}`
+            }
           </p>
         </div>
       </div>
@@ -343,16 +402,28 @@ export default function BriefGenerator() {
   const [agent, setAgent] = useState('claude')
   const [showWizard, setShowWizard] = useState(true)
   const [showVoice, setShowVoice] = useState(false)
+  const [wizardType, setWizardType] = useState<BuildType | undefined>(undefined)
+  const [agencySignals, setAgencySignals] = useState<string[]>([])
+  const [agencyOverride, setAgencyOverride] = useState(false)
   const [showEmailGate, setShowEmailGate] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [country, setCountry] = useState('')
+  const [marketCode, setMarketCode] = useState<CountryCode>('US')
+  const [selectedDesign, setSelectedDesign] = useState<{ style: string; html: string } | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const runningRef = useRef(false)
 
-  // Restore email from localStorage on mount
+  // Restore email from localStorage + fetch geo on mount
   useEffect(() => {
     const saved = localStorage.getItem('i2l_email')
     if (saved) setUserEmail(saved)
+    fetch('/api/geo').then(r => r.json()).then(d => {
+      if (d.country) {
+        setCountry(d.country)
+        setMarketCode(resolveMarket({ country: d.country }))
+      }
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -382,7 +453,11 @@ export default function BriefGenerator() {
         setShowEmailGate(true)
         return
       }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string }
+        const msg = body.error || `HTTP ${res.status}`
+        throw new Error(msg === 'AI service not configured' ? 'Brief generation is not available in this environment.' : msg)
+      }
       const reader = res.body!.getReader()
       const decoder = new TextDecoder()
       let acc = ''
@@ -432,7 +507,7 @@ export default function BriefGenerator() {
         ::-webkit-scrollbar { width: 0; }
       `}</style>
 
-      {showLaunch && <LaunchModal brief={output} onClose={() => setShowLaunch(false)} />}
+      {showLaunch && <LaunchModal brief={output} marketCode={marketCode} marketPricing={MARKET_PRICING[marketCode]} userEmail={userEmail} designStyle={selectedDesign?.style} onClose={() => setShowLaunch(false)} />}
 
       <div style={{ background: '#F2F2F7', minHeight: '100vh', paddingTop: 68 }}>
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '52px 20px 120px' }}>
@@ -467,9 +542,13 @@ export default function BriefGenerator() {
           {showWizard && !showVoice && !output && !loading && (
             <div style={{ background: '#fff', borderRadius: 20, padding: '28px 28px 32px', boxShadow: '0 2px 8px rgba(0,0,0,.06)', marginBottom: 12 }}>
               <IdeaWizard
-                onComplete={({ prefill }) => {
-                  setInput(prefill)
+                onComplete={({ prefill, type }) => {
+                  const merged = input.trim() ? `${input.trim()}\n\n${prefill}` : prefill
+                  setInput(merged)
+                  setWizardType(type)
                   setShowWizard(false)
+                  const result = detectComplexity(merged, type)
+                  if (result.isComplex) setAgencySignals(result.signals)
                   setTimeout(() => textareaRef.current?.focus(), 50)
                 }}
                 onSkip={() => setShowWizard(false)}
@@ -599,7 +678,12 @@ export default function BriefGenerator() {
           )}
 
           {/* Website Preview */}
-          <WebsitePreview brief={output} productName={productName || 'Your Product'} isDone={isDone} />
+          <WebsitePreview
+            brief={output}
+            productName={productName || 'Your Product'}
+            isDone={isDone}
+            onDesignSelected={(style, html) => setSelectedDesign({ style, html })}
+          />
 
           {/* Calculator + 3 Previews + Pay */}
           <BuildFlow brief={output} productName={productName || 'Your Product'} isDone={isDone} />
@@ -619,7 +703,23 @@ export default function BriefGenerator() {
           )}
 
           {/* Done CTA */}
-          {isDone && (
+          {isDone && agencySignals.length > 0 && !agencyOverride ? (
+            <div style={{ marginTop: 24 }}>
+              <AgencyGate
+                signals={agencySignals}
+                brief={output}
+                idea={input}
+                onOverride={() => { setAgencyOverride(true); setAgencySignals([]) }}
+              />
+              <div style={{ marginTop: 10, textAlign: 'center' as const }}>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(output); setCopiedAll(true); setTimeout(() => setCopiedAll(false), 1800) }}
+                  style={{ background: 'none', border: 'none', color: copiedAll ? '#30D158' : '#6E6E73', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+                  {copiedAll ? '✓ Brief copied' : 'Copy brief'}
+                </button>
+              </div>
+            </div>
+          ) : isDone ? (
             <div style={{ marginTop: 24, background: '#1D1D1F', borderRadius: 20, padding: '28px 28px 24px', animation: 'fadeUp .5s ease both' }}>
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,.4)', marginBottom: 6 }}>Your brief is ready</div>
@@ -643,7 +743,7 @@ export default function BriefGenerator() {
                 </button>
               </div>
             </div>
-          )}
+          ) : null}
 
         </div>
       </div>
