@@ -7,6 +7,7 @@ import IdeaWizard from './IdeaWizard'
 import EmailGate from './EmailGate'
 import VoiceInterview from './VoiceInterview'
 import ConceptVideoTab from './ConceptVideoTab'
+import LogoTab from './LogoTab'
 import AgencyGate from './AgencyGate'
 import { detectComplexity } from '@/app/lib/complexity'
 import type { BuildType } from '@/app/lib/complexity'
@@ -693,14 +694,20 @@ export default function BriefGenerator() {
             <PhotographySection brief={output} productName={productName || 'Your Product'} isDone={isDone} />
           )}
 
-          {/* Concept Video */}
+          {/* Concept Video + Logo */}
           {isDone && (
-            <ConceptVideoTab
-              vision={visionSection}
-              tagline={firstTagline}
-              productName={productName || 'Your Product'}
-              email={userEmail}
-            />
+            <>
+              <ConceptVideoTab
+                vision={visionSection}
+                tagline={firstTagline}
+                productName={productName || 'Your Product'}
+                email={userEmail}
+              />
+              <LogoTab
+                productName={productName || 'Your Product'}
+                vision={visionSection}
+              />
+            </>
           )}
 
           {/* Done CTA */}
