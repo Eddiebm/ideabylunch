@@ -706,6 +706,7 @@ export default function BriefGenerator() {
               <LogoTab
                 productName={productName || 'Your Product'}
                 vision={visionSection}
+                tagline={firstTagline}
               />
             </>
           )}

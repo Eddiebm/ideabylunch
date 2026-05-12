@@ -10,12 +10,13 @@ function getRedis() {
   return new Redis({ url, token })
 }
 
-async function generateStarterLogos(businessName: string, industry: string): Promise<string[]> {
+async function generateStarterLogos(businessName: string, industry: string, tagline?: string): Promise<string[]> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  const brand = tagline ? `, brand tagline: "${tagline}"` : ''
   const styles = [
-    `minimalist wordmark logo for "${businessName}", ${industry} business, clean sans-serif typography, single color, white background, professional`,
-    `bold modern logo for "${businessName}", ${industry} business, geometric icon + text, strong contrast, white background`,
-    `elegant logo for "${businessName}", ${industry} business, refined serif typography, subtle icon, premium feel, white background`,
+    `minimalist wordmark logo for "${businessName}", ${industry} business${brand}, clean sans-serif typography, single color, white background, professional`,
+    `bold modern logo for "${businessName}", ${industry} business${brand}, geometric icon + text, strong contrast, white background`,
+    `elegant logo for "${businessName}", ${industry} business${brand}, refined serif typography, subtle icon, premium feel, white background`,
   ]
 
   const urls: string[] = []
@@ -33,14 +34,15 @@ async function generateStarterLogos(businessName: string, industry: string): Pro
   return urls
 }
 
-async function generateProLogos(businessName: string, industry: string): Promise<string[]> {
+async function generateProLogos(businessName: string, industry: string, tagline?: string): Promise<string[]> {
   const key = process.env.RECRAFT_API_KEY
   if (!key) throw new Error('RECRAFT_API_KEY not configured')
 
+  const brand = tagline ? `, tagline: "${tagline}"` : ''
   const styles = [
-    { style: 'vector_illustration', prompt: `minimalist logo for "${businessName}", ${industry}, clean lines, scalable vector` },
-    { style: 'vector_illustration', prompt: `bold geometric logo for "${businessName}", ${industry}, modern iconmark + wordmark` },
-    { style: 'vector_illustration', prompt: `elegant emblem logo for "${businessName}", ${industry}, premium brand identity` },
+    { style: 'vector_illustration', prompt: `minimalist logo for "${businessName}", ${industry}${brand}, clean lines, scalable vector` },
+    { style: 'vector_illustration', prompt: `bold geometric logo for "${businessName}", ${industry}${brand}, modern iconmark + wordmark` },
+    { style: 'vector_illustration', prompt: `elegant emblem logo for "${businessName}", ${industry}${brand}, premium brand identity` },
   ]
 
   const urls: string[] = []
@@ -63,7 +65,7 @@ async function generateProLogos(businessName: string, industry: string): Promise
 
 export async function POST(req: Request) {
   try {
-    const { businessName, industry, tier } = await req.json()
+    const { businessName, industry, tier, tagline } = await req.json()
     if (!businessName || !industry || !tier) {
       return Response.json({ error: 'businessName, industry, tier required' }, { status: 400 })
     }
@@ -72,8 +74,8 @@ export async function POST(req: Request) {
     }
 
     const urls = tier === 'pro'
-      ? await generateProLogos(businessName, industry)
-      : await generateStarterLogos(businessName, industry)
+      ? await generateProLogos(businessName, industry, tagline)
+      : await generateStarterLogos(businessName, industry, tagline)
 
     if (!urls.length) {
       return Response.json({ error: 'Logo generation failed' }, { status: 500 })

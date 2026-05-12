@@ -6,6 +6,7 @@ type Tier = 'starter' | 'pro'
 interface Props {
   productName: string
   vision: string
+  tagline?: string
 }
 
 function deriveIndustry(vision: string): string {
@@ -16,7 +17,7 @@ function deriveIndustry(vision: string): string {
   return cleaned.slice(0, 50)
 }
 
-export default function LogoTab({ productName, vision }: Props) {
+export default function LogoTab({ productName, vision, tagline }: Props) {
   const [businessName, setBusinessName] = useState(productName)
   const [industry, setIndustry] = useState(() => deriveIndustry(vision))
   const [tier, setTier] = useState<Tier>('starter')
@@ -31,7 +32,7 @@ export default function LogoTab({ productName, vision }: Props) {
       const res = await fetch('/api/logo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessName: businessName.trim(), industry: industry.trim(), tier }),
+        body: JSON.stringify({ businessName: businessName.trim(), industry: industry.trim(), tier, tagline: tagline?.trim() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
