@@ -35,7 +35,7 @@ export default function AdminPage() {
   async function load(s = secret) {
     setLoading(true); setError('')
     try {
-      const res = await fetch(`/api/admin/stats?secret=${encodeURIComponent(s)}`)
+      const res = await fetch('/api/admin/stats', { headers: { 'x-admin-secret': s } })
       if (res.status === 401) { setError('Wrong password'); setLoading(false); return }
       const d = await res.json()
       if (d.error) { setError(d.error); setLoading(false); return }

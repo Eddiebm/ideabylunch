@@ -4,7 +4,6 @@ export const runtime = 'edge'
 
 async function auth(req: Request) {
   const secret = req.headers.get('x-admin-secret')
-    || new URL(req.url).searchParams.get('secret')
   const expected = process.env.ADMIN_SECRET
   if (!secret || !expected) return false
   const enc = new TextEncoder()
