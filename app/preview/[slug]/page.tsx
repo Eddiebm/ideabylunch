@@ -89,10 +89,12 @@ export default async function PreviewPage({ params }: { params: Promise<{ slug: 
 
       <div style={{ height: 88 }} />
 
-      {/* Full site rendered inline — no iframe needed since this is server-rendered */}
-      <div
-        style={{ width: '100%', minHeight: 'calc(100vh - 88px - 72px)', overflow: 'hidden' }}
-        dangerouslySetInnerHTML={{ __html: data.html }}
+      {/* LLM-generated HTML isolated in a sandboxed iframe — no script execution */}
+      <iframe
+        srcDoc={data.html}
+        sandbox="allow-same-origin allow-forms"
+        style={{ width: '100%', minHeight: 'calc(100vh - 88px - 72px)', border: 'none', display: 'block' }}
+        title={`${data.businessName} website preview`}
       />
 
       {/* Bottom CTA */}

@@ -19,7 +19,10 @@ export async function middleware(req: NextRequest) {
         return response
       }
     } catch {
-      // On error, allow through — dashboard will handle gracefully
+      // On error, fail closed — never allow unauthenticated access
+      const response = NextResponse.redirect(new URL('/login', req.url))
+      response.cookies.delete('i2l_session')
+      return response
     }
   }
 

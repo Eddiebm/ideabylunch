@@ -15,6 +15,16 @@ export async function POST(req: NextRequest) {
     }
 
     const redis = getRedis()
+
+    // Rate-limit: 10 checkout attempts per IP per hour
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    if (redis) {
+      const ratKey = `rl:audit-upgrade:${ip}`
+      const attempts = await redis.incr(ratKey)
+      if (attempts === 1) await redis.expire(ratKey, 3600)
+      if (attempts > 10) return Response.json({ error: 'too_many_requests' }, { status: 429 })
+    }
+
     const exists = redis ? await redis.get(`audit:${slug}`) : null
     if (!exists) return Response.json({ error: 'audit_not_found' }, { status: 404 })
 

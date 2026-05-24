@@ -43,11 +43,10 @@ export async function POST(req: Request) {
   // Don't self-refer
   if (String(referrerEmail) === newCustomerEmail) return Response.json({ ok: false, reason: 'self-refer' })
 
-  // Check not already referred
-  const existing = await redis.get(`refer:used:${newCustomerEmail}`)
-  if (existing) return Response.json({ ok: false, reason: 'already referred' })
+  // Atomic SET NX — only one concurrent request wins, prevents double-spend
+  const claimed = await redis.set(`refer:used:${newCustomerEmail}`, code, { nx: true, ex: 60 * 60 * 24 * 365 * 3 })
+  if (!claimed) return Response.json({ ok: false, reason: 'already referred' })
 
-  await redis.set(`refer:used:${newCustomerEmail}`, code)
   await redis.incr(`refer:conversions:${String(referrerEmail)}`)
 
   return Response.json({ ok: true, referrer: String(referrerEmail) })

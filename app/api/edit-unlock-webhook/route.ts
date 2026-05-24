@@ -1,4 +1,5 @@
 export const runtime = 'nodejs'
+import Stripe from 'stripe'
 import { Redis } from '@upstash/redis'
 
 function getRedis() {
@@ -11,31 +12,22 @@ function getRedis() {
 export async function POST(req: Request) {
   const body = await req.text()
   const sig = req.headers.get('stripe-signature') || ''
-  const secret = process.env.STRIPE_WEBHOOK_SECRET || ''
+  const secret = process.env.STRIPE_WEBHOOK_SECRET
+  if (!secret) return new Response('Webhook secret not configured', { status: 500 })
 
-  // Verify Stripe signature
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
+
+  let event: Stripe.Event
   try {
-    const key = await crypto.subtle.importKey(
-      'raw',
-      new TextEncoder().encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign'],
-    )
-    const [timestamp, signature] = sig.split(',').map((s) => s.split('=')[1])
-    const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${timestamp}.${body}`))
-    const hex = Array.from(new Uint8Array(mac))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
-    if (hex !== signature) return new Response('Invalid signature', { status: 400 })
+    event = stripe.webhooks.constructEvent(body, sig, secret)
   } catch {
     return new Response('Invalid signature', { status: 400 })
   }
 
-  const event = JSON.parse(body)
   if (event.type !== 'checkout.session.completed') return new Response('OK', { status: 200 })
 
-  const { metadata } = event.data.object
+  const session = event.data.object as Stripe.Checkout.Session
+  const { metadata } = session
   if (metadata?.type !== 'edit_unlock') return new Response('OK', { status: 200 })
 
   const { siteId } = metadata
@@ -46,7 +38,6 @@ export async function POST(req: Request) {
   const order: any = orderRaw ? (typeof orderRaw === 'string' ? JSON.parse(orderRaw) : orderRaw) : null
 
   if (order) {
-    // Reset edit count to 0 (they paid for unlimited)
     await redis.set(
       `order:${siteId}`,
       JSON.stringify({
