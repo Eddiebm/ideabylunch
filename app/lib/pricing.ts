@@ -99,6 +99,30 @@ export function resolveMarket(opts: {
   return COUNTRY_MAP[c] ?? 'US'
 }
 
+export type StripeTier = {
+  currency: string
+  starter: number
+  professional: number
+  premium: number
+  full: number
+}
+
+// Stripe-billable markets with local-currency minor-unit amounts.
+// GH uses Paystack — omitted here; checkout falls back to USD gracefully.
+export const STRIPE_MARKET_AMOUNTS: Partial<Record<CountryCode, StripeTier>> = {
+  US: { currency: 'usd', starter: 14900, professional: 29900, premium: 49900, full: 149900 },
+  GB: { currency: 'gbp', starter: 10900, professional: 24900, premium: 39900, full: 119900 },
+  AU: { currency: 'aud', starter: 22900, professional: 49900, premium: 79900, full: 229900 },
+  CA: { currency: 'cad', starter: 19900, professional: 39900, premium: 64900, full: 199900 },
+  AE: { currency: 'aed', starter: 54900, professional: 109900, premium: 179900, full: 549900 },
+  MX: { currency: 'mxn', starter: 199900, professional: 399900, premium: 649900, full: 2499900 },
+  ZA: { currency: 'zar', starter: 129900, professional: 249900, premium: 399900, full: 1249900 },
+  PH: { currency: 'usd', starter: 7900,  professional: 14900, premium: 24900, full: 74900 },
+  KE: { currency: 'usd', starter: 5900,  professional: 9900,  premium: 17900, full: 49900 },
+  NG: { currency: 'usd', starter: 3900,  professional: 7900,  premium: 12900, full: 39900 },
+  IN: { currency: 'usd', starter: 2900,  professional: 4900,  premium: 8900,  full: 24900 },
+}
+
 // Legacy compat — keep existing checkout routes working
 export type Currency = 'USD' | 'GHS'
 export type Tier = {

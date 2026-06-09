@@ -6,7 +6,10 @@ import { resolveMarket, MARKET_PRICING } from './lib/pricing'
 async function getDeployCount(): Promise<number> {
   try {
     const base = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
-    const res = await fetch(`${base}/api/stats`, { next: { revalidate: 60 } })
+    const ctrl = new AbortController()
+    const t = setTimeout(() => ctrl.abort(), 3000)
+    const res = await fetch(`${base}/api/stats`, { next: { revalidate: 60 }, signal: ctrl.signal })
+    clearTimeout(t)
     const data = await res.json()
     return data.deploys || 0
   } catch { return 0 }
