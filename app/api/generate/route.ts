@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  let extraHeaders: Record<string, string> = {}
+
   if (redis) {
     const key = bodyEmail
       ? `gen:email:${bodyEmail.toLowerCase()}`
@@ -46,6 +48,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Signal the last free generation so the frontend can gate after showing the brief
+    if (!bodyEmail && count === FREE_LIMIT - 1) {
+      extraHeaders['X-Free-Remaining'] = '0'
+    }
+
     await redis.incr(key)
     await redis.expire(key, 60 * 60 * 24 * 30) // 30-day rolling window
 
@@ -59,12 +66,16 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return stream(systemPrompt, userMessage)
+  return stream(systemPrompt, userMessage, extraHeaders)
 }
 
-function stream(systemPrompt: string, userMessage: string) {
+function stream(systemPrompt: string, userMessage: string, extraHeaders: Record<string, string> = {}) {
+  const apiKey = process.env.OPENROUTER_API_KEY
+  if (!apiKey) {
+    return Response.json({ error: 'AI service not configured' }, { status: 503 })
+  }
   const openai = new OpenAI({
-    apiKey: process.env.OPENROUTER_API_KEY,
+    apiKey,
     baseURL: 'https://openrouter.ai/api/v1',
   })
 
@@ -95,6 +106,6 @@ function stream(systemPrompt: string, userMessage: string) {
   })
 
   return new Response(readable, {
-    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', ...extraHeaders },
   })
 }

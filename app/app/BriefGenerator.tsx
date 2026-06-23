@@ -95,7 +95,7 @@ const USD_EXPRESS: Record<string, { label: string; delivery: string }> = {
 }
 
 const DELIVERY: Record<string, string> = {
-  starter: '48 hours', professional: '24 hours', premium: '12 hours', full: '5–7 days',
+  starter: '4 hours', professional: '2 hours', premium: '1 hour', full: '5–7 days',
 }
 
 const FEATURES: Record<string, string[]> = {
@@ -411,6 +411,10 @@ export default function BriefGenerator() {
   const [country, setCountry] = useState('')
   const [marketCode, setMarketCode] = useState<CountryCode>('US')
   const [selectedDesign, setSelectedDesign] = useState<{ style: string; html: string } | null>(null)
+  const [freeToken, setFreeToken] = useState<string | null>(null)
+  const [freeBuildEmail, setFreeBuildEmail] = useState('')
+  const [freeBuildLoading, setFreeBuildLoading] = useState(false)
+  const [freeBuildResult, setFreeBuildResult] = useState<{ liveUrl?: string; error?: string } | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const runningRef = useRef(false)
@@ -418,7 +422,11 @@ export default function BriefGenerator() {
   // Restore email from localStorage + fetch geo on mount
   useEffect(() => {
     const saved = localStorage.getItem('i2l_email')
-    if (saved) setUserEmail(saved)
+    if (saved) { setUserEmail(saved); setFreeBuildEmail(saved) }
+    // Read ?free= token from URL
+    const params = new URLSearchParams(window.location.search)
+    const ft = params.get('free')
+    if (ft) setFreeToken(ft)
     fetch('/api/geo').then(r => r.json()).then(d => {
       if (d.country) {
         setCountry(d.country)
@@ -441,6 +449,7 @@ export default function BriefGenerator() {
     abortRef.current?.abort()
     abortRef.current = new AbortController()
     const email = overrideEmail ?? userEmail
+    let gateAfterStream = false
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
@@ -449,7 +458,6 @@ export default function BriefGenerator() {
         body: JSON.stringify({ systemPrompt: SYSTEM_PROMPT, userMessage: input.trim(), email }),
       })
       if (res.status === 429) {
-        // Hit rate limit — show email gate
         setLoading(false); setStreaming(false); runningRef.current = false
         setShowEmailGate(true)
         return
@@ -459,6 +467,8 @@ export default function BriefGenerator() {
         const msg = body.error || `HTTP ${res.status}`
         throw new Error(msg === 'AI service not configured' ? 'Brief generation is not available in this environment.' : msg)
       }
+      // Last free generation — show gate after the brief renders, not instead of it
+      gateAfterStream = res.headers.get('X-Free-Remaining') === '0'
       const reader = res.body!.getReader()
       const decoder = new TextDecoder()
       let acc = ''
@@ -474,7 +484,10 @@ export default function BriefGenerator() {
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') setError(err.message || 'Something went wrong.')
-    } finally { setLoading(false); setStreaming(false); runningRef.current = false }
+    } finally {
+      setLoading(false); setStreaming(false); runningRef.current = false
+      if (gateAfterStream) setShowEmailGate(true)
+    }
   }, [input, loading])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -515,10 +528,11 @@ export default function BriefGenerator() {
 
           {showEmailGate && (
             <EmailGate
+              hasBrief={!!output}
               onUnlock={email => {
                 setUserEmail(email)
                 setShowEmailGate(false)
-                handleGenerate(email)
+                if (!output) handleGenerate(email)
               }}
               onDismiss={() => setShowEmailGate(false)}
             />
@@ -733,24 +747,67 @@ export default function BriefGenerator() {
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,.4)', marginBottom: 6 }}>Your brief is ready</div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', letterSpacing: '-.5px', lineHeight: 1.2 }}>
-                  Ready to go live?
+                  {freeToken ? 'Build your free site' : 'Ready to go live?'}
                 </div>
                 <div style={{ fontSize: 15, color: 'rgba(255,255,255,.55)', marginTop: 6, lineHeight: 1.55 }}>
-                  We build, design, and deploy it. You get a live URL in 48 hours.
+                  {freeToken ? 'Enter your email and we\'ll build and deploy it — free.' : 'We build, design, and deploy it. You get a live URL in 4 hours.'}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
-                <button
-                  onClick={() => setShowLaunch(true)}
-                  style={{ background: '#FFFFFF', color: '#1D1D1F', border: 'none', borderRadius: 12, padding: '13px 24px', fontSize: 16, fontWeight: 600, letterSpacing: '-.2px', cursor: 'pointer', flex: 1, minWidth: 160 }}>
-                  Build it — from $149
-                </button>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(output); setCopiedAll(true); setTimeout(() => setCopiedAll(false), 1800) }}
-                  style={{ background: 'rgba(255,255,255,.1)', color: copiedAll ? '#30D158' : 'rgba(255,255,255,.7)', border: 'none', borderRadius: 12, padding: '13px 20px', fontSize: 16, fontWeight: 500, cursor: 'pointer', transition: 'all .15s' }}>
-                  {copiedAll ? '✓ Copied' : 'Copy brief'}
-                </button>
-              </div>
+
+              {freeToken ? (
+                freeBuildResult?.liveUrl ? (
+                  <div>
+                    <div style={{ fontSize: 15, color: '#30D158', fontWeight: 600, marginBottom: 12 }}>✓ Your site is live!</div>
+                    <a href={freeBuildResult.liveUrl} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'inline-block', background: '#30D158', color: '#000', borderRadius: 12, padding: '13px 24px', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
+                      View your site →
+                    </a>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,.4)', marginTop: 12 }}>Check your email — we've sent the link there too.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                    <input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={freeBuildEmail}
+                      onChange={e => setFreeBuildEmail(e.target.value)}
+                      style={{ flex: 1, minWidth: 180, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)', borderRadius: 12, padding: '13px 16px', fontSize: 15, color: '#FFFFFF', outline: 'none' }}
+                    />
+                    <button
+                      disabled={freeBuildLoading || !freeBuildEmail.includes('@')}
+                      onClick={async () => {
+                        setFreeBuildLoading(true)
+                        try {
+                          const res = await fetch('/api/free-build', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token: freeToken, email: freeBuildEmail, brief: output, selectedHtml: selectedDesign?.html }),
+                          })
+                          const data = await res.json()
+                          setFreeBuildResult(data.ok ? { liveUrl: data.liveUrl } : { error: data.error || 'Something went wrong' })
+                        } catch { setFreeBuildResult({ error: 'Something went wrong' }) }
+                        setFreeBuildLoading(false)
+                      }}
+                      style={{ background: freeBuildLoading ? 'rgba(255,255,255,.3)' : '#FFFFFF', color: '#1D1D1F', border: 'none', borderRadius: 12, padding: '13px 24px', fontSize: 15, fontWeight: 600, cursor: freeBuildLoading ? 'default' : 'pointer', whiteSpace: 'nowrap' as const }}>
+                      {freeBuildLoading ? 'Building…' : 'Build my free site →'}
+                    </button>
+                    {freeBuildResult?.error && <p style={{ width: '100%', fontSize: 13, color: '#FF453A', margin: '4px 0 0' }}>{freeBuildResult.error}</p>}
+                  </div>
+                )
+              ) : (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                  <button
+                    onClick={() => setShowLaunch(true)}
+                    style={{ background: '#FFFFFF', color: '#1D1D1F', border: 'none', borderRadius: 12, padding: '13px 24px', fontSize: 16, fontWeight: 600, letterSpacing: '-.2px', cursor: 'pointer', flex: 1, minWidth: 160 }}>
+                    Build it — from $149
+                  </button>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(output); setCopiedAll(true); setTimeout(() => setCopiedAll(false), 1800) }}
+                    style={{ background: 'rgba(255,255,255,.1)', color: copiedAll ? '#30D158' : 'rgba(255,255,255,.7)', border: 'none', borderRadius: 12, padding: '13px 20px', fontSize: 16, fontWeight: 500, cursor: 'pointer', transition: 'all .15s' }}>
+                    {copiedAll ? '✓ Copied' : 'Copy brief'}
+                  </button>
+                </div>
+              )}
             </div>
           ) : null}
 

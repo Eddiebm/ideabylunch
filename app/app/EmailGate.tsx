@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 interface Props {
   onUnlock: (email: string) => void
   onDismiss?: () => void
+  hasBrief?: boolean
 }
 
-export default function EmailGate({ onUnlock, onDismiss }: Props) {
+export default function EmailGate({ onUnlock, onDismiss, hasBrief }: Props) {
   const [email, setEmail] = useState('')
   const [source, setSource] = useState('')
   const [loading, setLoading] = useState(false)
@@ -69,7 +70,9 @@ export default function EmailGate({ onUnlock, onDismiss }: Props) {
             Drop your email — unlock 12 more briefs.
           </h3>
           <p style={{ fontSize: 14, color: '#6E6E73', margin: 0, lineHeight: 1.5 }}>
-            Your previous brief is still right below — you can keep working with it. Email also gets you the saved version.
+            {hasBrief
+              ? 'Your brief is right below — keep working with it. Email also gets you the saved version.'
+              : 'No password. Drop your email and keep cooking — 12 more briefs, instantly.'}
           </p>
         </div>
 
