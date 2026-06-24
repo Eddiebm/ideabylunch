@@ -1,7 +1,9 @@
 'use client'
 export const runtime = 'edge'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import EmailGate from '@/app/app/EmailGate'
+
+const PROFILE_FIELDS = ['business', 'businessType', 'location', 'services', 'customer']
 
 type Field = {
   key: string
@@ -116,12 +118,60 @@ export default function GrowPage() {
   const [activeTool, setActiveTool] = useState<Tool>(TOOLS[0])
   const [fields, setFields] = useState<Record<string, string>>({})
   const [email, setEmail] = useState('')
+  const [profileStatus, setProfileStatus] = useState<'idle' | 'loading' | 'loaded' | 'new'>('idle')
+  const [profileBusiness, setProfileBusiness] = useState('')
   const [output, setOutput] = useState('')
   const [loading, setLoading] = useState(false)
   const [streaming, setStreaming] = useState(false)
   const [showEmailGate, setShowEmailGate] = useState(false)
   const [error, setError] = useState('')
   const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('i2l_email')
+    if (saved) {
+      setEmail(saved)
+      loadProfile(saved)
+    }
+  }, [])
+
+  const loadProfile = useCallback(async (emailToLoad: string) => {
+    if (!emailToLoad.includes('@')) return
+    setProfileStatus('loading')
+    try {
+      const res = await fetch(`/api/grow/profile?email=${encodeURIComponent(emailToLoad)}`)
+      const data = await res.json()
+      if (data.profile) {
+        const p = data.profile
+        setFields(f => ({
+          ...f,
+          ...Object.fromEntries(PROFILE_FIELDS.map(k => [k, p[k] || f[k] || ''])),
+        }))
+        setProfileBusiness(p.business)
+        setProfileStatus('loaded')
+      } else {
+        setProfileStatus('new')
+      }
+    } catch {
+      setProfileStatus('idle')
+    }
+  }, [])
+
+  const saveProfile = useCallback(async (emailToSave: string, currentFields: Record<string, string>) => {
+    if (!emailToSave.includes('@') || !currentFields.business) return
+    try {
+      await fetch('/api/grow/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailToSave,
+          ...Object.fromEntries(PROFILE_FIELDS.map(k => [k, currentFields[k] || ''])),
+        }),
+      })
+      setProfileBusiness(currentFields.business)
+      setProfileStatus('loaded')
+    } catch {}
+  }, [])
 
   const setField = (key: string, value: string) => setFields(f => ({ ...f, [key]: value }))
 
@@ -190,6 +240,10 @@ export default function GrowPage() {
       setLoading(false)
       setStreaming(false)
       if (gateAfterStream) setShowEmailGate(true)
+      if (activeEmail) {
+        localStorage.setItem('i2l_email', activeEmail)
+        saveProfile(activeEmail, fields)
+      }
     }
   }
 
@@ -232,6 +286,27 @@ export default function GrowPage() {
           <p style={{ fontSize:16,color:'#6E6E73',margin:0,lineHeight:1.55 }}>
             AI-written content and documents for every part of running a small business — ready in under 2 minutes.
           </p>
+        </div>
+
+        {/* Profile bar */}
+        <div style={{ background:'#fff',borderRadius:14,padding:'14px 18px',boxShadow:'0 1px 3px rgba(0,0,0,.06)',marginBottom:20,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap' }}>
+          <div style={{ flex:'1 1 220px' }}>
+            <label style={{ fontSize:12,fontWeight:600,color:'#6E6E73',textTransform:'uppercase',letterSpacing:'.04em',display:'block',marginBottom:4 }}>Your email — loads saved profile</label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onBlur={e => { if (e.target.value.includes('@')) loadProfile(e.target.value) }}
+              onKeyDown={e => { if (e.key === 'Enter' && email.includes('@')) loadProfile(email) }}
+              placeholder="you@email.com"
+              style={{ width:'100%',padding:'9px 12px',borderRadius:8,border:'1px solid #D2D2D7',fontSize:14,outline:'none' }}
+            />
+          </div>
+          <div style={{ fontSize:13,color: profileStatus === 'loaded' ? '#30D158' : profileStatus === 'loading' ? '#AEAEB2' : profileStatus === 'new' ? '#6E6E73' : 'transparent', whiteSpace:'nowrap', paddingTop:18 }}>
+            {profileStatus === 'loaded' && `✓ ${profileBusiness}`}
+            {profileStatus === 'loading' && 'Loading…'}
+            {profileStatus === 'new' && 'New profile — saves after first generation'}
+          </div>
         </div>
 
         {/* Tool tabs */}
@@ -322,6 +397,8 @@ export default function GrowPage() {
             hasBrief={!!output}
             onUnlock={e => {
               setEmail(e)
+              localStorage.setItem('i2l_email', e)
+              loadProfile(e)
               setShowEmailGate(false)
               if (!output) generate(e)
             }}
