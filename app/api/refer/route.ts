@@ -71,6 +71,7 @@ export async function PUT(req: Request) {
   const code = makeCode(email)
   const revenueInCents = Number(await redis.get(`reseller:revenue:${code}`)) || 0
   const earnings = Math.round(revenueInCents * COMMISSION_RATE) / 100
+  const conversions = Number(await redis.get(`refer:conversions:${email}`)) || 0
 
   if (earnings < PAYOUT_MINIMUM) {
     return Response.json({ error: `Minimum payout is $${PAYOUT_MINIMUM}. You have $${earnings.toFixed(2)}.` }, { status: 400 })
