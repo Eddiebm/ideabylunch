@@ -431,9 +431,21 @@ export default function GrowPage() {
                   <div style={{ fontSize:19,fontWeight:700,color:'#fff',letterSpacing:'-.4px',marginBottom:2 }}>$49/month</div>
                   <div style={{ fontSize:13,color:'rgba(255,255,255,.55)' }}>Unlimited generations. Cancel anytime.</div>
                 </div>
-                <a href="/app" style={{ background:'#fff',color:'#1D1D1F',borderRadius:12,padding:'11px 22px',fontSize:15,fontWeight:600,textDecoration:'none',whiteSpace:'nowrap',flexShrink:0 }}>
+                <button
+                  onClick={async () => {
+                    const ref = typeof window !== 'undefined' ? (localStorage.getItem('i2l_ref') || undefined) : undefined
+                    const res = await fetch('/api/grow/checkout', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: email || undefined, ref }),
+                    })
+                    const data = await res.json()
+                    if (data.url) window.location.href = data.url
+                  }}
+                  style={{ background:'#fff',color:'#1D1D1F',borderRadius:12,padding:'11px 22px',fontSize:15,fontWeight:600,border:'none',cursor:'pointer',whiteSpace:'nowrap',flexShrink:0 }}
+                >
                   Get unlimited →
-                </a>
+                </button>
               </div>
             )}
           </div>
