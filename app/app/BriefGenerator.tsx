@@ -144,11 +144,12 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
     if (isPaystack && !email.trim()) { setError('Email is required to checkout'); return }
     setLoading(true); setError('')
     try {
+      const affiliateRef = typeof window !== 'undefined' ? (localStorage.getItem('i2l_ref') || undefined) : undefined
       if (isPaystack) {
         const res = await fetch('/api/paystack/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), country: marketCode, tier: selected }),
+          body: JSON.stringify({ email: email.trim(), country: marketCode, tier: selected, ...(affiliateRef ? { ref: affiliateRef } : {}) }),
         })
         const data = await res.json()
         if (data.url) window.location.href = data.url
@@ -157,7 +158,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: selected, brief, express: showExpress && express, market: marketCode, designStyle }),
+          body: JSON.stringify({ plan: selected, brief, express: showExpress && express, market: marketCode, designStyle, ...(affiliateRef ? { ref: affiliateRef } : {}) }),
         })
         const data = await res.json()
         if (data.url) window.location.href = data.url

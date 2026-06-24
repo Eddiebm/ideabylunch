@@ -93,6 +93,8 @@ export async function POST(req: Request) {
   const customerCode: string = data.customer?.customer_code
   const authCode: string = data.authorization?.authorization_code
 
+  const affiliateRef: string | undefined = meta.ref || undefined
+
   const redis = getRedis()
   const raw = redis ? await redis.get(`order:${ref}`) : null
   const order: any = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null
@@ -100,6 +102,20 @@ export async function POST(req: Request) {
   const productName = order?.productName || meta.productName || 'Your product'
   const html = order?.selectedHtml
   const whatsapp = order?.contact?.whatsapp || meta.whatsapp
+
+  // Track affiliate referral conversion
+  if (redis && email && affiliateRef) {
+    const referrerEmail = await redis.get(`refer:code:${affiliateRef}`)
+    if (referrerEmail && String(referrerEmail) !== email) {
+      const alreadyUsed = await redis.get(`refer:used:${email}`)
+      if (!alreadyUsed) {
+        await redis.set(`refer:used:${email}`, affiliateRef)
+        await redis.incr(`refer:conversions:${String(referrerEmail)}`)
+        await redis.incr(`reseller:sales:${affiliateRef}`)
+        await redis.incrby(`reseller:revenue:${affiliateRef}`, data.amount || 0)
+      }
+    }
+  }
 
   // Set up recurring subscription starting next month — currency follows the charged tx
   const txCurrency: 'USD' | 'GHS' = data.currency === 'GHS' || meta.currency === 'GHS' ? 'GHS' : 'USD'

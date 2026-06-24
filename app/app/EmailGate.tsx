@@ -20,6 +20,8 @@ export default function EmailGate({ onUnlock, onDismiss, hasBrief }: Props) {
       ? new URL(document.referrer).hostname.replace('www.', '')
       : ''
     localStorage.setItem('i2l_source', utmSource || ref || 'direct')
+    const refCode = params.get('ref')
+    if (refCode) localStorage.setItem('i2l_ref', refCode)
   }, [])
 
   async function submit() {
