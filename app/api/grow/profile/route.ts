@@ -50,6 +50,7 @@ export async function POST(req: Request) {
   await redis.set(`grow:profile:${email.toLowerCase()}`, JSON.stringify(profile), {
     ex: 60 * 60 * 24 * 365 * 2,
   })
+  await redis.sadd('grow:delivery:subscribers', email.toLowerCase())
 
   return Response.json({ ok: true, profile })
 }
