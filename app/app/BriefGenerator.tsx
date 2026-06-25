@@ -122,6 +122,8 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
   const [error, setError] = useState('')
   const [extraPages, setExtraPages] = useState(0)
   const [showCustomize, setShowCustomize] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
+  const promoDiscount = promoCode.toUpperCase() === 'PRODUCTHUNT' ? 0.30 : 0
 
   const isPaystack = marketCode === 'GH' || marketCode === 'NG'
   const stripeRow = STRIPE_MARKET_AMOUNTS[marketCode]
@@ -155,7 +157,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
         const res = await fetch('/api/paystack/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), brief, country: marketCode, tier: selected, ...(selectedHtml ? { selectedHtml } : {}), ...(addOnTotal > 0 ? { extraPages } : {}), ...(affiliateRef ? { ref: affiliateRef } : {}) }),
+          body: JSON.stringify({ email: email.trim(), brief, country: marketCode, tier: selected, ...(selectedHtml ? { selectedHtml } : {}), ...(addOnTotal > 0 ? { extraPages } : {}), ...(affiliateRef ? { ref: affiliateRef } : {}), ...(promoCode.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}) }),
         })
         const data = await res.json()
         if (data.url) { track('checkout_redirected', { method: 'paystack' }); window.location.href = data.url }
@@ -259,7 +261,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
 
           {/* Email input — Paystack only (Stripe captures it in their checkout UI) */}
           {isPaystack && (
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 10 }}>
               <input
                 type="email"
                 value={email}
@@ -269,6 +271,22 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
               />
             </div>
           )}
+
+          {/* Promo code — Paystack applies server-side; Stripe shows field on their page */}
+          <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+            <input
+              value={promoCode}
+              onChange={e => setPromoCode(e.target.value)}
+              placeholder={isPaystack ? 'Promo code (optional)' : 'Have a promo code? Enter it on the next page'}
+              disabled={!isPaystack}
+              style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: `1px solid ${promoDiscount ? '#30D158' : 'rgba(0,0,0,.1)'}`, fontSize: 14, outline: 'none', boxSizing: 'border-box' as const, color: '#1D1D1F', background: !isPaystack ? 'rgba(0,0,0,.03)' : '#fff' }}
+            />
+            {promoDiscount > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px', borderRadius: 10, background: '#F0FFF4', border: '1px solid #30D158', fontSize: 13, fontWeight: 600, color: '#30D158', whiteSpace: 'nowrap' }}>
+                −{Math.round(promoDiscount * 100)}% off
+              </div>
+            )}
+          </div>
 
           {designStyle && (
             <div style={{ background: 'rgba(0,0,0,.03)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#1D1D1F', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>

@@ -9,6 +9,10 @@ function getRedis() {
   return new Redis({ url, token })
 }
 
+const PROMO_CODES: Record<string, number> = {
+  PRODUCTHUNT: 0.30,
+}
+
 type Body = {
   email: string
   brief?: string
@@ -19,6 +23,7 @@ type Body = {
   ref?: string
   tier?: string
   extraPages?: number
+  promoCode?: string
 }
 
 export async function POST(req: Request) {
@@ -35,8 +40,9 @@ export async function POST(req: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
     const gh = PRICING.GHS
-    // Charge one-time build fee + first month up-front in pesewas.
-    const amount = gh.oneTime + gh.monthly
+    const discount = PROMO_CODES[(body.promoCode || '').toUpperCase()] ?? 0
+    const baseAmount = gh.oneTime + gh.monthly
+    const amount = discount ? Math.round(baseAmount * (1 - discount)) : baseAmount
     const reference = `i2l_gh_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
     const init = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -58,6 +64,8 @@ export async function POST(req: Request) {
           selectedStyle: body.selectedStyle || '',
           whatsapp: body.whatsapp || '',
           ref: body.ref || '',
+          promoCode: body.promoCode || '',
+          discount: discount ? `${Math.round(discount * 100)}%` : '',
           oneTimePesewas: gh.oneTime,
           monthlyPesewas: gh.monthly,
           cancel_action: `${appUrl}/app`,
