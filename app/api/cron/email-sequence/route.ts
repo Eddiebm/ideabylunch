@@ -10,6 +10,8 @@ export async function GET(req: Request) {
   }
 
   const redis = getRedis()
+  if (!redis) return Response.json({ error: 'Redis unavailable' }, { status: 503 })
+
   const resend = new Resend(process.env.RESEND_API_KEY)
   const from = process.env.RESEND_FROM || 'hello@ideabylunch.com'
   const adminEmail = process.env.ADMIN_EMAIL || 'eddie@bannermanmenson.com'
