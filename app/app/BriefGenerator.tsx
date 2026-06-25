@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { track } from '@vercel/analytics'
 import WebsitePreview from './WebsitePreview'
 import BuildFlow from './BuildFlow'
 import PhotographySection from './PhotographySection'
@@ -147,6 +148,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
   const handleCheckout = async () => {
     if (isPaystack && !email.trim()) { setError('Email is required to checkout'); return }
     setLoading(true); setError('')
+    track('checkout_initiated', { method: isPaystack ? 'paystack' : 'stripe', plan: selected, market: marketCode })
     try {
       const affiliateRef = typeof window !== 'undefined' ? (localStorage.getItem('i2l_ref') || undefined) : undefined
       if (isPaystack) {
@@ -156,7 +158,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
           body: JSON.stringify({ email: email.trim(), brief, country: marketCode, tier: selected, ...(selectedHtml ? { selectedHtml } : {}), ...(addOnTotal > 0 ? { extraPages } : {}), ...(affiliateRef ? { ref: affiliateRef } : {}) }),
         })
         const data = await res.json()
-        if (data.url) window.location.href = data.url
+        if (data.url) { track('checkout_redirected', { method: 'paystack' }); window.location.href = data.url }
         else throw new Error(data.error || 'Checkout failed')
       } else {
         const res = await fetch('/api/checkout', {
@@ -165,7 +167,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
           body: JSON.stringify({ plan: selected, brief, express: showExpress && express, market: marketCode, designStyle, ...(selectedHtml ? { selectedHtml } : {}), ...(affiliateRef ? { ref: affiliateRef } : {}) }),
         })
         const data = await res.json()
-        if (data.url) window.location.href = data.url
+        if (data.url) { track('checkout_redirected', { method: 'stripe' }); window.location.href = data.url }
         else throw new Error(data.error || 'Checkout failed')
       }
     } catch (err: any) {
@@ -478,6 +480,7 @@ export default function BriefGenerator() {
   const handleGenerate = useCallback(async (overrideEmail?: string) => {
     if (!input.trim() || loading || runningRef.current) return
     runningRef.current = true
+    track('brief_submitted', { chars: input.trim().length })
     setLoading(true); setStreaming(true); setOutput(''); setError(''); setShowLaunch(false)
     abortRef.current?.abort()
     abortRef.current = new AbortController()
@@ -745,7 +748,7 @@ export default function BriefGenerator() {
             brief={output}
             productName={productName || 'Your Product'}
             isDone={isDone}
-            onDesignSelected={(style, html) => setSelectedDesign({ style, html })}
+            onDesignSelected={(style, html) => { track('preview_selected', { style }); setSelectedDesign({ style, html }) }}
           />
 
 
@@ -843,7 +846,7 @@ export default function BriefGenerator() {
               ) : (
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
                   <button
-                    onClick={() => setShowLaunch(true)}
+                    onClick={() => { track('checkout_opened'); setShowLaunch(true) }}
                     style={{ background: '#FFFFFF', color: '#1D1D1F', border: 'none', borderRadius: 12, padding: '13px 24px', fontSize: 16, fontWeight: 600, letterSpacing: '-.2px', cursor: 'pointer', flex: 1, minWidth: 160 }}>
                     Build it — from $149
                   </button>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const SITE = 'https://ideabylunch.com'
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   title: { default: TITLE, template: '%s — IdeaByLunch' },
   description: DESCRIPTION,
   applicationName: 'IdeaByLunch',
-  keywords: ['product brief', 'idea to MVP', 'AI product strategy', 'launch in 48 hours', 'startup idea validator', 'PRD generator'],
+  keywords: ['product brief', 'idea to MVP', 'AI product strategy', 'launch in 4 hours', 'startup idea validator', 'PRD generator'],
   alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
@@ -36,7 +37,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   )
 }
