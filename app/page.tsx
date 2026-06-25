@@ -134,6 +134,7 @@ export default async function HomePage({
               <a href="#how" style={{ fontSize: 14, color: '#6E6E73', fontWeight: 400 }}>How it works</a>
               <a href="#pricing" style={{ fontSize: 14, color: '#6E6E73', fontWeight: 400 }}>Pricing</a>
               <Link href="/grow" style={{ fontSize: 14, color: '#30D158', fontWeight: 600 }}>Grow</Link>
+              <Link href="/refer" style={{ fontSize: 14, color: '#0066CC', fontWeight: 600 }}>Refer & earn</Link>
               <a href="#faq" style={{ fontSize: 14, color: '#6E6E73', fontWeight: 400 }}>FAQ</a>
               {!isUS && (
                 <a href={toggleHref} style={{ fontSize: 12, color: '#6E6E73', fontWeight: 500, border: '0.5px solid rgba(0,0,0,.15)', borderRadius: 6, padding: '4px 8px' }}>

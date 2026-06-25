@@ -14,15 +14,18 @@ type ReferData = {
 export default function ReferPage() {
   const [email, setEmail] = useState('')
   const [data, setData] = useState<ReferData | null>(null)
+  const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [payoutLoading, setPayoutLoading] = useState(false)
   const [payoutMsg, setPayoutMsg] = useState('')
 
   async function lookup() {
     if (!email.includes('@')) return
+    setLoading(true)
     const res = await fetch(`/api/refer?email=${encodeURIComponent(email)}`)
     const d = await res.json()
     if (!d.error) setData(d)
+    setLoading(false)
   }
 
   function copy() {
@@ -57,100 +60,155 @@ export default function ReferPage() {
   return (
     <>
       <style>{`* { box-sizing: border-box; } body { margin: 0; background: #F2F2F7; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }`}</style>
-      <nav style={{ background: '#fff', borderBottom: '0.5px solid rgba(0,0,0,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <a href="/" style={{ fontSize: 17, fontWeight: 600, color: '#1D1D1F', textDecoration: 'none' }}>IdeaByLunch</a>
+      <nav style={{ background: 'rgba(242,242,247,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '0.5px solid rgba(0,0,0,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <a href="/" style={{ fontSize: 16, fontWeight: 700, color: '#1D1D1F', textDecoration: 'none', letterSpacing: '-.3px' }}>IdeaByLunch</a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <a href="/grow" style={{ fontSize: 14, color: '#30D158', fontWeight: 600, textDecoration: 'none' }}>Grow</a>
+          <a href="/refer" style={{ fontSize: 14, color: '#0066CC', fontWeight: 600, textDecoration: 'none' }}>Refer & earn</a>
+          <a href="/app" style={{ background: '#1D1D1F', color: '#FFFFFF', borderRadius: 8, padding: '7px 16px', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>Launch →</a>
+        </div>
       </nav>
 
-      <div style={{ maxWidth: 520, margin: '64px auto', padding: '0 24px' }}>
-        <div style={{ background: '#fff', borderRadius: 20, padding: 36, boxShadow: '0 1px 3px rgba(0,0,0,.08)' }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1px', margin: '0 0 8px' }}>Refer a business, earn 30%</h1>
-          <p style={{ fontSize: 15, color: '#6E6E73', margin: '0 0 28px' }}>
-            Every business you refer earns you 30% of the sale — paid in cash. No cap. Enter your email to get your link.
+      <div style={{ maxWidth: 540, margin: '0 auto', padding: '60px 24px 80px' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ fontSize: 44, marginBottom: 14 }}>💸</div>
+          <h1 style={{ fontSize: 34, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', margin: '0 0 10px' }}>Earn 30% per referral</h1>
+          <p style={{ fontSize: 16, color: '#6E6E73', margin: 0, lineHeight: 1.5 }}>
+            Share your link. When someone launches a site or joins Grow, you earn 30% cash. No cap, no expiry.
           </p>
+        </div>
 
-          <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+        {/* Email lookup */}
+        <div style={{ background: '#fff', borderRadius: 16, padding: 24, border: '0.5px solid rgba(0,0,0,.08)', marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F', display: 'block', marginBottom: 10 }}>Your email</label>
+          <div style={{ display: 'flex', gap: 8 }}>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && lookup()}
-              placeholder="your@email.com"
-              style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: '1px solid #D2D2D7', fontSize: 15, outline: 'none' }}
+              placeholder="you@example.com"
+              style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: '1px solid #D2D2D7', fontSize: 15, outline: 'none', color: '#1D1D1F' }}
             />
             <button
               onClick={lookup}
-              disabled={!email.includes('@')}
-              style={{ background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 20px', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: email.includes('@') ? 1 : 0.4 }}
+              disabled={!email.includes('@') || loading}
+              style={{ background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 20px', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: email.includes('@') && !loading ? 1 : 0.4, whiteSpace: 'nowrap' }}
             >
-              Get link
+              {loading ? '...' : 'Get my link'}
             </button>
           </div>
+        </div>
 
-          {data && (
-            <div style={{ background: '#F2F2F7', borderRadius: 14, padding: 20 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#6E6E73', textTransform: 'uppercase', letterSpacing: '.5px', margin: '0 0 10px' }}>Your referral link</p>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
-                <div style={{ flex: 1, background: '#fff', borderRadius: 8, padding: '10px 14px', fontSize: 14, color: '#1D1D1F', wordBreak: 'break-all', border: '1px solid rgba(0,0,0,.08)' }}>
+        {/* Dashboard */}
+        {data && (
+          <>
+            {/* Link */}
+            <div style={{ background: '#fff', borderRadius: 16, padding: 20, border: '0.5px solid rgba(0,0,0,.08)', marginBottom: 12, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#6E6E73', textTransform: 'uppercase', letterSpacing: '.6px', margin: '0 0 10px' }}>Your referral link</p>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ flex: 1, background: '#F2F2F7', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#1D1D1F', wordBreak: 'break-all', fontFamily: 'monospace' }}>
                   {data.link}
                 </div>
                 <button
                   onClick={copy}
-                  style={{ background: copied ? '#30D158' : '#1D1D1F', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'background .2s' }}
+                  style={{ background: copied ? '#30D158' : '#0066CC', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'background .2s' }}
                 >
                   {copied ? '✓ Copied' : 'Copy'}
                 </button>
               </div>
+            </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: data.payoutEligible || data.payoutRequested || payoutMsg ? 16 : 0 }}>
-                <div style={{ background: '#fff', borderRadius: 10, padding: 14, textAlign: 'center' }}>
-                  <p style={{ fontSize: 24, fontWeight: 700, color: '#1D1D1F', margin: '0 0 4px' }}>{data.conversions}</p>
-                  <p style={{ fontSize: 12, color: '#6E6E73', margin: 0 }}>Referrals</p>
-                </div>
-                <div style={{ background: '#fff', borderRadius: 10, padding: 14, textAlign: 'center' }}>
-                  <p style={{ fontSize: 24, fontWeight: 700, color: '#30D158', margin: '0 0 4px' }}>${data.earnings.toFixed(2)}</p>
-                  <p style={{ fontSize: 12, color: '#6E6E73', margin: 0 }}>Earned (30%)</p>
-                </div>
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+              <div style={{ background: '#fff', borderRadius: 14, padding: 18, textAlign: 'center', border: '0.5px solid rgba(0,0,0,.08)' }}>
+                <div style={{ fontSize: 30, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px' }}>{data.conversions}</div>
+                <div style={{ fontSize: 12, color: '#6E6E73', marginTop: 4 }}>Paid referrals</div>
               </div>
+              <div style={{ background: '#fff', borderRadius: 14, padding: 18, textAlign: 'center', border: '0.5px solid rgba(0,0,0,.08)' }}>
+                <div style={{ fontSize: 30, fontWeight: 700, color: data.earnings > 0 ? '#30D158' : '#1D1D1F', letterSpacing: '-.5px' }}>${data.earnings.toFixed(2)}</div>
+                <div style={{ fontSize: 12, color: '#6E6E73', marginTop: 4 }}>Total earned</div>
+              </div>
+            </div>
 
-              {payoutMsg && (
-                <p style={{ fontSize: 13, color: data.payoutRequested ? '#30D158' : '#FF3B30', margin: '0 0 12px', textAlign: 'center' }}>{payoutMsg}</p>
-              )}
-
-              {data.payoutEligible && !payoutMsg && (
+            {/* Payout section */}
+            <div style={{ background: '#fff', borderRadius: 16, padding: 20, border: '0.5px solid rgba(0,0,0,.08)', marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+              {payoutMsg ? (
+                <p style={{ fontSize: 14, color: data.payoutRequested ? '#30D158' : '#FF3B30', margin: 0, textAlign: 'center', fontWeight: 500 }}>{payoutMsg}</p>
+              ) : data.payoutRequested ? (
+                <p style={{ fontSize: 14, color: '#6E6E73', margin: 0, textAlign: 'center' }}>✓ Payout requested — we'll send it within 48 hours.</p>
+              ) : data.payoutEligible ? (
                 <button
                   onClick={requestPayout}
                   disabled={payoutLoading}
-                  style={{ width: '100%', background: '#30D158', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 15, fontWeight: 600, cursor: payoutLoading ? 'not-allowed' : 'pointer', opacity: payoutLoading ? 0.7 : 1 }}
+                  style={{ width: '100%', background: '#30D158', color: '#fff', border: 'none', borderRadius: 10, padding: '13px', fontSize: 15, fontWeight: 600, cursor: payoutLoading ? 'default' : 'pointer', opacity: payoutLoading ? 0.7 : 1 }}
                 >
                   {payoutLoading ? 'Requesting…' : `Request payout — $${data.earnings.toFixed(2)}`}
                 </button>
-              )}
-
-              {data.payoutRequested && !payoutMsg && (
-                <p style={{ fontSize: 13, color: '#6E6E73', textAlign: 'center', margin: 0 }}>Payout requested — we'll send it within 48 hours.</p>
-              )}
-
-              {!data.payoutEligible && !data.payoutRequested && data.earnings > 0 && (
-                <p style={{ fontSize: 12, color: '#AEAEB2', textAlign: 'center', margin: 0 }}>
-                  ${(50 - data.earnings).toFixed(2)} more to reach the $50 payout minimum.
-                </p>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6E6E73', marginBottom: 8 }}>
+                    <span>Progress to payout</span>
+                    <span>${data.earnings.toFixed(2)} / $50</span>
+                  </div>
+                  <div style={{ background: '#F2F2F7', borderRadius: 6, height: 6, overflow: 'hidden' }}>
+                    <div style={{ background: '#30D158', height: '100%', width: `${Math.min(100, (data.earnings / 50) * 100)}%`, transition: 'width .5s' }} />
+                  </div>
+                  {data.earnings === 0 && (
+                    <p style={{ fontSize: 12, color: '#AEAEB2', margin: '10px 0 0', textAlign: 'center' }}>Share your link to start earning</p>
+                  )}
+                </>
               )}
             </div>
-          )}
-        </div>
 
-        <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-          {[
-            { step: '1', text: 'Share your link — post it on TikTok, send to a friend, put it in your bio' },
-            { step: '2', text: 'They buy a website — you get 30% of the sale, automatically tracked' },
-            { step: '3', text: 'Hit $50 and request your payout — paid via PayPal or Wise within 48 hours' },
-          ].map(({ step, text }) => (
-            <div key={step} style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#0066CC', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{step}</div>
-              <p style={{ fontSize: 13, color: '#6E6E73', margin: 0, lineHeight: 1.5 }}>{text}</p>
+            {/* Share prompt */}
+            <div style={{ background: '#fff', borderRadius: 14, padding: 18, border: '0.5px solid rgba(0,0,0,.08)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#6E6E73', textTransform: 'uppercase', letterSpacing: '.6px', margin: '0 0 10px' }}>Ready to paste</p>
+              <p style={{ fontSize: 13, color: '#1D1D1F', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
+                "Went from idea to live website in one morning using IdeaByLunch. If you're starting a business, try it: {data.link}"
+              </p>
             </div>
-          ))}
-        </div>
+          </>
+        )}
+
+        {/* How it works — shown before lookup */}
+        {!data && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 8 }}>
+            {[
+              { step: '1', title: 'Get your link', body: 'Enter your email above — same link every time.' },
+              { step: '2', title: 'Share it', body: 'Post on TikTok, LinkedIn, your bio, anywhere.' },
+              { step: '3', title: 'Get paid', body: 'Hit $50 and request your payout in cash.' },
+            ].map(({ step, title, body }) => (
+              <div key={step} style={{ background: '#fff', borderRadius: 14, padding: 16, border: '0.5px solid rgba(0,0,0,.08)' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#0066CC', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, marginBottom: 10 }}>{step}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F', marginBottom: 4 }}>{title}</div>
+                <p style={{ fontSize: 12, color: '#6E6E73', margin: 0, lineHeight: 1.5 }}>{body}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Commission table */}
+        {!data && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: 20, border: '0.5px solid rgba(0,0,0,.08)', marginTop: 16 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#6E6E73', textTransform: 'uppercase', letterSpacing: '.6px', margin: '0 0 14px' }}>What you earn</p>
+            {[
+              { product: 'Website — US', price: '$149', earn: '$44.70' },
+              { product: 'Website — Ghana / NG', price: '$49', earn: '$14.70' },
+              { product: 'Grow subscription', price: '$49/mo', earn: '$14.70/mo' },
+            ].map(r => (
+              <div key={r.product} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '0.5px solid rgba(0,0,0,.06)' }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1D1D1F' }}>{r.product}</div>
+                  <div style={{ fontSize: 12, color: '#6E6E73' }}>{r.price}</div>
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#30D158' }}>{r.earn}</div>
+              </div>
+            ))}
+            <p style={{ fontSize: 12, color: '#AEAEB2', margin: '12px 0 0' }}>30% of every payment. Recurring monthly on Grow. No cap.</p>
+          </div>
+        )}
       </div>
     </>
   )
