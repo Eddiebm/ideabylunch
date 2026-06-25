@@ -420,6 +420,8 @@ export default function BriefGenerator() {
   const abortRef = useRef<AbortController | null>(null)
   const runningRef = useRef(false)
 
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false)
+
   // Restore email from localStorage + fetch geo on mount
   useEffect(() => {
     const saved = localStorage.getItem('i2l_email')
@@ -428,6 +430,10 @@ export default function BriefGenerator() {
     const params = new URLSearchParams(window.location.search)
     const ft = params.get('free')
     if (ft) setFreeToken(ft)
+    if (params.get('success') === 'true') {
+      setPurchaseSuccess(true)
+      window.history.replaceState({}, '', '/app')
+    }
     fetch('/api/geo').then(r => r.json()).then(d => {
       if (d.country) {
         setCountry(d.country)
@@ -526,6 +532,21 @@ export default function BriefGenerator() {
 
       <div style={{ background: '#F2F2F7', minHeight: '100vh', paddingTop: 68 }}>
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '52px 20px 120px' }}>
+
+          {/* Post-purchase success banner */}
+          {purchaseSuccess && (
+            <div style={{ background:'#000',borderRadius:20,padding:'28px 32px',marginBottom:24,animation:'fadeUp .4s ease both' }}>
+              <div style={{ fontSize:12,fontWeight:700,color:'#30D158',letterSpacing:'.06em',textTransform:'uppercase',marginBottom:8 }}>Order confirmed</div>
+              <div style={{ fontSize:22,fontWeight:700,color:'#fff',letterSpacing:'-.4px',marginBottom:6 }}>Your site is in the queue.</div>
+              <div style={{ fontSize:15,color:'rgba(255,255,255,.65)',lineHeight:1.6,marginBottom:20 }}>We're building it now — you'll get an email with the live URL within 24 hours. No action needed.</div>
+              <div style={{ borderTop:'1px solid rgba(255,255,255,.1)',paddingTop:20 }}>
+                <div style={{ fontSize:13,fontWeight:600,color:'rgba(255,255,255,.5)',marginBottom:10 }}>While you wait — market your new business from day one</div>
+                <a href="/grow" style={{ display:'inline-flex',alignItems:'center',gap:8,background:'#30D158',color:'#fff',textDecoration:'none',padding:'10px 18px',borderRadius:10,fontSize:14,fontWeight:600 }}>
+                  Try Grow — free →
+                </a>
+              </div>
+            </div>
+          )}
 
           {showEmailGate && (
             <EmailGate

@@ -126,6 +126,10 @@ export default function GrowPage() {
   const [showEmailGate, setShowEmailGate] = useState(false)
   const [error, setError] = useState('')
   const [subscribed, setSubscribed] = useState(false)
+  const [isSubscriber, setIsSubscriber] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [history, setHistory] = useState<Array<{ tool: string; emoji: string; label: string; business: string; output: string; date: string }>>([])
+  const [showHistory, setShowHistory] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -146,6 +150,7 @@ export default function GrowPage() {
     try {
       const res = await fetch(`/api/grow/profile?email=${encodeURIComponent(emailToLoad)}`)
       const data = await res.json()
+      if (data.isSubscriber) setIsSubscriber(true)
       if (data.profile) {
         const p = data.profile
         setFields(f => ({
@@ -157,6 +162,9 @@ export default function GrowPage() {
       } else {
         setProfileStatus('new')
       }
+      // Load local history
+      const h = localStorage.getItem(`grow:history:${emailToLoad.toLowerCase()}`)
+      if (h) setHistory(JSON.parse(h))
     } catch {
       setProfileStatus('idle')
     }
@@ -248,6 +256,18 @@ export default function GrowPage() {
       if (activeEmail) {
         localStorage.setItem('i2l_email', activeEmail)
         saveProfile(activeEmail, fields)
+        // Save to local history
+        setOutput(prev => {
+          if (prev) {
+            const key = `grow:history:${activeEmail.toLowerCase()}`
+            const existing = JSON.parse(localStorage.getItem(key) || '[]')
+            const entry = { tool: activeTool.id, emoji: activeTool.emoji, label: activeTool.label, business: fields.business || '', output: prev, date: new Date().toISOString() }
+            const updated = [entry, ...existing].slice(0, 10)
+            localStorage.setItem(key, JSON.stringify(updated))
+            setHistory(updated)
+          }
+          return prev
+        })
       }
     }
   }
@@ -318,12 +338,50 @@ export default function GrowPage() {
               style={{ width:'100%',padding:'9px 12px',borderRadius:8,border:'1px solid #D2D2D7',fontSize:14,outline:'none' }}
             />
           </div>
-          <div style={{ fontSize:13,color: profileStatus === 'loaded' ? '#30D158' : profileStatus === 'loading' ? '#AEAEB2' : profileStatus === 'new' ? '#6E6E73' : 'transparent', whiteSpace:'nowrap', paddingTop:18 }}>
-            {profileStatus === 'loaded' && `✓ ${profileBusiness}`}
-            {profileStatus === 'loading' && 'Loading…'}
-            {profileStatus === 'new' && 'New profile — saves after first generation'}
+          <div style={{ display:'flex',flexDirection:'column',gap:4,paddingTop:18 }}>
+            <div style={{ fontSize:13,color: profileStatus === 'loaded' ? '#30D158' : profileStatus === 'loading' ? '#AEAEB2' : profileStatus === 'new' ? '#6E6E73' : 'transparent', whiteSpace:'nowrap' }}>
+              {profileStatus === 'loaded' && `✓ ${profileBusiness}`}
+              {profileStatus === 'loading' && 'Loading…'}
+              {profileStatus === 'new' && 'New profile — saves after first generation'}
+            </div>
+            {isSubscriber && (
+              <button
+                onClick={async () => {
+                  const res = await fetch('/api/grow/portal', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) })
+                  const d = await res.json()
+                  if (d.url) window.location.href = d.url
+                }}
+                style={{ background:'none',border:'none',padding:0,fontSize:12,color:'#6E6E73',cursor:'pointer',textDecoration:'underline',textAlign:'left' }}
+              >
+                Manage subscription
+              </button>
+            )}
+            {history.length > 0 && (
+              <button onClick={() => setShowHistory(h => !h)} style={{ background:'none',border:'none',padding:0,fontSize:12,color:'#6E6E73',cursor:'pointer',textDecoration:'underline',textAlign:'left' }}>
+                {showHistory ? 'Hide history' : `History (${history.length})`}
+              </button>
+            )}
           </div>
         </div>
+
+        {/* History panel */}
+        {showHistory && history.length > 0 && (
+          <div style={{ background:'#fff',borderRadius:14,padding:'14px 18px',boxShadow:'0 1px 3px rgba(0,0,0,.06)',marginBottom:16 }}>
+            <div style={{ fontSize:13,fontWeight:600,color:'#6E6E73',marginBottom:10,textTransform:'uppercase',letterSpacing:'.04em' }}>Recent generations</div>
+            <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
+              {history.map((h, i) => (
+                <button key={i} onClick={() => { setOutput(h.output); setShowHistory(false) }}
+                  style={{ background:'#F9F9FB',border:'1px solid #E5E5EA',borderRadius:10,padding:'10px 14px',textAlign:'left',cursor:'pointer',display:'flex',alignItems:'center',gap:10 }}>
+                  <span style={{ fontSize:18 }}>{h.emoji}</span>
+                  <div>
+                    <div style={{ fontSize:13,fontWeight:600,color:'#1D1D1F' }}>{h.business || h.label}</div>
+                    <div style={{ fontSize:12,color:'#AEAEB2' }}>{h.label} · {new Date(h.date).toLocaleDateString()}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Tool tabs */}
         <div style={{ overflowX:'auto',marginBottom:24,paddingBottom:4 }}>
@@ -429,10 +487,10 @@ export default function GrowPage() {
               <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18 }}>
                 <div style={{ fontSize:15,fontWeight:600,color:'#1D1D1F' }}>{activeTool.emoji} {fields.business || activeTool.label}</div>
                 <button
-                  onClick={() => navigator.clipboard.writeText(output)}
-                  style={{ background:'#F2F2F7',border:'none',borderRadius:8,padding:'7px 14px',fontSize:13,fontWeight:600,color:'#1D1D1F',cursor:'pointer' }}
+                  onClick={() => { navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+                  style={{ background: copied ? '#30D158' : '#F2F2F7', border:'none',borderRadius:8,padding:'7px 14px',fontSize:13,fontWeight:600,color: copied ? '#fff' : '#1D1D1F',cursor:'pointer',transition:'background .2s,color .2s' }}
                 >
-                  Copy all
+                  {copied ? 'Copied ✓' : 'Copy all'}
                 </button>
               </div>
               <div className="tool-out" style={{ fontSize:15,color:'#3C3C43',lineHeight:1.7,whiteSpace:'pre-wrap',wordBreak:'break-word' }}>

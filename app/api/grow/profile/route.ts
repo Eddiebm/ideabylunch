@@ -21,10 +21,12 @@ export async function GET(req: Request) {
   if (!redis) return Response.json({ error: 'unavailable' }, { status: 503 })
 
   const raw = await redis.get(`grow:profile:${email}`)
-  if (!raw) return Response.json({ profile: null })
+  const isSubscriber = !!(await redis.get(`grow:subscriber:${email}`))
+
+  if (!raw) return Response.json({ profile: null, isSubscriber })
 
   const profile = typeof raw === 'string' ? JSON.parse(raw) : raw
-  return Response.json({ profile })
+  return Response.json({ profile, isSubscriber })
 }
 
 // POST /api/grow/profile — create or update

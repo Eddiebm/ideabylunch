@@ -331,6 +331,9 @@ export async function POST(req: Request) {
         if (customerEmail && redis) {
           await redis.set(`grow:subscriber:${customerEmail.toLowerCase()}`, '1')
           await redis.sadd('grow:delivery:subscribers', customerEmail.toLowerCase())
+          if (session.customer) {
+            await redis.set(`grow:stripe_customer:${customerEmail.toLowerCase()}`, String(session.customer))
+          }
           // Track referral
           if (refCode) {
             const referrerEmail = await redis.get(`refer:code:${refCode}`)
