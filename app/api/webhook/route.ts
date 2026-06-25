@@ -324,6 +324,11 @@ async function notifyCustomer(email: string, productName: string, liveUrl: strin
             ${editLink ? `<p style="margin:0"><a href="${editLink}" style="background:#1D1D1F;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Edit your content</a></p>` : ''}
           </div>
           <p style="font-size:14px;color:#6E6E73">A custom domain will be connected within 24 hours. Reply with any tweaks you want.</p>
+          <div style="margin-top:28px;padding-top:24px;border-top:1px solid #E5E5EA">
+            <p style="font-size:14px;font-weight:600;color:#1D1D1F;margin:0 0 6px">Know another business owner?</p>
+            <p style="font-size:13px;color:#6E6E73;margin:0 0 14px">Refer them to IdeaByLunch and earn 30% of their purchase — paid in cash.</p>
+            <a href="${appUrl}/refer" style="background:#0066CC;color:#fff;padding:10px 20px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;display:inline-block">Get your referral link →</a>
+          </div>
         </div></body></html>`,
     })
   } catch (e) {

@@ -568,10 +568,12 @@ export default function BriefGenerator() {
               <div style={{ fontSize:12,fontWeight:700,color:'#30D158',letterSpacing:'.06em',textTransform:'uppercase',marginBottom:8 }}>Order confirmed</div>
               <div style={{ fontSize:22,fontWeight:700,color:'#fff',letterSpacing:'-.4px',marginBottom:6 }}>Your site is in the queue.</div>
               <div style={{ fontSize:15,color:'rgba(255,255,255,.65)',lineHeight:1.6,marginBottom:20 }}>We're building it now — you'll get an email with the live URL within 24 hours. No action needed.</div>
-              <div style={{ borderTop:'1px solid rgba(255,255,255,.1)',paddingTop:20 }}>
-                <div style={{ fontSize:13,fontWeight:600,color:'rgba(255,255,255,.5)',marginBottom:10 }}>While you wait — market your new business from day one</div>
+              <div style={{ borderTop:'1px solid rgba(255,255,255,.1)',paddingTop:20,display:'flex',gap:12,flexWrap:'wrap' }}>
                 <a href="/grow" style={{ display:'inline-flex',alignItems:'center',gap:8,background:'#30D158',color:'#fff',textDecoration:'none',padding:'10px 18px',borderRadius:10,fontSize:14,fontWeight:600 }}>
                   Try Grow — free →
+                </a>
+                <a href="/refer" style={{ display:'inline-flex',alignItems:'center',gap:8,background:'rgba(255,255,255,.12)',color:'#fff',textDecoration:'none',padding:'10px 18px',borderRadius:10,fontSize:14,fontWeight:600 }}>
+                  Refer a friend, earn 30% →
                 </a>
               </div>
             </div>
