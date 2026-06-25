@@ -434,6 +434,11 @@ export default function BriefGenerator() {
       setPurchaseSuccess(true)
       window.history.replaceState({}, '', '/app')
     }
+    const prefill = localStorage.getItem('i2l_brief_prefill')
+    if (prefill) {
+      setInput(prefill)
+      localStorage.removeItem('i2l_brief_prefill')
+    }
     fetch('/api/geo').then(r => r.json()).then(d => {
       if (d.country) {
         setCountry(d.country)

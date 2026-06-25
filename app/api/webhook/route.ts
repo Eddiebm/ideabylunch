@@ -84,6 +84,35 @@ function slugify(name: string) {
     .slice(0, 40) + '-' + Math.random().toString(36).slice(2, 7)
 }
 
+function extractLocation(brief: string): string {
+  const m = brief.match(/\bin\s+([A-Z][a-zA-Z\s]+,\s*[A-Z]{2})\b/)
+    || brief.match(/\blocated in\s+([A-Z][a-zA-Z\s]+?)(?:\.|,|\s{2})/i)
+    || brief.match(/([A-Z][a-zA-Z\s]+,\s*[A-Z]{2})\b/)
+  return m?.[1]?.trim() || ''
+}
+
+function extractBusinessType(brief: string): string {
+  const lower = brief.toLowerCase()
+  if (/plumb/.test(lower)) return 'Plumbing'
+  if (/restaurant|cafe|bistro|eatery|dining/.test(lower)) return 'Restaurant'
+  if (/salon|barber|beauty|spa|hair/.test(lower)) return 'Beauty & Wellness'
+  if (/law|attorney|legal/.test(lower)) return 'Legal Services'
+  if (/real estate|property|realtor/.test(lower)) return 'Real Estate'
+  if (/fitness|gym|yoga|personal train/.test(lower)) return 'Fitness'
+  if (/dental|dentist|medical|clinic|doctor/.test(lower)) return 'Healthcare'
+  if (/tech|software|saas|platform/.test(lower)) return 'Technology'
+  if (/consult|agenc|marketing|branding/.test(lower)) return 'Consulting'
+  if (/retail|shop|store|boutique/.test(lower)) return 'Retail'
+  if (/landscap|lawn|garden/.test(lower)) return 'Landscaping'
+  if (/electric/.test(lower)) return 'Electrical'
+  if (/hvac|heating|cooling|air condition/.test(lower)) return 'HVAC'
+  if (/clean|maid|janitor/.test(lower)) return 'Cleaning'
+  if (/construct|contractor|builder|remodel/.test(lower)) return 'Construction'
+  if (/photog/.test(lower)) return 'Photography'
+  if (/catering|event|wedding/.test(lower)) return 'Events & Catering'
+  return ''
+}
+
 function extractProductName(brief: string): string {
   const m = brief.match(/(?:PRODUCT VISION|^)\s*([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+is/)
   return m?.[1] || 'Your Product'
@@ -459,6 +488,26 @@ export async function POST(req: Request) {
           liveUrl,
           deployFailed: !!html && !liveUrl,
         })
+      }
+
+      // Auto-create Grow profile from website brief (only if no profile exists yet)
+      if (redis && customerEmail && brief) {
+        const profileKey = `grow:profile:${customerEmail.toLowerCase()}`
+        const existing = await redis.get(profileKey)
+        if (!existing) {
+          const profile = {
+            email: customerEmail.toLowerCase(),
+            business: productName,
+            businessType: extractBusinessType(brief),
+            location: extractLocation(brief),
+            services: '',
+            customer: '',
+            source: 'website_brief',
+            updatedAt: Date.now(),
+          }
+          await redis.set(profileKey, JSON.stringify(profile), { ex: 60 * 60 * 24 * 365 * 2 })
+          await redis.sadd('grow:delivery:subscribers', customerEmail.toLowerCase())
+        }
       }
     } catch (e) {
       console.error('webhook handler error', e)

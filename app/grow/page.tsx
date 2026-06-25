@@ -127,6 +127,7 @@ export default function GrowPage() {
   const [error, setError] = useState('')
   const [subscribed, setSubscribed] = useState(false)
   const [isSubscriber, setIsSubscriber] = useState(false)
+  const [profileSource, setProfileSource] = useState<string>('')
   const [copied, setCopied] = useState(false)
   const [history, setHistory] = useState<Array<{ tool: string; emoji: string; label: string; business: string; output: string; date: string }>>([])
   const [showHistory, setShowHistory] = useState(false)
@@ -158,6 +159,7 @@ export default function GrowPage() {
           ...Object.fromEntries(PROFILE_FIELDS.map(k => [k, p[k] || f[k] || ''])),
         }))
         setProfileBusiness(p.business)
+        setProfileSource(p.source || '')
         setProfileStatus('loaded')
       } else {
         setProfileStatus('new')
@@ -321,6 +323,16 @@ export default function GrowPage() {
               <div style={{ fontSize:13,color:'rgba(255,255,255,.85)',marginTop:2 }}>All 7 tools are now unlimited. Your first kit lands in your inbox on the 1st.</div>
             </div>
             <button onClick={() => setSubscribed(false)} style={{ background:'none',border:'none',color:'rgba(255,255,255,.7)',fontSize:20,cursor:'pointer',lineHeight:1,padding:0 }}>×</button>
+          </div>
+        )}
+
+        {/* Website buyer welcome */}
+        {profileSource === 'website_brief' && !subscribed && (
+          <div style={{ background:'#fff',borderRadius:14,padding:'14px 20px',marginBottom:16,border:'1px solid #E5E5EA',display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap' }}>
+            <div>
+              <div style={{ fontSize:14,fontWeight:600,color:'#1D1D1F',marginBottom:2 }}>Profile set up from your website brief</div>
+              <div style={{ fontSize:13,color:'#6E6E73' }}>Your business details are already filled in — generate your first kit below.</div>
+            </div>
           </div>
         )}
 
@@ -497,6 +509,25 @@ export default function GrowPage() {
                 {output}
               </div>
             </div>
+
+            {!showEmailGate && profileSource !== 'website_brief' && profileStatus === 'loaded' && (
+              <div style={{ background:'#F9F9FB',borderRadius:16,padding:'16px 20px',marginBottom:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap',border:'1px solid #E5E5EA' }}>
+                <div>
+                  <div style={{ fontSize:14,fontWeight:600,color:'#1D1D1F',marginBottom:2 }}>Need a website too?</div>
+                  <div style={{ fontSize:13,color:'#6E6E73' }}>Launch {fields.business || 'your business'} online — built and deployed in 24 hours.</div>
+                </div>
+                <button
+                  onClick={() => {
+                    const pre = `${fields.business || 'My business'}${fields.businessType ? ` — ${fields.businessType}` : ''}${fields.location ? ` in ${fields.location}` : ''}${fields.services ? `. Services: ${fields.services}` : ''}${fields.customer ? `. Target customer: ${fields.customer}` : ''}.`
+                    localStorage.setItem('i2l_brief_prefill', pre)
+                    window.location.href = '/app'
+                  }}
+                  style={{ background:'#1D1D1F',color:'#fff',border:'none',borderRadius:10,padding:'10px 18px',fontSize:14,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0 }}
+                >
+                  Launch a website →
+                </button>
+              </div>
+            )}
 
             {!showEmailGate && (
               <div style={{ background:'linear-gradient(135deg,#1D1D1F 0%,#3C3C43 100%)',borderRadius:20,padding:'24px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:20,flexWrap:'wrap' }}>
