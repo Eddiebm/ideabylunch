@@ -105,12 +105,13 @@ const FEATURES: Record<string, string[]> = {
   full:         ['Everything in Premium', 'Authentication (Clerk)', 'Stripe payments wired up', 'Database (Supabase)', '30 days of support'],
 }
 
-function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle, onClose }: {
+function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle, selectedHtml, onClose }: {
   brief: string
   marketCode: CountryCode
   marketPricing: MarketPricing
   userEmail?: string | null
   designStyle?: string
+  selectedHtml?: string
   onClose: () => void
 }) {
   const [loading, setLoading] = useState(false)
@@ -158,7 +159,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: selected, brief, express: showExpress && express, market: marketCode, designStyle, ...(affiliateRef ? { ref: affiliateRef } : {}) }),
+          body: JSON.stringify({ plan: selected, brief, express: showExpress && express, market: marketCode, designStyle, ...(selectedHtml ? { selectedHtml } : {}), ...(affiliateRef ? { ref: affiliateRef } : {}) }),
         })
         const data = await res.json()
         if (data.url) window.location.href = data.url
@@ -533,7 +534,7 @@ export default function BriefGenerator() {
         ::-webkit-scrollbar { width: 0; }
       `}</style>
 
-      {showLaunch && <LaunchModal brief={output} marketCode={marketCode} marketPricing={MARKET_PRICING[marketCode]} userEmail={userEmail} designStyle={selectedDesign?.style} onClose={() => setShowLaunch(false)} />}
+      {showLaunch && <LaunchModal brief={output} marketCode={marketCode} marketPricing={MARKET_PRICING[marketCode]} userEmail={userEmail} designStyle={selectedDesign?.style} selectedHtml={selectedDesign?.html} onClose={() => setShowLaunch(false)} />}
 
       <div style={{ background: '#F2F2F7', minHeight: '100vh', paddingTop: 68 }}>
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '52px 20px 120px' }}>

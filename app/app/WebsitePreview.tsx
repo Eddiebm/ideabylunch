@@ -9,7 +9,7 @@ interface Photos {
   cta: string | null
 }
 
-type DirectionKey = 'editorial' | 'minimal' | 'bold'
+type DirectionKey = 'editorial' | 'minimal' | 'bold' | 'bespoke'
 type Phase = 'idle' | 'loading' | 'done' | 'error'
 
 interface DesignState {
@@ -35,9 +35,14 @@ const DIRECTION_META: Record<DirectionKey, { label: string; description: string;
     description: 'Oversized type, saturated color, high-energy — impossible to ignore',
     accent: '#E85D04',
   },
+  bespoke: {
+    label: 'Made for you',
+    description: 'AI reads your brief and invents a design system from scratch — unique to your brand',
+    accent: '#8B5CF6',
+  },
 }
 
-const DIRECTION_KEYS: DirectionKey[] = ['editorial', 'minimal', 'bold']
+const DIRECTION_KEYS: DirectionKey[] = ['editorial', 'minimal', 'bold', 'bespoke']
 
 interface WebsitePreviewProps {
   brief: string
@@ -97,8 +102,9 @@ export default function WebsitePreview({
     editorial: { phase: 'idle', html: '', chars: 0, error: '' },
     minimal:   { phase: 'idle', html: '', chars: 0, error: '' },
     bold:      { phase: 'idle', html: '', chars: 0, error: '' },
+    bespoke:   { phase: 'idle', html: '', chars: 0, error: '' },
   })
-  const dirHtmlRefs = useRef<Record<DirectionKey, string>>({ editorial: '', minimal: '', bold: '' })
+  const dirHtmlRefs = useRef<Record<DirectionKey, string>>({ editorial: '', minimal: '', bold: '', bespoke: '' })
 
   // ── Shared ───────────────────────────────────────────────────────────────
   const [expanded, setExpanded] = useState<'default' | DirectionKey | null>(null)
@@ -139,7 +145,7 @@ export default function WebsitePreview({
     streamBuild(
       payload, 'default',
       (text) => { defaultHtmlRef.current += text; setDefaultHtml(defaultHtmlRef.current) },
-      () => setDefaultPhase('done'),
+      () => { setDefaultPhase('done'); onDesignSelected?.('auto', defaultHtmlRef.current) },
       (msg) => { setDefaultError(msg); setDefaultPhase('error') },
       abortRef.current.signal,
     )

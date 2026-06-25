@@ -412,8 +412,12 @@ export async function POST(req: Request) {
       const productName = order?.productName || session.metadata?.productName || extractProductName(brief)
       const whatsapp = order?.contact?.whatsapp || session.metadata?.whatsapp
 
-      // Get or generate HTML
+      // Get or generate HTML — prefer pre-generated (from LaunchModal preview), then BuildFlow selected, then regenerate
       let html: string | null = order?.selectedHtml || null
+      if (!html && briefToken && redis) {
+        const pregenHtml = await redis.get(`html:${briefToken}`)
+        if (pregenHtml) html = String(pregenHtml)
+      }
       if (!html && brief) html = await generateHtmlFromBrief(brief, productName, plan)
 
       // Inject concept video if customer generated one

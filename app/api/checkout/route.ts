@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
   if (!stripe) return Response.json({ error: 'Checkout is not available in this environment.' }, { status: 503 })
 
   try {
-    const { plan, brief, ref, express, market, designStyle } = await req.json() as {
-      plan: string; brief: string; ref?: string; express?: boolean; market?: string; designStyle?: string
+    const { plan, brief, ref, express, market, designStyle, selectedHtml } = await req.json() as {
+      plan: string; brief: string; ref?: string; express?: boolean; market?: string; designStyle?: string; selectedHtml?: string
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
@@ -114,11 +114,15 @@ export async function POST(req: NextRequest) {
     if (redis && brief) {
       await redis.set(`brief:${briefToken}`, brief, { ex: 60 * 60 * 24 * 7 })
     }
+    if (redis && selectedHtml) {
+      await redis.set(`html:${briefToken}`, selectedHtml, { ex: 60 * 60 * 24 * 7 })
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
       line_items: lineItems,
+      allow_promotion_codes: true,
       success_url: `${appUrl}/app?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/app`,
       metadata: {
