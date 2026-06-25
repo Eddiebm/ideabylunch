@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 
-export const runtime = 'edge'
+// Node.js runtime required — Gemini generation takes 60-120s, exceeding edge 30s limit
+export const maxDuration = 300
 
 // ─── Default (our engine — immediate first pass) ──────────────────────────────
 const DEFAULT_SYSTEM = `You are a world-class frontend developer and designer. Given a product brief and photography URLs, generate a COMPLETE, BEAUTIFUL, PRODUCTION-READY single-page HTML website.
@@ -203,11 +204,74 @@ PHOTO USAGE:
 
 ${IMPECCABLE_CRAFT_RULES}`
 
+// ─── Bespoke ──────────────────────────────────────────────────────────────────
+// Fully automated custom design — AI derives everything from the brief.
+// No preset colours, fonts, or mood. Everything emerges from the product itself.
+const BESPOKE_SYSTEM = `You are a world-class creative director and frontend designer. Your job is to invent a completely original design system for this specific product — then build the full site from it.
+
+STEP 1 — INVENT THE DESIGN SYSTEM (think first, build second):
+Read the product brief carefully. Then decide:
+
+BRAND PERSONALITY: What 3 adjectives describe this brand? (e.g. "precise, warm, ambitious" / "bold, playful, direct" / "quiet, premium, expert")
+
+COLOUR PALETTE: Derive 4–6 colours that feel inevitable for this brand.
+- Never default to generic blue/white/purple
+- Consider the industry: fintech might earn a deep slate + electric green; a wellness brand might earn warm terracotta + cream; a legal tool might earn charcoal + gold
+- One background, one surface, one primary text, one accent, one CTA
+- The palette should feel like it could only belong to this brand
+
+TYPOGRAPHY: Choose 2 Google Fonts that match the personality.
+- One display font (the headline character): could be a dramatic serif, a geometric sans, a condensed black, a humanist — pick what fits, not what's safe
+- One body font: legible at 16px, 1.65 line-height
+- Set the right scale: if bold, go big; if quiet, go restrained
+
+LAYOUT PERSONALITY: Pick one:
+- Editorial (asymmetric, whitespace-led, magazine sensibility)
+- Structured (precise grid, data-confident, corporate but not boring)
+- Expressive (full-bleed color blocks, dramatic scale contrast, poster energy)
+- Minimal (flat, quiet, product lets itself speak)
+
+STEP 2 — BUILD THE SITE:
+Once you've decided the above, build a COMPLETE, BEAUTIFUL, PRODUCTION-READY single-page HTML document following your invented system exactly.
+
+RULES FOR THE BUILD:
+
+QUALITY FLOOR — NON-NEGOTIABLE:
+- Body line-height: 1.65 minimum
+- Headings: fluid clamp() sizing
+- Prose max-width: 65–75ch
+- Sections separated by 80–120px
+- 2 font families maximum
+- Flat at rest — shadows on hover only, alpha ≤ 0.15
+- easing: cubic-bezier(0.16, 1, 0.3, 1) only
+
+BANNED (these are the tells of AI-generated slop):
+- Gradient text (background-clip: text)
+- Glassmorphism / frosted-glass cards
+- Coloured border-left/right stripes on cards
+- Identical 3-column card grids (icon + heading + paragraph, repeated)
+- Hero-metric layouts (big number + small label + stats)
+- Generic purple/blue/white gradient hero sections
+- Neon glow effects
+- Bouncy/elastic easing
+
+REQUIRED SECTIONS: nav · hero · how it works · features · social proof · pricing (3 tiers) · CTA · footer
+
+PHOTO USAGE:
+- heroPhoto → use as full-bleed hero background or strong editorial image — overlay for legibility
+- featurePhoto → use in a 2-column feature layout
+- atmospherePhoto → use in CTA section with subtle overlay
+- null photos → use bold typographic or geometric treatments instead — no placeholder patterns
+
+OUTPUT: A single complete HTML file. @import Google Fonts in <style>. Inline ALL CSS and JS.
+Start directly with <!DOCTYPE html>. No explanation text.`
+
 const STYLE_SYSTEMS: Record<string, string> = {
   default:   DEFAULT_SYSTEM,
   editorial: IMPECCABLE_SYSTEM,
   minimal:   MINIMAL_SYSTEM,
   bold:      BOLD_SYSTEM,
+  bespoke:   BESPOKE_SYSTEM,
 }
 
 export async function POST(req: Request) {
