@@ -294,25 +294,49 @@ export default function GrowPage() {
         .tab-pill:not(.active):hover{background:rgba(0,0,0,.06)}
         input,textarea{font-family:-apple-system,BlinkMacSystemFont,sans-serif}
         .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-        @media(max-width:600px){.field-row{grid-template-columns:1fr}}
+        @media(max-width:600px){
+          .field-row{grid-template-columns:1fr}
+          .grow-h1{font-size:26px!important;letter-spacing:-.6px!important}
+          .grow-wrap{padding:24px 16px 80px!important}
+          .grow-steps{flex-direction:column!important;gap:8px!important}
+          .grow-step{flex-direction:row!important;text-align:left!important}
+          .profile-bar{flex-direction:column!important;align-items:flex-start!important;gap:8px!important}
+          .cta-bar{flex-direction:column!important;align-items:stretch!important}
+          .cta-bar button,.cta-bar a{width:100%!important;text-align:center!important}
+          .grow-website-cta{flex-direction:column!important;align-items:flex-start!important}
+        }
       `}</style>
 
-      <nav style={{ background:'#fff',borderBottom:'0.5px solid rgba(0,0,0,.08)',padding:'0 24px',height:52,display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:100 }}>
+      <nav style={{ background:'#fff',borderBottom:'0.5px solid rgba(0,0,0,.08)',padding:'0 16px',height:52,display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:100 }}>
         <a href="/" style={{ fontSize:17,fontWeight:600,color:'#1D1D1F',textDecoration:'none',letterSpacing:'-.3px' }}>IdeaByLunch</a>
-        <a href="/app" style={{ fontSize:14,color:'#6E6E73',textDecoration:'none' }}>Launch a new business →</a>
+        <a href="/app" style={{ fontSize:13,color:'#6E6E73',textDecoration:'none' }}>Launch a business →</a>
       </nav>
 
-      <div style={{ maxWidth:760,margin:'0 auto',padding:'40px 24px 96px' }}>
+      <div className="grow-wrap" style={{ maxWidth:760,margin:'0 auto',padding:'40px 24px 96px' }}>
 
         {/* Header */}
-        <div style={{ marginBottom:32 }}>
+        <div style={{ marginBottom:28 }}>
           <div style={{ fontSize:12,fontWeight:700,color:'#30D158',letterSpacing:'.06em',textTransform:'uppercase',marginBottom:10 }}>✦ For businesses that already exist</div>
-          <h1 style={{ fontSize:34,fontWeight:700,color:'#1D1D1F',letterSpacing:'-1.2px',lineHeight:1.15,margin:'0 0 10px' }}>
+          <h1 className="grow-h1" style={{ fontSize:34,fontWeight:700,color:'#1D1D1F',letterSpacing:'-1.2px',lineHeight:1.15,margin:'0 0 10px' }}>
             Grow your business.<br />One tool at a time.
           </h1>
-          <p style={{ fontSize:16,color:'#6E6E73',margin:0,lineHeight:1.55 }}>
-            AI-written content and documents for every part of running a small business — ready in under 2 minutes.
+          <p style={{ fontSize:16,color:'#6E6E73',margin:'0 0 24px',lineHeight:1.55 }}>
+            AI-written content for every part of running a small business — ready in under 2 minutes.
           </p>
+          {/* How it works — 3 steps */}
+          <div className="grow-steps" style={{ display:'flex',gap:12,marginBottom:4 }}>
+            {[
+              { n:'1', label:'Pick a tool', sub:'Review reply, proposal, hiring post, and more' },
+              { n:'2', label:'Describe your business', sub:'Saved after first use — never re-enter' },
+              { n:'3', label:'Get ready-to-use content', sub:'Copy, paste, done. Takes 60 seconds' },
+            ].map(s => (
+              <div key={s.n} className="grow-step" style={{ flex:1,background:'#fff',borderRadius:12,padding:'12px 14px',display:'flex',flexDirection:'column',gap:4,border:'0.5px solid rgba(0,0,0,.06)' }}>
+                <div style={{ fontSize:11,fontWeight:700,color:'#30D158',letterSpacing:'.06em' }}>STEP {s.n}</div>
+                <div style={{ fontSize:13,fontWeight:600,color:'#1D1D1F' }}>{s.label}</div>
+                <div style={{ fontSize:12,color:'#AEAEB2',lineHeight:1.4 }}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Subscribed success banner */}
@@ -337,7 +361,7 @@ export default function GrowPage() {
         )}
 
         {/* Profile bar */}
-        <div style={{ background:'#fff',borderRadius:14,padding:'14px 18px',boxShadow:'0 1px 3px rgba(0,0,0,.06)',marginBottom:20,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap' }}>
+        <div className="profile-bar" style={{ background:'#fff',borderRadius:14,padding:'14px 18px',boxShadow:'0 1px 3px rgba(0,0,0,.06)',marginBottom:20,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap' }}>
           <div style={{ flex:'1 1 220px' }}>
             <label style={{ fontSize:12,fontWeight:600,color:'#6E6E73',textTransform:'uppercase',letterSpacing:'.04em',display:'block',marginBottom:4 }}>Your email — loads saved profile</label>
             <input
@@ -511,7 +535,7 @@ export default function GrowPage() {
             </div>
 
             {!showEmailGate && profileSource !== 'website_brief' && profileStatus === 'loaded' && (
-              <div style={{ background:'#F9F9FB',borderRadius:16,padding:'16px 20px',marginBottom:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap',border:'1px solid #E5E5EA' }}>
+              <div className="grow-website-cta" style={{ background:'#F9F9FB',borderRadius:16,padding:'16px 20px',marginBottom:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap',border:'1px solid #E5E5EA' }}>
                 <div>
                   <div style={{ fontSize:14,fontWeight:600,color:'#1D1D1F',marginBottom:2 }}>Need a website too?</div>
                   <div style={{ fontSize:13,color:'#6E6E73' }}>Launch {fields.business || 'your business'} online — built and deployed in 24 hours.</div>
@@ -530,7 +554,7 @@ export default function GrowPage() {
             )}
 
             {!showEmailGate && (
-              <div style={{ background:'linear-gradient(135deg,#1D1D1F 0%,#3C3C43 100%)',borderRadius:20,padding:'24px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:20,flexWrap:'wrap' }}>
+              <div className="cta-bar" style={{ background:'linear-gradient(135deg,#1D1D1F 0%,#3C3C43 100%)',borderRadius:20,padding:'24px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:20,flexWrap:'wrap' }}>
                 <div>
                   <div style={{ fontSize:12,fontWeight:700,color:'#30D158',letterSpacing:'.06em',textTransform:'uppercase',marginBottom:4 }}>All 7 tools, every month</div>
                   <div style={{ fontSize:19,fontWeight:700,color:'#fff',letterSpacing:'-.4px',marginBottom:2 }}>$49/month</div>
