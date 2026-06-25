@@ -30,7 +30,7 @@ export default function AdminPage() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState<'overview' | 'orders' | 'leads' | 'resellers' | 'costs'>('overview')
+  const [tab, setTab] = useState<'overview' | 'orders' | 'leads' | 'resellers' | 'costs' | 'grow'>('overview')
 
   async function load(s = secret) {
     setLoading(true); setError('')
@@ -73,6 +73,7 @@ export default function AdminPage() {
   const content = data?.content || {}
   const resellers = data?.resellers || []
   const costs = data?.costs || {}
+  const grow = data?.grow || {}
 
   // Source breakdown from leads
   const sourceMap: Record<string, number> = {}
@@ -82,7 +83,7 @@ export default function AdminPage() {
   }
   const topSources = Object.entries(sourceMap).sort((a, b) => b[1] - a[1])
 
-  const TABS = ['overview', 'orders', 'leads', 'resellers', 'costs'] as const
+  const TABS = ['overview', 'orders', 'leads', 'resellers', 'costs', 'grow'] as const
 
   return (
     <div style={{ minHeight: '100vh', background: '#F2F2F7', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
@@ -283,6 +284,54 @@ export default function AdminPage() {
                 </div>
             }
           </Section>
+        )}
+
+        {/* Grow */}
+        {tab === 'grow' && (
+          <>
+            <Section title="Grow subscribers">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+                <StatCard label="Total in Grow" value={String(grow.totalSubscribers || 0)} sub="delivery list" />
+                <StatCard label="Paid subscribers" value={String(grow.paidSubscribers || 0)} sub="$49/mo active" color="#30D158" />
+                <StatCard label="Sites deployed" value={String(grow.deploys || 0)} />
+              </div>
+            </Section>
+            <Section title="Subscriber profiles">
+              <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '0.5px solid rgba(0,0,0,.08)' }}>
+                      {['Email', 'Business', 'Type', 'Location', 'Source', 'Plan', 'Updated'].map(h => (
+                        <th key={h} style={{ padding: '12px 16px', fontSize: 12, fontWeight: 600, color: '#6E6E73', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(grow.profiles || []).map((p: any, i: number) => (
+                      <tr key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,.04)' }}>
+                        <td style={{ padding: '12px 16px', fontSize: 14, color: '#1D1D1F', fontWeight: 500 }}>{p.email}</td>
+                        <td style={{ padding: '12px 16px', fontSize: 13, color: '#3C3C43' }}>{p.business || '—'}</td>
+                        <td style={{ padding: '12px 16px', fontSize: 13, color: '#6E6E73' }}>{p.businessType || '—'}</td>
+                        <td style={{ padding: '12px 16px', fontSize: 13, color: '#6E6E73' }}>{p.location || '—'}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{ background: '#F2F2F7', borderRadius: 6, padding: '3px 8px', fontSize: 12, fontWeight: 600, color: '#1D1D1F' }}>{p.source || 'direct'}</span>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {p.paid
+                            ? <span style={{ background: '#E8F8EF', color: '#30D158', borderRadius: 6, padding: '3px 8px', fontSize: 12, fontWeight: 600 }}>Paid</span>
+                            : <span style={{ background: '#F2F2F7', color: '#6E6E73', borderRadius: 6, padding: '3px 8px', fontSize: 12, fontWeight: 600 }}>Free</span>}
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: 13, color: '#6E6E73' }}>{fmtDate(p.updatedAt)}</td>
+                      </tr>
+                    ))}
+                    {!(grow.profiles || []).length && (
+                      <tr><td colSpan={7} style={{ padding: '32px 16px', textAlign: 'center', color: '#AEAEB2', fontSize: 14 }}>No Grow subscribers yet</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Section>
+          </>
         )}
 
         {/* Costs */}

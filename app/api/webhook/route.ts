@@ -523,5 +523,24 @@ export async function POST(req: Request) {
     }
   }
 
+  if (event.type === 'customer.subscription.deleted') {
+    try {
+      const subscription = event.data.object as Stripe.Subscription
+      const customerId = subscription.customer as string
+      const customer = await stripe.customers.retrieve(customerId)
+      if (!customer.deleted) {
+        const email = (customer as Stripe.Customer).email?.toLowerCase()
+        const redis = getRedis()
+        if (email && redis) {
+          await redis.del('grow:subscriber:' + email)
+          await redis.srem('grow:delivery:subscribers', email)
+        }
+      }
+    } catch (e) {
+      console.error('subscription.deleted handler error', e)
+    }
+    return new Response('OK', { status: 200 })
+  }
+
   return new Response('OK', { status: 200 })
 }

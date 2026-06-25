@@ -57,6 +57,25 @@ export async function GET(req: Request) {
   // Sessions (active customers)
   const sessionKeys = await redis.keys('session:*')
 
+  // Grow subscribers
+  const growSubscribers: string[] = (await redis.smembers('grow:delivery:subscribers')) as string[]
+  const paidChecks = await Promise.all(
+    growSubscribers.map(email => redis.get('grow:subscriber:' + email))
+  )
+  const paidCount = paidChecks.filter(Boolean).length
+  const growProfilesRaw = await Promise.all(
+    growSubscribers.map(email => redis.get('grow:profile:' + email))
+  )
+  const growProfiles = growProfilesRaw
+    .map((raw, i) => {
+      if (!raw) return null
+      const p: any = typeof raw === 'string' ? JSON.parse(raw) : raw
+      return { ...p, email: p.email || growSubscribers[i], paid: !!paidChecks[i] }
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => (b.updatedAt || 0) - (a.updatedAt || 0))
+    .slice(0, 50)
+
   // Deploys
   const deploys = Number(await redis.get('stats:deploys')) || 0
 
@@ -89,6 +108,12 @@ export async function GET(req: Request) {
   const estimatedProfit = totalRevenue - estimatedTotalCost
 
   return Response.json({
+    grow: {
+      totalSubscribers: growSubscribers.length,
+      paidSubscribers: paidCount,
+      deploys,
+      profiles: growProfiles,
+    },
     overview: {
       totalRevenue,
       expressRevenue,
