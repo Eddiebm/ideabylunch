@@ -104,7 +104,28 @@ export default function DistributePage() {
   const [rawOutput, setRawOutput] = useState('')
   const [parsed, setParsed] = useState<ParsedSection | null>(null)
   const [error, setError] = useState('')
+  const [scheduling, setScheduling] = useState(false)
+  const [scheduled, setScheduled] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+
+  async function scheduleAll() {
+    if (!email.includes('@')) { alert('Enter your email above to schedule hooks.'); return }
+    if (!parsed?.hooks.length) return
+    setScheduling(true)
+    try {
+      const res = await fetch('/api/distribute/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, idea, hooks: parsed.hooks }),
+      })
+      if (res.ok) {
+        setScheduled(true)
+        localStorage.setItem('i2l_distribute_email', email)
+      }
+    } finally {
+      setScheduling(false)
+    }
+  }
 
   async function generate(overrideEmail?: string) {
     const activeEmail = overrideEmail || email
@@ -364,6 +385,33 @@ export default function DistributePage() {
                     </div>
                   )
                 })}
+              </div>
+            )}
+
+            {/* Schedule All */}
+            {!scheduled ? (
+              <div style={{ background: '#1D1D1F', borderRadius: 16, padding: 24, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Automate this — schedule all 20 hooks</div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,.6)' }}>One hook lands in your email every day for 20 days. Click to post, or post directly on X.</div>
+                </div>
+                <button
+                  onClick={scheduleAll}
+                  disabled={scheduling}
+                  style={{ background: '#0071E3', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 22px', fontSize: 14, fontWeight: 600, cursor: scheduling ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
+                >
+                  {scheduling ? 'Scheduling…' : 'Schedule all 20 →'}
+                </button>
+              </div>
+            ) : (
+              <div style={{ background: '#30D158', borderRadius: 16, padding: 20, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Scheduled — starts tomorrow at noon</div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,.85)' }}>You'll get one hook per day by email for 20 days.</div>
+                </div>
+                <a href={`/distribute/queue?email=${encodeURIComponent(email)}`} style={{ background: 'rgba(255,255,255,.2)', color: '#fff', textDecoration: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  View queue →
+                </a>
               </div>
             )}
 
