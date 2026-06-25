@@ -237,7 +237,7 @@ export default async function AuditResultsPage({ params }: { params: Promise<{ s
               kind: 'rebuild-stack',
               eyebrow: `${stackLabel.toUpperCase()} DETECTED`,
               h2: 'The patches won\'t apply to your stack.',
-              body: `Your site is on ${stackLabel}. Our $49 ship-the-rewrite is Next.js-specific. The fix that actually moves your score: rebuild on Vercel. We do it from the brief above — live in 48 hours, you own the code, the domain, everything.`,
+              body: `Your site is on ${stackLabel}. Our $49 ship-the-rewrite is Next.js-specific. The fix that actually moves your score: rebuild on Vercel. We do it from the brief above — live in 4 hours, you own the code, the domain, everything.`,
               ctaLabel: 'Rebuild on Vercel — from $299',
               ctaHref: '/app',
               accent: '#FF6B35',

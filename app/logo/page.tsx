@@ -33,7 +33,7 @@ export default function LogoPage() {
     }
   }
 
-  const price = tier === 'pro' ? '$199' : '$99'
+  const price = tier === 'pro' ? '$49' : '$19'
   const priceEnvKey = tier === 'pro' ? 'STRIPE_LOGO_PRO_PAYMENT_LINK' : 'STRIPE_LOGO_STARTER_PAYMENT_LINK'
 
   return (
@@ -43,7 +43,7 @@ export default function LogoPage() {
         <a href="/" style={{ fontSize: 14, color: '#6E6E73', display: 'inline-block', marginBottom: 32 }}>← Back</a>
 
         <h1 style={{ fontSize: 34, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', marginBottom: 8 }}>Logo Generator</h1>
-        <p style={{ fontSize: 17, color: '#6E6E73', marginBottom: 40 }}>3 AI-generated logo concepts. Preview free, download after payment.</p>
+        <p style={{ fontSize: 17, color: '#6E6E73', marginBottom: 40 }}>3 AI-generated logo concepts. Free to generate and download.</p>
 
         {/* Tier picker */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
@@ -108,22 +108,23 @@ export default function LogoPage() {
             <p style={{ fontSize: 13, fontWeight: 500, color: '#6E6E73', marginBottom: 20, textTransform: 'uppercase', letterSpacing: '.5px' }}>Your 3 concepts</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 28 }}>
               {result.urls.map((url, i) => (
-                <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #F2F2F7', aspectRatio: '1', background: '#FAFAFA' }}>
-                  <img src={url} alt={`Logo concept ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 8 }} />
+                <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
+                  <div style={{ aspectRatio: '1' }}>
+                    <img src={url} alt={`Logo concept ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 8 }} />
+                  </div>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'block', textAlign: 'center', padding: '10px 0', fontSize: 13, fontWeight: 600, color: '#1D1D1F', textDecoration: 'none', borderTop: '1px solid #F2F2F7' }}
+                  >
+                    Download →
+                  </a>
                 </div>
               ))}
             </div>
-            <div style={{ padding: 20, background: '#F2F2F7', borderRadius: 12, textAlign: 'center' }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', marginBottom: 4 }}>Download your logos</p>
-              <p style={{ fontSize: 13, color: '#6E6E73', marginBottom: 16 }}>
-                {tier === 'pro' ? 'SVG + PNG + favicon + social variants' : 'High-res PNG files, transparent background'}
-              </p>
-              <a
-                href={`/api/logo/checkout?key=${result.cacheKey}&tier=${tier}`}
-                style={{ display: 'inline-block', background: '#1D1D1F', color: '#fff', borderRadius: 10, padding: '11px 28px', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
-              >
-                Download — {price}
-              </a>
+            <div style={{ padding: 16, background: '#F2F2F7', borderRadius: 12, textAlign: 'center' }}>
+              <p style={{ fontSize: 13, color: '#6E6E73', margin: 0 }}>Click any logo to open full resolution — right-click to save.</p>
             </div>
           </div>
         )}

@@ -119,7 +119,7 @@ export default function TermsPage() {
 
             <Section id="timeline" title="2. Delivery timeline">
               <p>The delivery clock starts when your payment is confirmed — not when you submit your idea.</p>
-              <Rule><strong>Launch:</strong> delivered within 48 business hours.</Rule>
+              <Rule><strong>Launch:</strong> delivered within 4 hours.</Rule>
               <Rule><strong>Full Product:</strong> delivered within 72 business hours.</Rule>
               <Rule>Business hours: Monday–Friday, 06:00–22:00 GMT.</Rule>
               <Rule>The clock pauses if we are waiting on information from you (domain name, brand colours, account credentials).</Rule>

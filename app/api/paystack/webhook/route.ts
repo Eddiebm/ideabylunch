@@ -1,4 +1,5 @@
-export const runtime = 'edge'
+// Node.js runtime required — generates website HTML via OpenAI and deploys to Vercel (60-120s)
+export const maxDuration = 300
 
 import { Redis } from '@upstash/redis'
 import { Resend } from 'resend'

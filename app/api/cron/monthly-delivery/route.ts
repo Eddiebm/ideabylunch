@@ -1,4 +1,5 @@
-export const runtime = 'edge'
+// Node.js runtime required — generates marketing kit via OpenAI per subscriber (60s+ per call)
+export const maxDuration = 300
 import { getRedis } from '@/app/lib/redis'
 import { Resend } from 'resend'
 import OpenAI from 'openai'

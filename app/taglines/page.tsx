@@ -37,7 +37,7 @@ export default function TaglinesPage() {
         <a href="/" style={{ fontSize: 14, color: '#6E6E73', display: 'inline-block', marginBottom: 32 }}>← Back</a>
 
         <h1 style={{ fontSize: 34, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.5px', marginBottom: 8 }}>Tagline Generator</h1>
-        <p style={{ fontSize: 17, color: '#6E6E73', marginBottom: 40 }}>Get 3 free taglines. Unlock all 10 for $29.</p>
+        <p style={{ fontSize: 17, color: '#6E6E73', marginBottom: 40 }}>Get 3 free taglines. Unlock all 10 for $9.</p>
 
         <div style={{ background: '#fff', borderRadius: 16, padding: 28, marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,.08)' }}>
           <div style={{ marginBottom: 16 }}>

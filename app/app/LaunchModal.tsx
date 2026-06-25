@@ -2,7 +2,7 @@
 import { useState } from 'react'
 
 const PLANS = [
-  { id: 'launch', name: 'Launch', price: '$299', desc: 'Built and deployed in 48 hours.', features: ['Complete product brief', 'Full codebase', 'Deployed to Vercel', 'GitHub repo'] },
+  { id: 'launch', name: 'Launch', price: '$299', desc: 'Built and deployed in 4 hours.', features: ['Complete product brief', 'Full codebase', 'Deployed to Vercel', 'GitHub repo'] },
   { id: 'design', name: 'Launch + Design', price: '$699', desc: 'Built, designed, and polished.', features: ['Everything in Launch', 'Custom design system', 'Branded landing page', 'Figma file'], featured: true },
   { id: 'full', name: 'Full Product', price: '$1,499', desc: 'Complete SaaS, ready to charge.', features: ['Everything in Launch + Design', 'Auth (Clerk)', 'Stripe payments', 'Database (Supabase)'] },
 ]

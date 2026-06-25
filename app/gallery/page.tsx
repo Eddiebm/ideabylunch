@@ -41,7 +41,9 @@ async function getGallerySites(): Promise<SiteCard[]> {
         })
       }
     }
-    return sites.sort((a, b) => b.deployedAt - a.deployedAt)
+    return sites
+      .filter(s => !s.liveUrl.includes('.vercel.app'))
+      .sort((a, b) => b.deployedAt - a.deployedAt)
   } catch { return [] }
 }
 
@@ -53,13 +55,13 @@ export default async function GalleryPage() {
       <style>{`* { box-sizing: border-box; } body { margin: 0; background: #F2F2F7; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }`}</style>
       <nav style={{ background: '#fff', borderBottom: '0.5px solid rgba(0,0,0,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <a href="/" style={{ fontSize: 17, fontWeight: 600, color: '#1D1D1F', textDecoration: 'none' }}>IdeaByLunch</a>
-        <a href="/app" style={{ background: '#0066CC', color: '#fff', borderRadius: 8, padding: '7px 16px', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>Build my site →</a>
+        <a href="/app" style={{ background: '#0066CC', color: '#fff', borderRadius: 8, padding: '7px 16px', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>Get your free brief →</a>
       </nav>
 
       <div style={{ maxWidth: 980, margin: '0 auto', padding: '48px 24px 80px' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h1 style={{ fontSize: 40, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1.5px', margin: '0 0 12px' }}>Sites built with IdeaByLunch</h1>
-          <p style={{ fontSize: 17, color: '#6E6E73', margin: 0 }}>{sites.length} live sites and counting — yours could be next.</p>
+          <h1 style={{ fontSize: 40, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1.5px', margin: '0 0 12px' }}>Founders launched with IdeaByLunch</h1>
+          <p style={{ fontSize: 17, color: '#6E6E73', margin: 0 }}>{sites.length} live {sites.length === 1 ? 'business' : 'businesses'} and counting — yours could be next.</p>
         </div>
 
         {sites.length === 0 ? (
@@ -102,8 +104,8 @@ export default async function GalleryPage() {
         )}
 
         <div style={{ textAlign: 'center', marginTop: 60, padding: '40px 32px', background: '#fff', borderRadius: 20, boxShadow: '0 1px 3px rgba(0,0,0,.08)' }}>
-          <h2 style={{ fontSize: 28, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1px', margin: '0 0 12px' }}>Ready to join them?</h2>
-          <p style={{ fontSize: 15, color: '#6E6E73', margin: '0 0 24px' }}>Your professional site, live in 48 hours. Starts at $149.</p>
+          <h2 style={{ fontSize: 28, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1px', margin: '0 0 12px' }}>Ready to become a founder?</h2>
+          <p style={{ fontSize: 15, color: '#6E6E73', margin: '0 0 24px' }}>Your professional site, live in 4 hours. Starts at $149.</p>
           <a href="/app" style={{ background: '#0066CC', color: '#fff', borderRadius: 12, padding: '14px 32px', fontSize: 17, fontWeight: 600, textDecoration: 'none' }}>Build my site — free brief →</a>
         </div>
       </div>

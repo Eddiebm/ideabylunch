@@ -83,7 +83,7 @@ const NICHES: Record<string, Niche> = {
     kind: 'smb',
     title: 'Plumber Websites | IdeaByLunch',
     headline: 'Get more plumbing jobs with a professional website.',
-    sub: 'A fast, mobile-friendly site that shows up when local customers search for a plumber. Live in 48 hours.',
+    sub: 'A fast, mobile-friendly site that shows up when local customers search for a plumber. Live in 4 hours.',
     examples: ['Emergency plumber in Atlanta', 'Residential plumber in Houston', 'Commercial plumbing in Phoenix'],
   },
   electrician: {
@@ -94,19 +94,19 @@ const NICHES: Record<string, Niche> = {
   },
   salon: {
     title: 'Hair Salon Websites | IdeaByLunch',
-    headline: 'Professional websites for hair salons — live in 48 hours.',
+    headline: 'Professional websites for hair salons — live in 4 hours.',
     sub: 'Attract more clients with a booking-ready website built for your salon. No tech skills needed.',
     examples: ['Hair salon in Atlanta', 'Barbershop in Houston', 'Beauty studio in Phoenix'],
   },
   barber: {
     title: 'Barber Shop Websites | IdeaByLunch',
-    headline: 'A sharp website for your barbershop — ready in 48 hours.',
+    headline: 'A sharp website for your barbershop — ready in 4 hours.',
     sub: 'Let clients book online, see your work, and find your shop. More chairs filled.',
     examples: ['Barbershop in Atlanta', 'Fade specialists in Houston', 'Classic barber in Phoenix'],
   },
   restaurant: {
     title: 'Restaurant Websites | IdeaByLunch',
-    headline: 'A beautiful menu website for your restaurant — ready in 48 hours.',
+    headline: 'A beautiful menu website for your restaurant — ready in 4 hours.',
     sub: 'Show your menu, location, and hours. Drive walk-ins and online orders.',
     examples: ['BBQ restaurant in Atlanta', 'Tex-Mex in Houston', 'Pizza place in Phoenix'],
   },
@@ -148,7 +148,7 @@ const NICHES: Record<string, Niche> = {
   },
   cafe: {
     title: 'Cafe & Coffee Shop Websites | IdeaByLunch',
-    headline: 'A beautiful website for your cafe — live in 48 hours.',
+    headline: 'A beautiful website for your cafe — live in 4 hours.',
     sub: 'Show your menu, hours, and vibe. Get found by local coffee lovers.',
     examples: ['Coffee shop in Atlanta', 'Bakery cafe in Houston', 'Espresso bar in Phoenix'],
   },
@@ -156,7 +156,7 @@ const NICHES: Record<string, Niche> = {
 
 const DEFAULT = {
   title: 'Professional Business Websites | IdeaByLunch',
-  headline: 'A professional website for your business — live in 48 hours.',
+  headline: 'A professional website for your business — live in 4 hours.',
   sub: 'IdeaByLunch builds fast, mobile-ready websites for local businesses. Starting at $299.',
   examples: ['Local service businesses', 'Restaurants and cafes', 'Tradespeople and contractors'],
 }
@@ -213,7 +213,7 @@ export default async function NichePage({ params }: { params: Promise<{ slug: st
             {[
               { n: '1', h: 'Describe your business', b: 'Tell us your name, location, and services in plain English. Takes 60 seconds.' },
               { n: '2', h: 'We build it', b: 'We build a professional site tailored to your industry. You own everything.' },
-              { n: '3', h: 'Go live in 48 hours', b: 'Your site is live within 48 hours. No agency, no waiting, no DIY.' },
+              { n: '3', h: 'Go live in 4 hours', b: 'Your site is live within 4 hours. No agency, no waiting, no DIY.' },
             ].map(({ n, h, b }) => (
               <div key={n}>
                 <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#0066CC', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, marginBottom: 10 }}>{n}</div>

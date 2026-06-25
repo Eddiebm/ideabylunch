@@ -66,7 +66,7 @@ export default async function OG() {
             fully cooked.
           </div>
           <div style={{ fontSize: 32, color: '#3a2e1a', maxWidth: 900, marginTop: 16, lineHeight: 1.3 }}>
-            Brief in 60 seconds. Live product in 48 hours.
+            Brief in 60 seconds. Live product in 4 hours.
           </div>
         </div>
 
