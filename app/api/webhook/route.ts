@@ -395,6 +395,11 @@ export async function POST(req: Request) {
           subject: `💰 Grow subscriber — $49/mo — ${customerEmail}`,
           html: `<p><strong>${customerEmail}</strong> subscribed to Grow ($49/mo).</p>`,
         }).catch(() => {})
+        // Trigger Grow email sequence
+        if (redis && customerEmail) {
+          await redis.set(`seq:grow:${customerEmail.toLowerCase()}`, Date.now(), { ex: 60 * 60 * 24 * 30 })
+          await redis.sadd('seq:grow:active', customerEmail.toLowerCase())
+        }
         return new Response('OK', { status: 200 })
       }
       const raw = redis ? await redis.get(`order:${session.id}`) : null
@@ -494,6 +499,12 @@ export async function POST(req: Request) {
         })
       }
 
+      // Trigger website buyer email sequence
+      if (redis && customerEmail) {
+        await redis.set(`seq:website:${customerEmail.toLowerCase()}`, Date.now(), { ex: 60 * 60 * 24 * 30 })
+        await redis.sadd('seq:website:active', customerEmail.toLowerCase())
+      }
+
       // Auto-create Grow profile from website brief (only if no profile exists yet)
       if (redis && customerEmail && brief) {
         const profileKey = `grow:profile:${customerEmail.toLowerCase()}`
@@ -515,6 +526,19 @@ export async function POST(req: Request) {
       }
     } catch (e) {
       console.error('webhook handler error', e)
+      // Store error in Redis for admin dashboard visibility
+      try {
+        const redis2 = getRedis()
+        if (redis2) {
+          await redis2.lpush('errors:webhook', JSON.stringify({
+            time: Date.now(),
+            eventId: event?.id || 'unknown',
+            eventType: event?.type || 'unknown',
+            error: String(e).slice(0, 500),
+          }))
+          await redis2.ltrim('errors:webhook', 0, 49)
+        }
+      } catch {}
       // Always email admin on failure so money never lands silently
       try {
         await resend.emails.send({

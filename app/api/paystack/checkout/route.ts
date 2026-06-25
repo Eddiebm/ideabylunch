@@ -11,11 +11,14 @@ function getRedis() {
 
 type Body = {
   email: string
+  brief?: string
   productName?: string
   selectedStyle?: string
   selectedHtml?: string
   whatsapp?: string
   ref?: string
+  tier?: string
+  extraPages?: number
 }
 
 export async function POST(req: Request) {
@@ -81,9 +84,13 @@ export async function POST(req: Request) {
           currency: 'GHS',
           amount,
           productName: body.productName || '',
+          brief: body.brief || '',
           selectedStyle: body.selectedStyle || '',
           selectedHtml: body.selectedHtml || '',
+          plan: body.tier || 'starter',
+          extraPages: body.extraPages || 0,
           contact: { email: body.email, whatsapp: body.whatsapp || '' },
+          ref: body.ref || '',
           createdAt: Date.now(),
           status: 'pending',
         }),

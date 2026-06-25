@@ -79,6 +79,12 @@ export async function GET(req: Request) {
   // Deploys
   const deploys = Number(await redis.get('stats:deploys')) || 0
 
+  // Webhook errors (last 50)
+  const errorItems = await redis.lrange('errors:webhook', 0, 49)
+  const webhookErrors = errorItems.map((raw: any) => {
+    try { return typeof raw === 'string' ? JSON.parse(raw) : raw } catch { return null }
+  }).filter(Boolean)
+
   // Weekly edits per customer (Pro vs free usage)
   const editKeys = await redis.keys('edits:*')
   const totalEdits = editKeys.length
@@ -157,6 +163,7 @@ export async function GET(req: Request) {
       totalEdits,
     },
     resellers,
+    webhookErrors,
     costs: {
       aiPerBrief: 0.003,
       estimatedMonthlyCost: estimatedTotalCost,

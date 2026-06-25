@@ -119,6 +119,8 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
   const [express, setExpress] = useState(false)
   const [email, setEmail] = useState(userEmail || '')
   const [error, setError] = useState('')
+  const [extraPages, setExtraPages] = useState(0)
+  const [showCustomize, setShowCustomize] = useState(false)
 
   const isPaystack = marketCode === 'GH' || marketCode === 'NG'
   const stripeRow = STRIPE_MARKET_AMOUNTS[marketCode]
@@ -140,6 +142,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
   const exp = USD_EXPRESS[selected]
   const delivery = showExpress && express ? exp.delivery : DELIVERY[selected]
   const disabled = loading || (isPaystack && !email.trim())
+  const addOnTotal = extraPages * 50
 
   const handleCheckout = async () => {
     if (isPaystack && !email.trim()) { setError('Email is required to checkout'); return }
@@ -150,7 +153,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
         const res = await fetch('/api/paystack/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), country: marketCode, tier: selected, ...(affiliateRef ? { ref: affiliateRef } : {}) }),
+          body: JSON.stringify({ email: email.trim(), brief, country: marketCode, tier: selected, ...(selectedHtml ? { selectedHtml } : {}), ...(addOnTotal > 0 ? { extraPages } : {}), ...(affiliateRef ? { ref: affiliateRef } : {}) }),
         })
         const data = await res.json()
         if (data.url) window.location.href = data.url
@@ -217,6 +220,23 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
             </button>
           )}
 
+          {/* Extra pages add-on */}
+          <div style={{ marginBottom: 16 }}>
+            <button onClick={() => setShowCustomize(c => !c)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#0066CC', fontWeight: 500, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+              {showCustomize ? '▾' : '▸'} Add extra pages {extraPages > 0 && <span style={{ background: '#E3F2FD', color: '#0066CC', borderRadius: 6, padding: '2px 7px', fontWeight: 600 }}>+{extraPages} pages (+${addOnTotal})</span>}
+            </button>
+            {showCustomize && (
+              <div style={{ marginTop: 12, padding: '14px 16px', background: 'rgba(0,102,204,.04)', borderRadius: 10, border: '1px solid rgba(0,102,204,.12)' }}>
+                <div style={{ fontSize: 13, color: '#1D1D1F', marginBottom: 8, fontWeight: 500 }}>Extra pages — $50 each</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <input type="range" min={0} max={10} value={extraPages} onChange={e => setExtraPages(Number(e.target.value))} style={{ flex: 1 }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', minWidth: 20 }}>{extraPages}</span>
+                </div>
+                {extraPages > 0 && <div style={{ fontSize: 12, color: '#6E6E73', marginTop: 6 }}>+${addOnTotal} added to your order</div>}
+              </div>
+            )}
+          </div>
+
           {/* Features */}
           <div style={{ background: 'rgba(0,0,0,.03)', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -261,7 +281,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
         {/* Footer */}
         <div style={{ padding: '0 40px 36px' }}>
           <button onClick={handleCheckout} disabled={disabled} style={{ width: '100%', background: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 17, fontWeight: 600, letterSpacing: '-.2px', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? .7 : 1, transition: 'all .2s', marginBottom: 10 }}>
-            {loading ? 'Redirecting…' : `${activePlan.name}${showExpress && express ? ' + Express' : ''} — ${activePlan.price} →`}
+            {loading ? 'Redirecting…' : `${activePlan.name}${showExpress && express ? ' + Express' : ''} — ${activePlan.price}${addOnTotal > 0 ? ` + $${addOnTotal}` : ''} →`}
           </button>
           <p style={{ textAlign: 'center' as const, fontSize: 12, color: '#6E6E73', margin: 0 }}>
             {isPaystack
@@ -728,8 +748,6 @@ export default function BriefGenerator() {
             onDesignSelected={(style, html) => setSelectedDesign({ style, html })}
           />
 
-          {/* Calculator + 3 Previews + Pay */}
-          <BuildFlow brief={output} productName={productName || 'Your Product'} isDone={isDone} />
 
           {/* Photography */}
           {isDone && (
