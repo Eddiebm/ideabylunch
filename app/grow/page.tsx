@@ -125,6 +125,7 @@ export default function GrowPage() {
   const [streaming, setStreaming] = useState(false)
   const [showEmailGate, setShowEmailGate] = useState(false)
   const [error, setError] = useState('')
+  const [subscribed, setSubscribed] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -132,6 +133,10 @@ export default function GrowPage() {
     if (saved) {
       setEmail(saved)
       loadProfile(saved)
+    }
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('subscribed') === 'true') {
+      setSubscribed(true)
+      window.history.replaceState({}, '', '/grow')
     }
   }, [])
 
@@ -287,6 +292,17 @@ export default function GrowPage() {
             AI-written content and documents for every part of running a small business — ready in under 2 minutes.
           </p>
         </div>
+
+        {/* Subscribed success banner */}
+        {subscribed && (
+          <div style={{ background:'#30D158',borderRadius:14,padding:'14px 20px',marginBottom:16,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12 }}>
+            <div>
+              <div style={{ fontWeight:700,color:'#fff',fontSize:15 }}>You're in — welcome to Grow.</div>
+              <div style={{ fontSize:13,color:'rgba(255,255,255,.85)',marginTop:2 }}>All 7 tools are now unlimited. Your first kit lands in your inbox on the 1st.</div>
+            </div>
+            <button onClick={() => setSubscribed(false)} style={{ background:'none',border:'none',color:'rgba(255,255,255,.7)',fontSize:20,cursor:'pointer',lineHeight:1,padding:0 }}>×</button>
+          </div>
+        )}
 
         {/* Profile bar */}
         <div style={{ background:'#fff',borderRadius:14,padding:'14px 18px',boxShadow:'0 1px 3px rgba(0,0,0,.06)',marginBottom:20,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap' }}>

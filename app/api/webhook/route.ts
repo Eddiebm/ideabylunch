@@ -323,6 +323,48 @@ export async function POST(req: Request) {
     try {
       const session = event.data.object as Stripe.Checkout.Session
       const redis = getRedis()
+
+      // Grow subscription — handled separately from website builds
+      if (session.metadata?.source === 'grow') {
+        const customerEmail = session.customer_details?.email
+        const refCode = session.metadata?.ref
+        if (customerEmail && redis) {
+          await redis.set(`grow:subscriber:${customerEmail.toLowerCase()}`, '1')
+          await redis.sadd('grow:delivery:subscribers', customerEmail.toLowerCase())
+          // Track referral
+          if (refCode) {
+            const referrerEmail = await redis.get(`refer:code:${refCode}`)
+            if (referrerEmail && String(referrerEmail) !== customerEmail) {
+              const alreadyUsed = await redis.get(`refer:used:${customerEmail}`)
+              if (!alreadyUsed) {
+                await redis.set(`refer:used:${customerEmail}`, refCode)
+                await redis.incr(`refer:conversions:${String(referrerEmail)}`)
+                await redis.incr(`reseller:sales:${refCode}`)
+                await redis.incrby(`reseller:revenue:${refCode}`, session.amount_total || 0)
+              }
+            }
+          }
+        }
+        // Welcome email
+        await resend.emails.send({
+          from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
+          to: customerEmail!,
+          subject: 'Welcome to IdeaByLunch Grow — you\'re all set',
+          html: `<div style="font-family:-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px">
+            <h1 style="font-size:24px;margin-bottom:8px">You\'re in.</h1>
+            <p style="color:#3C3C43">All 7 Grow tools are now unlimited for you. Your first monthly kit lands in your inbox on the 1st.</p>
+            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'}/grow" style="background:#000;color:#fff;padding:11px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Go to Grow →</a></p>
+          </div>`,
+        }).catch(() => {})
+        // Admin alert
+        await resend.emails.send({
+          from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
+          to: process.env.ADMIN_EMAIL || 'eddie@bannermanmenson.com',
+          subject: `💰 Grow subscriber — $49/mo — ${customerEmail}`,
+          html: `<p><strong>${customerEmail}</strong> subscribed to Grow ($49/mo).</p>`,
+        }).catch(() => {})
+        return new Response('OK', { status: 200 })
+      }
       const raw = redis ? await redis.get(`order:${session.id}`) : null
       const order: any = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null
 

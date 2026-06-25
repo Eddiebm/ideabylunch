@@ -340,6 +340,12 @@ export async function POST(req: NextRequest) {
     if (sessionEmail) return streamResponse(systemPrompt, buildUserMessage(tool, fields))
   }
 
+  // Grow subscribers get unlimited
+  if (redis && bodyEmail) {
+    const isSubscriber = await redis.get(`grow:subscriber:${bodyEmail.toLowerCase()}`)
+    if (isSubscriber) return streamResponse(systemPrompt, buildUserMessage(tool, fields))
+  }
+
   let extraHeaders: Record<string, string> = {}
 
   if (redis) {
