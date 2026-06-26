@@ -212,6 +212,32 @@ export default function DistributePage() {
   const [scheduled, setScheduled] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
+  type VideoState = { status: 'idle' | 'generating' | 'done' | 'error'; renderId?: string; url?: string; error?: string }
+  const [videoStates, setVideoStates] = useState<Record<number, VideoState>>({})
+
+  async function generateVideo(idx: number, s: VideoScript) {
+    setVideoStates(prev => ({ ...prev, [idx]: { status: 'generating' } }))
+    try {
+      const res = await fetch('/api/generate/tiktok', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hook: s.hook, body: s.body, cta: s.cta, caption: s.caption }),
+      })
+      const data = await res.json()
+      if (data.error) { setVideoStates(prev => ({ ...prev, [idx]: { status: 'error', error: data.error } })); return }
+      const renderId = data.renderId
+      setVideoStates(prev => ({ ...prev, [idx]: { status: 'generating', renderId } }))
+      const poll = setInterval(async () => {
+        const r = await fetch(`/api/generate/tiktok/status?id=${renderId}`)
+        const d = await r.json()
+        if (d.status === 'succeeded') { clearInterval(poll); setVideoStates(prev => ({ ...prev, [idx]: { status: 'done', url: d.url } })) }
+        else if (d.status === 'failed') { clearInterval(poll); setVideoStates(prev => ({ ...prev, [idx]: { status: 'error', error: d.error || 'Render failed' } })) }
+      }, 3000)
+    } catch (err) {
+      setVideoStates(prev => ({ ...prev, [idx]: { status: 'error', error: String(err) } }))
+    }
+  }
+
   async function scheduleAll() {
     if (!email.includes('@')) { alert('Enter your email above to schedule hooks.'); return }
     if (!parsed?.hooks.length) return
@@ -523,8 +549,42 @@ export default function DistributePage() {
                       </div>
                     ))}
                     <div style={{ borderTop: '0.5px solid rgba(255,255,255,.08)', paddingTop: 12, marginTop: 4 }}>
-                      <CopyButton size="md" text={[s.hook && `HOOK: ${s.hook}`, s.body && `BODY: ${s.body}`, s.cta && `CTA: ${s.cta}`, s.caption && `CAPTION: ${s.caption}`].filter(Boolean).join('\n\n')} />
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,.25)', marginLeft: 8 }}>Copy full script</span>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+                        <CopyButton size="md" text={[s.hook && `HOOK: ${s.hook}`, s.body && `BODY: ${s.body}`, s.cta && `CTA: ${s.cta}`, s.caption && `CAPTION: ${s.caption}`].filter(Boolean).join('\n\n')} />
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,.25)' }}>Copy full script</span>
+                      </div>
+                      {(() => {
+                        const vs = videoStates[i] || { status: 'idle' }
+                        if (vs.status === 'idle') return (
+                          <button onClick={() => generateVideo(i, s)} style={{ background: '#FF0050', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            🎬 Generate TikTok video
+                          </button>
+                        )
+                        if (vs.status === 'generating') return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,0,80,.08)', border: '0.5px solid rgba(255,0,80,.2)', borderRadius: 8, padding: '10px 14px' }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF0050', animation: 'pulse 1.2s ease infinite' }} />
+                            <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)' }}>Rendering video… ~30–60 seconds</span>
+                            {vs.renderId && <span style={{ fontSize: 10, color: 'rgba(255,255,255,.2)', marginLeft: 'auto' }}>{vs.renderId.slice(0, 8)}</span>}
+                          </div>
+                        )
+                        if (vs.status === 'done' && vs.url) return (
+                          <div>
+                            <video src={vs.url} controls playsInline style={{ width: '100%', maxWidth: 280, borderRadius: 10, marginBottom: 10, display: 'block' }} />
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              <a href={vs.url} download="tiktok-video.mp4" style={{ background: '#FF0050', color: '#fff', textDecoration: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 12, fontWeight: 600 }}>Download MP4</a>
+                              <a href="https://www.tiktok.com/upload" target="_blank" rel="noopener noreferrer" style={{ background: 'rgba(255,255,255,.1)', color: '#fff', textDecoration: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 12, fontWeight: 600 }}>Post to TikTok ↗</a>
+                              <button onClick={() => generateVideo(i, s)} style={{ background: 'none', border: '0.5px solid rgba(255,255,255,.2)', color: 'rgba(255,255,255,.5)', borderRadius: 8, padding: '7px 14px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Regenerate</button>
+                            </div>
+                          </div>
+                        )
+                        if (vs.status === 'error') return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,55,95,.08)', border: '0.5px solid rgba(255,55,95,.2)', borderRadius: 8, padding: '10px 14px' }}>
+                            <span style={{ fontSize: 12, color: '#FF375F', flex: 1 }}>{vs.error || 'Generation failed'}</span>
+                            <button onClick={() => generateVideo(i, s)} style={{ background: '#FF375F', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>Retry</button>
+                          </div>
+                        )
+                        return null
+                      })()}
                     </div>
                   </div>
                 ))}
