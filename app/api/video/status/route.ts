@@ -3,9 +3,11 @@ import { put } from '@vercel/blob'
 import { Resend } from 'resend'
 import { getRedis } from '@/app/lib/redis'
 
-async function persistToBlob(piapiUrl: string, taskId: string): Promise<string | null> {
+const FAL_MODEL = 'fal-ai/kling-video/v1.6/standard/text-to-video'
+
+async function persistToBlob(videoUrl: string, taskId: string): Promise<string | null> {
   try {
-    const videoRes = await fetch(piapiUrl)
+    const videoRes = await fetch(videoUrl)
     if (!videoRes.ok) return null
     const blob = await put(`concepts/${taskId}.mp4`, videoRes.body!, {
       access: 'public',
@@ -46,57 +48,53 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const task_id = searchParams.get('task_id')
   if (!task_id) return Response.json({ error: 'task_id required' }, { status: 400 })
-  const apiKey = process.env.PIAPI_KEY
+  const apiKey = process.env.FAL_KEY
   if (!apiKey) return Response.json({ error: 'Not configured' }, { status: 503 })
 
   try {
-    // Fast path: already persisted
     const redis = getRedis()
     if (redis) {
       const cached = await redis.get<string>(`video:blob:${task_id}`)
       if (cached) return Response.json({ task_id, status: 'complete', video_url: cached })
     }
 
-    const res = await fetch(`https://api.piapi.ai/api/v1/task/${task_id}`, {
-      headers: { 'x-api-key': apiKey },
-    })
-    if (!res.ok) return Response.json({ error: `Poll failed: ${res.status}` }, { status: 502 })
-    const data = await res.json()
-    if (data.code !== 200) return Response.json({ error: 'Poll error' }, { status: 502 })
+    const statusRes = await fetch(
+      `https://queue.fal.run/${FAL_MODEL}/requests/${task_id}/status`,
+      { headers: { Authorization: `Key ${apiKey}` } },
+    )
+    if (!statusRes.ok) return Response.json({ error: `Poll failed: ${statusRes.status}` }, { status: 502 })
+    const { status: falStatus } = await statusRes.json() as { status: string }
 
-    const piStatus: string = data.data?.status
-
-    if (piStatus !== 'completed') {
-      const status = piStatus === 'failed' ? 'failed' : piStatus === 'processing' ? 'processing' : 'pending'
+    if (falStatus === 'FAILED') return Response.json({ task_id, status: 'failed', video_url: null })
+    if (falStatus !== 'COMPLETED') {
+      const status = falStatus === 'IN_PROGRESS' ? 'processing' : 'pending'
       return Response.json({ task_id, status, video_url: null })
     }
 
-    const piapiUrl: string | null = data.data?.output?.works?.[0]?.resource?.resource || null
-    if (!piapiUrl) return Response.json({ task_id, status: 'failed', video_url: null })
+    const resultRes = await fetch(
+      `https://queue.fal.run/${FAL_MODEL}/requests/${task_id}`,
+      { headers: { Authorization: `Key ${apiKey}` } },
+    )
+    if (!resultRes.ok) return Response.json({ task_id, status: 'failed', video_url: null })
+    const result = await resultRes.json() as { video?: { url: string } }
+    const falUrl = result.video?.url
+    if (!falUrl) return Response.json({ task_id, status: 'failed', video_url: null })
 
-    // Persist to Vercel Blob
     const blobUrl = process.env.BLOB_READ_WRITE_TOKEN
-      ? await persistToBlob(piapiUrl, task_id)
+      ? await persistToBlob(falUrl, task_id)
       : null
-    const video_url = blobUrl ?? piapiUrl
+    const video_url = blobUrl ?? falUrl
 
     if (redis) {
-      // Cache blob URL (or piapi URL if blob unavailable) for 1 year
       await redis.set(`video:blob:${task_id}`, video_url, { ex: 60 * 60 * 24 * 365 })
-
-      // Index by email for deploy-time lookup
       const email = await redis.get<string>(`video:email:${task_id}`)
       if (email) {
         await redis.set(`video:by_email:${email}`, video_url, { ex: 60 * 60 * 24 * 90 })
-
-        // Send notification email exactly once
         const alreadyNotified = await redis.set(`video:notified:${task_id}`, '1', {
           ex: 60 * 60 * 24 * 7,
-          nx: true, // only set if not exists — atomic dedup
+          nx: true,
         })
-        if (alreadyNotified) {
-          await sendVideoEmail(email, video_url).catch(() => {})
-        }
+        if (alreadyNotified) await sendVideoEmail(email, video_url).catch(() => {})
       }
     }
 
