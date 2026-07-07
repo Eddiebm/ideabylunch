@@ -87,8 +87,7 @@ export async function postBluesky(conn: BlueskyConn, text: string): Promise<bool
       },
     }),
   })
-  // Return updated refreshJwt so caller can persist it
-  return postRes.ok ? newRefresh : false
+  return postRes.ok
 }
 
 export async function postTwitter(conn: TwitterConn, text: string, clientId: string, clientSecret: string): Promise<{ ok: boolean; newTokens?: Partial<TwitterConn> }> {
