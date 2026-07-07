@@ -288,8 +288,8 @@ export async function POST(req: Request) {
 TAGLINE: ${tagline || ''}
 VISION: ${vision || ''}
 
-BRIEF EXCERPT:
-${(brief || '').slice(0, 2000)}
+FOUNDER BRIEF:
+${brief || ''}
 
 PHOTOGRAPHY URLS:
 heroPhoto: ${photos?.hero || 'null'}
@@ -301,7 +301,8 @@ Build a complete, beautiful, photo-rich website for this product now.`
 
     const stream = await openai.chat.completions.create({
       model: 'google/gemini-2.5-flash',
-      max_tokens: 12000,
+      max_tokens: 32000,
+      temperature: 0.2,
       stream: true,
       messages: [
         { role: 'system', content: systemPrompt },
