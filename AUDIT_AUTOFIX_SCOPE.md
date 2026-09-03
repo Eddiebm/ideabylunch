@@ -1,6 +1,21 @@
 # Audit auto-fix v1 — one-click apply for existing IdeaByLunch customers
 
-> **Status:** scoped, not yet implemented. Single-session scope.
+> **Status:** ✅ Implemented (Phases 1-4), pushed on branch
+> `claude/code-hackathon-setup-1bv52y` 2026-09-03. NOT yet smoke-tested
+> against a live Vercel/Stripe account or a real deployed site — do that
+> before this is customer-visible.
+>
+> **One correction to the plan below:** customer sites are not a Next.js
+> source repo with `app/page.tsx` — `deployToVercel()` pushes a single
+> generated `index.html` straight to Vercel, no retained source. So
+> "apply" patches the live HTML directly via string replace (new
+> `applyAuditPatches()` in `app/lib/deploy.ts`), not TSX files. Phase 2's
+> file list below is superseded by: `app/lib/deploy.ts` (patch + preview
+> deploy + promote + delete helpers), `app/api/audit/apply/route.ts`,
+> `app/api/audit/promote/route.ts` (handles both promote and rollback),
+> `app/audit/[slug]/applied/[applyId]/` (diff + iframe preview page).
+> Phase 1 (domain index) and Phase 4 (auth/rate-limit/logging) match the
+> plan as written.
 
 ---
 
