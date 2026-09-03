@@ -6,6 +6,7 @@ import { getRedis } from '@/app/lib/redis'
 import type { StoredAudit } from '@/app/api/audit/route'
 import UpgradeButton from './UpgradeButton'
 import ShareButtons from './ShareButtons'
+import ApplyRewriteButton from './ApplyRewriteButton'
 
 async function getAudit(slug: string): Promise<StoredAudit | null> {
   const redis = getRedis()
@@ -222,11 +223,9 @@ export default async function AuditResultsPage({ params }: { params: Promise<{ s
             <div style={{ fontSize: 11, fontWeight: 700, color: '#30D158', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 14 }}>Your IdeaByLunch site</div>
             <h2 style={{ fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-1.2px', margin: '0 0 14px', lineHeight: 1.15 }}>We built this — we can ship the fix.</h2>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,.65)', margin: '0 0 26px', lineHeight: 1.55, maxWidth: 560, marginInline: 'auto' }}>
-              One-click apply for sites we host is rolling out. In the meantime, reply to your delivery email or reach us from your dashboard and we'll ship this rewrite to your live site directly — no code, no pasting.
+              We control this site's deployment, so we can apply this rewrite directly — no code, no pasting. You'll see a preview first and choose when it goes live.
             </p>
-            <Link href="/dashboard" style={{ background: '#30D158', color: '#FFFFFF', borderRadius: 12, padding: '14px 32px', fontSize: 16, fontWeight: 600, display: 'inline-block', boxShadow: '0 4px 24px rgba(48,209,88,.4)' }}>
-              Go to my dashboard →
-            </Link>
+            <ApplyRewriteButton slug={slug} siteId={ownedSiteId} />
           </div>
         </div>
       )}
