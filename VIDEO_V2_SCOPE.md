@@ -1,6 +1,10 @@
 # Video v2 — make the concept video an actual deliverable
 
-> **Status:** scoped, not yet implemented. Single-session scope.
+> **Status:** ✅ Implemented (all 3 fixes). See `app/api/video/status/route.ts`
+> (Blob persistence + notification email) and `app/lib/deploy.ts` /
+> `app/api/webhook/route.ts` (auto-embed via `injectConceptVideo`).
+> Verified by code read on 2026-09-03; not re-tested end-to-end against
+> live PiAPI/Vercel credentials in that pass.
 
 ---
 
@@ -83,11 +87,11 @@ Turn the concept video from a session-scoped toy into:
 ## Acceptance criteria
 
 After this ships:
-- [ ] Generated video URLs survive >7 days from generation (no PiAPI URL rot)
-- [ ] Every paid customer's deployed website includes their concept video in the hero, autoplaying
-- [ ] Free users get an email with a permanent link to their video
-- [ ] PiAPI cost per generation is unchanged (we're not double-generating)
-- [ ] Vercel Blob storage cost is <$1/mo at current traffic
+- [x] Generated video URLs survive >7 days from generation (no PiAPI URL rot) — cached in Redis for 1yr, `video:blob:{task_id}`
+- [x] Every paid customer's deployed website includes their concept video in the hero, autoplaying — `webhook/route.ts` looks up `video:by_email:{email}` and calls `injectConceptVideo`
+- [x] Free users get an email with a permanent link to their video — `sendVideoEmail`, deduped via `video:notified:{task_id}` (nx set)
+- [ ] PiAPI cost per generation is unchanged (we're not double-generating) — not independently re-verified this pass
+- [ ] Vercel Blob storage cost is <$1/mo at current traffic — not independently re-verified this pass
 
 ## Out of scope (deliberately)
 

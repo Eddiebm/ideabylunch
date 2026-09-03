@@ -461,6 +461,13 @@ export async function POST(req: Request) {
       if (redis) {
         if (liveUrl) redis.incr('stats:deploys')
         if (customerEmail) redis.set(`customer:${customerEmail}:order`, session.id)
+        // Reverse-lookup index so the audit tool can tell "do we own this site?" in O(1)
+        if (liveUrl) {
+          try {
+            const hostname = new URL(liveUrl).hostname.replace(/^www\./, '')
+            await redis.set(`domain:${hostname}`, session.id, { ex: 60 * 60 * 24 * 90 })
+          } catch {}
+        }
         await redis.set(`order:${session.id}`, JSON.stringify({
           ...order,
           sessionId: session.id,

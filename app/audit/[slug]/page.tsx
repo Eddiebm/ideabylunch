@@ -64,12 +64,22 @@ const SEVERITY_COLOR: Record<string, string> = {
   low: '#0066CC',
 }
 
+async function getOwnedSiteId(domain: string): Promise<string | null> {
+  const redis = getRedis()
+  if (!redis) return null
+  const siteId = await redis.get<string>(`domain:${domain}`)
+  return siteId ? String(siteId) : null
+}
+
 export default async function AuditResultsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const data = await getAudit(slug)
   if (!data) notFound()
 
   const a = data.audit
+  // Is this a site we built and still control? Powers the "Apply this rewrite"
+  // path instead of upselling a rebuild/patches to an existing customer.
+  const ownedSiteId = await getOwnedSiteId(data.domain)
 
   return (
     <>
@@ -204,9 +214,25 @@ export default async function AuditResultsPage({ params }: { params: Promise<{ s
         </div>
       </div>
 
-      {/* Upsell */}
-      {/* Score + stack-aware upsell */}
-      {(() => {
+      {/* Owned-site path — customer's own IdeaByLunch-built site, not a rebuild/patches upsell */}
+      {ownedSiteId && (
+        <div style={{ maxWidth: 780, margin: '0 auto 32px', padding: '0 24px' }}>
+          <div style={{ background: '#1D1D1F', borderRadius: 20, padding: '48px 36px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: '#30D158' }} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#30D158', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 14 }}>Your IdeaByLunch site</div>
+            <h2 style={{ fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-1.2px', margin: '0 0 14px', lineHeight: 1.15 }}>We built this — we can ship the fix.</h2>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,.65)', margin: '0 0 26px', lineHeight: 1.55, maxWidth: 560, marginInline: 'auto' }}>
+              One-click apply for sites we host is rolling out. In the meantime, reply to your delivery email or reach us from your dashboard and we'll ship this rewrite to your live site directly — no code, no pasting.
+            </p>
+            <Link href="/dashboard" style={{ background: '#30D158', color: '#FFFFFF', borderRadius: 12, padding: '14px 32px', fontSize: 16, fontWeight: 600, display: 'inline-block', boxShadow: '0 4px 24px rgba(48,209,88,.4)' }}>
+              Go to my dashboard →
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Score + stack-aware upsell — only for sites we don't already own */}
+      {!ownedSiteId && (() => {
         const stack = data.current.stack || 'unknown'
         const score = a.convictionScore
         const stackLabel = ({
