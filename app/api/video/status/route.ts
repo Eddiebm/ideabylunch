@@ -1,9 +1,10 @@
 export const runtime = 'edge'
+import { fal } from '@fal-ai/client'
 import { put } from '@vercel/blob'
 import { Resend } from 'resend'
 import { getRedis } from '@/app/lib/redis'
 
-const FAL_MODEL = 'fal-ai/kling-video/v1.6/standard/text-to-video'
+const MODEL = 'fal-ai/kling-video/v1.6/standard/text-to-video'
 
 async function persistToBlob(videoUrl: string, taskId: string): Promise<string | null> {
   try {
@@ -48,8 +49,11 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const task_id = searchParams.get('task_id')
   if (!task_id) return Response.json({ error: 'task_id required' }, { status: 400 })
+
   const apiKey = process.env.FAL_KEY
   if (!apiKey) return Response.json({ error: 'Not configured' }, { status: 503 })
+
+  fal.config({ credentials: apiKey })
 
   try {
     const redis = getRedis()
@@ -58,12 +62,7 @@ export async function GET(req: Request) {
       if (cached) return Response.json({ task_id, status: 'complete', video_url: cached })
     }
 
-    const statusRes = await fetch(
-      `https://queue.fal.run/${FAL_MODEL}/requests/${task_id}/status`,
-      { headers: { Authorization: `Key ${apiKey}` } },
-    )
-    if (!statusRes.ok) return Response.json({ error: `Poll failed: ${statusRes.status}` }, { status: 502 })
-    const { status: falStatus } = await statusRes.json() as { status: string }
+    const { status: falStatus } = await fal.queue.status(MODEL, { requestId: task_id })
 
     if (falStatus === 'FAILED') return Response.json({ task_id, status: 'failed', video_url: null })
     if (falStatus !== 'COMPLETED') {
@@ -71,13 +70,8 @@ export async function GET(req: Request) {
       return Response.json({ task_id, status, video_url: null })
     }
 
-    const resultRes = await fetch(
-      `https://queue.fal.run/${FAL_MODEL}/requests/${task_id}`,
-      { headers: { Authorization: `Key ${apiKey}` } },
-    )
-    if (!resultRes.ok) return Response.json({ task_id, status: 'failed', video_url: null })
-    const result = await resultRes.json() as { video?: { url: string } }
-    const falUrl = result.video?.url
+    const result = await fal.queue.result<{ video: { url: string } }>(MODEL, { requestId: task_id })
+    const falUrl = result.data?.video?.url
     if (!falUrl) return Response.json({ task_id, status: 'failed', video_url: null })
 
     const blobUrl = process.env.BLOB_READ_WRITE_TOKEN

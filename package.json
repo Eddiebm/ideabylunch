@@ -12,6 +12,7 @@
     "check": "node scripts/validate.js"
   },
   "dependencies": {
+    "@fal-ai/client": "^1.10.1",
     "@upstash/redis": "^1.28.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.4.0",
