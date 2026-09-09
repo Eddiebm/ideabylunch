@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## First Transaction Autopilot
+
+Authenticated marketplace owners can open `/dashboard/autopilot` to configure a first-transaction goal, track verified supply-and-demand metrics, and run a bottleneck-aware growth cycle. The system prepares seller recruitment, activation, buyer acquisition, follow-up, and conversion assets behind explicit approval controls. A daily Vercel cron creates new tasks and can email an approval digest; it never reports a generated asset as a completed real-world action.
+
 ## Getting Started
 
 First, run the development server:

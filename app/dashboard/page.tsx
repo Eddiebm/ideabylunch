@@ -100,6 +100,17 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 24px 60px' }}>
 
+        <a href="/dashboard/autopilot" style={{ display: 'block', background: '#07111F', color: '#fff', borderRadius: 16, padding: 24, marginBottom: 24, textDecoration: 'none', boxShadow: '0 8px 28px rgba(7,17,31,.16)' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#A98BFF', letterSpacing: '1.4px', margin: '0 0 8px' }}>FIRST TRANSACTION AUTOPILOT</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
+            <div>
+              <h2 style={{ fontSize: 21, margin: '0 0 6px' }}>Turn your marketplace into a growth loop</h2>
+              <p style={{ fontSize: 14, lineHeight: 1.5, color: '#A9B9CC', margin: 0 }}>Track supply and demand, find the bottleneck, and approve the next best action.</p>
+            </div>
+            <span style={{ fontSize: 24 }}>→</span>
+          </div>
+        </a>
+
         {/* Site card */}
         {order && (
           <div style={{ background: '#fff', borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,.08)' }}>
