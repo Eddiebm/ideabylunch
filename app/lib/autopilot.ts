@@ -20,6 +20,14 @@ export type AutopilotTask = {
   preparedAt?: number
   completedAt?: number
   asset?: string
+  execution?: {
+    provider: 'resend' | 'meta'
+    externalIds: string[]
+    sent?: number
+    dailyBudget?: number
+    totalBudget?: number
+    currency?: string
+  }
 }
 
 export type AutopilotActivity = {
@@ -38,6 +46,7 @@ export type AutopilotWorkspace = {
   buyerProfile: string
   firstTransactionGoalDays: number
   dailyAdBudget: number
+  maxCampaignSpend: number
   dailyDigest: boolean
   status: AutopilotStatus
   metrics: MarketplaceMetrics

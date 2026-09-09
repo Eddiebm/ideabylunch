@@ -4,6 +4,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Authenticated marketplace owners can open `/dashboard/autopilot` to configure a first-transaction goal, track verified supply-and-demand metrics, and run a bottleneck-aware growth cycle. The system prepares seller recruitment, activation, buyer acquisition, follow-up, and conversion assets behind explicit approval controls. A daily Vercel cron creates new tasks and can email an approval digest; it never reports a generated asset as a completed real-world action.
 
+Approved tasks can be executed through Resend (up to 25 individually addressed emails per approval) or, for buyer-acquisition tasks, through the Meta Marketing API. Meta campaigns are assembled in a paused state and activated only after the complete campaign, ad set, creative, and ad exist. Workspace-level daily and total campaign limits are enforced before launch, and each campaign requires its own explicit spend confirmation.
+
+Execution uses the existing `RESEND_API_KEY` and `RESEND_FROM` variables. Meta execution additionally requires `META_AD_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID`, `META_PAGE_ID`, and optionally `META_GRAPH_VERSION` and `META_AD_CURRENCY`.
+
 ## Getting Started
 
 First, run the development server:

@@ -9,6 +9,7 @@ import {
   marketplaceStage,
   planNextTasks,
 } from '@/app/lib/autopilot'
+import { launchApprovedMetaCampaign, sendApprovedEmails } from '@/app/lib/growth-execution'
 
 async function session(req: Request) {
   const token = req.headers.get('cookie')?.match(/i2l_session=([a-f0-9]+)/)?.[1]
@@ -96,6 +97,7 @@ export async function POST(req: Request) {
       buyerProfile: String(body.buyerProfile || '').trim().slice(0, 300),
       firstTransactionGoalDays: Math.min(90, Math.max(7, Number(body.firstTransactionGoalDays) || 30)),
       dailyAdBudget: Math.min(500, Math.max(0, Number(body.dailyAdBudget) || 0)),
+      maxCampaignSpend: Math.min(5000, Math.max(0, Number(body.maxCampaignSpend) || (Number(body.dailyAdBudget) || 0) * 7)),
       dailyDigest: Boolean(body.dailyDigest),
       status: 'active',
       metrics: { ...EMPTY_METRICS },
@@ -132,6 +134,59 @@ export async function POST(req: Request) {
     task.status = 'ready'
     task.preparedAt = now
     workspace.activity.unshift(activity(`Approved and prepared: ${task.title}`))
+  } else if (body.action === 'execute_email') {
+    const task = workspace.tasks.find(item => item.id === body.taskId)
+    if (!task || task.status !== 'ready' || !task.asset) return Response.json({ error: 'Prepare and approve this task first' }, { status: 409 })
+    if (task.execution) return Response.json({ error: 'This task has already been executed' }, { status: 409 })
+    let result
+    try {
+      result = await sendApprovedEmails({
+        recipients: Array.isArray(body.recipients) ? body.recipients : [],
+        subject: String(body.subject || '').slice(0, 140),
+        body: String(body.message || task.asset).slice(0, 10000),
+        senderName: String(body.senderName || workspace.marketplaceName).slice(0, 100),
+        postalAddress: String(body.postalAddress || '').slice(0, 300),
+        lawfulBasisConfirmed: body.lawfulBasisConfirmed === true,
+      })
+    } catch (error) {
+      return Response.json({ error: error instanceof Error ? error.message : 'Email delivery failed' }, { status: 502 })
+    }
+    task.execution = result
+    task.status = 'completed'
+    task.completedAt = now
+    workspace.activity.unshift(activity(`Sent ${result.sent} approved email message${result.sent === 1 ? '' : 's'}: ${task.title}`))
+  } else if (body.action === 'execute_meta') {
+    const task = workspace.tasks.find(item => item.id === body.taskId)
+    if (!task || task.status !== 'ready' || !task.asset || task.type !== 'buyer_acquisition') return Response.json({ error: 'Approve a buyer campaign first' }, { status: 409 })
+    if (task.execution) return Response.json({ error: 'This task has already been executed' }, { status: 409 })
+    const dailyBudget = Number(body.dailyBudget)
+    const totalBudget = Number(body.totalBudget)
+    if (!workspace.dailyAdBudget || dailyBudget > workspace.dailyAdBudget) return Response.json({ error: `Daily spend exceeds the $${workspace.dailyAdBudget} workspace limit` }, { status: 409 })
+    if (!workspace.maxCampaignSpend || totalBudget > workspace.maxCampaignSpend) return Response.json({ error: `Total spend exceeds the $${workspace.maxCampaignSpend} workspace limit` }, { status: 409 })
+    let result
+    try {
+      result = await launchApprovedMetaCampaign({
+        websiteUrl: String(body.websiteUrl || '').slice(0, 500),
+        message: String(body.message || task.asset).slice(0, 2000),
+        headline: String(body.headline || task.title).slice(0, 100),
+        country: String(body.country || 'US').trim().toUpperCase(),
+        dailyBudget,
+        totalBudget,
+        durationDays: Math.floor(Number(body.durationDays) || 7),
+        spendConfirmed: body.spendConfirmed === true,
+      })
+    } catch (error) {
+      return Response.json({ error: error instanceof Error ? error.message : 'Meta campaign launch failed' }, { status: 502 })
+    }
+    task.execution = result
+    task.status = 'completed'
+    task.completedAt = now
+    workspace.activity.unshift(activity(`Launched approved Meta campaign with $${result.dailyBudget}/day and $${result.totalBudget} total caps`))
+  } else if (body.action === 'update_controls') {
+    workspace.dailyAdBudget = Math.min(500, Math.max(0, Number(body.dailyAdBudget) || 0))
+    workspace.maxCampaignSpend = Math.min(5000, Math.max(0, Number(body.maxCampaignSpend) || 0))
+    if (workspace.maxCampaignSpend && workspace.maxCampaignSpend < workspace.dailyAdBudget) return Response.json({ error: 'Total campaign cap cannot be below the daily cap' }, { status: 400 })
+    workspace.activity.unshift(activity(`Spend controls updated: $${workspace.dailyAdBudget}/day, $${workspace.maxCampaignSpend}/campaign`))
   } else if (body.action === 'complete' || body.action === 'reject') {
     const task = workspace.tasks.find(item => item.id === body.taskId)
     if (!task) return Response.json({ error: 'Task not found' }, { status: 404 })
