@@ -1,0 +1,13 @@
+.executePanel { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e1e6ee; }
+.executionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.executionOption { background: #f7f8fb; border: 1px solid #e0e5ed; border-radius: 14px; padding: 16px; }
+.executionOption h4 { margin: 0 0 5px; }
+.executionOption > p { font-size: .8rem; line-height: 1.45; color: #687385; }
+.executionOption label { display: flex; flex-direction: column; gap: 6px; font-size: .78rem; font-weight: 700; margin: 12px 0; color: #4e5968; }
+.executionOption input, .executionOption textarea { border: 1px solid #d3dae5; border-radius: 8px; padding: 9px 10px; font: inherit; background: #fff; color: #111827; resize: vertical; }
+.executionOption .consent { flex-direction: row; align-items: flex-start; line-height: 1.4; }
+.consent input { width: 18px; height: 18px; flex: 0 0 auto; margin: 0; }
+.dangerAction { width: 100%; border: 0; border-radius: 9px; background: #b42318; color: #fff; padding: 11px 12px; font: inherit; font-size: .84rem; font-weight: 800; cursor: pointer; }
+.dangerAction:disabled { opacity: .45; cursor: not-allowed; }
+.notice { background: #fff8e8; border: 1px solid #f6d995; border-radius: 8px; padding: 9px !important; color: #754f00 !important; }
+@media (max-width: 780px) { .executionGrid { grid-template-columns: 1fr; } }
