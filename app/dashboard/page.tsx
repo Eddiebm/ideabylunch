@@ -100,6 +100,17 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 24px 60px' }}>
 
+        <a href="/dashboard/employee" style={{ display: 'block', background: '#07111F', color: '#fff', borderRadius: 16, padding: 24, marginBottom: 16, textDecoration: 'none', boxShadow: '0 8px 28px rgba(7,17,31,.16)' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#A98BFF', letterSpacing: '1.4px', margin: '0 0 8px' }}>AI EMPLOYEE</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
+            <div>
+              <h2 style={{ fontSize: 21, margin: '0 0 6px' }}>Hand off leads, inbox, and reports</h2>
+              <p style={{ fontSize: 14, lineHeight: 1.5, color: '#A9B9CC', margin: 0 }}>The agent drafts it, you approve, rewrite, or reject — nothing sends without you.</p>
+            </div>
+            <span style={{ fontSize: 24 }}>→</span>
+          </div>
+        </a>
+
         <a href="/dashboard/autopilot" style={{ display: 'block', background: '#07111F', color: '#fff', borderRadius: 16, padding: 24, marginBottom: 24, textDecoration: 'none', boxShadow: '0 8px 28px rgba(7,17,31,.16)' }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: '#A98BFF', letterSpacing: '1.4px', margin: '0 0 8px' }}>FIRST TRANSACTION AUTOPILOT</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>

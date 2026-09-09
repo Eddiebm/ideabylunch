@@ -1,0 +1,57 @@
+.page,.setupPage,.center{min-height:100vh;background:#f5f7fb;color:#111827;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.center{display:grid;place-items:center}
+.nav{height:58px;padding:0 28px;background:#07111f;color:#fff;display:flex;align-items:center;justify-content:space-between}
+.nav a{color:#fff;text-decoration:none;font-weight:750}
+.nav span{font-size:.875rem;color:#a9b9cc}
+.shell{max-width:1180px;margin:0 auto;padding:42px 28px 80px}
+.header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:28px}
+.header h1,.setupCard h1{font-size:clamp(1.8rem,4.5vw,3rem);line-height:1.05;letter-spacing:-.04em;margin:8px 0 12px;max-width:760px}
+.header p,.lede{color:#5b6677;font-size:1.05rem;line-height:1.65;max-width:720px;margin:0}
+.eyebrow{font-size:.72rem!important;letter-spacing:.13em;font-weight:800;color:#7a4df5!important;margin:0!important}
+.statsRow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.statCard{background:#fff;border:1px solid #e1e6ee;border-radius:16px;padding:18px;box-shadow:0 10px 36px rgba(18,31,53,.06)}
+.statCard strong{font-size:1.7rem;display:block}
+.statCard span{font-size:.8rem;color:#6c7685}
+.columns{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(280px,1fr);gap:28px}
+.sectionHead{display:flex;justify-content:space-between;align-items:end;margin-bottom:14px}
+.sectionHead h2,.sideCard h2{margin:6px 0 0;font-size:1.3rem}
+.addCard,.task,.sideCard,.setupCard{background:#fff;border:1px solid #e1e6ee;border-radius:18px;box-shadow:0 10px 36px rgba(18,31,53,.06)}
+.addCard{padding:20px;margin-bottom:24px}
+.task{padding:22px;margin-bottom:14px}
+.taskMeta{display:flex;justify-content:space-between;gap:10px;font-size:.74rem;color:#6e7887;text-transform:uppercase;letter-spacing:.08em}
+.task h3{font-size:1.1rem;margin:12px 0 8px}
+.task>p,.sideCard>p{color:#677283;line-height:1.55;font-size:.92rem}
+.draft{width:100%;min-height:140px;border:1px solid #d8dee8;border-radius:12px;padding:14px;font:inherit;font-size:.88rem;line-height:1.55;color:#111827;background:#f9fafc;resize:vertical}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.primary,.primarySmall,.secondary,.textButton,.dangerText{border:0;cursor:pointer;font:inherit}
+.primary,.primarySmall{background:#7a4df5;color:#fff;border-radius:10px;font-weight:750}
+.primary{padding:14px 20px;font-size:1rem}
+.primarySmall{padding:10px 14px;font-size:.86rem}
+.secondary{background:#fff;border:1px solid #d7dde7;border-radius:10px;padding:10px 14px;font-weight:700}
+.textButton{background:transparent;color:#576273;font-weight:700}
+.dangerText{background:transparent;color:#b42318;font-weight:700}
+.primary:disabled,.primarySmall:disabled,.secondary:disabled{opacity:.5;cursor:not-allowed}
+.sideCard{padding:22px;margin-bottom:18px}
+.form{display:grid;gap:14px}
+.form label{display:flex;flex-direction:column;gap:7px;font-size:.82rem;font-weight:700;color:#4e5968}
+.form input,.form textarea,.form select{border:1px solid #d8dee8;border-radius:10px;padding:11px 12px;font:inherit;font-size:.95rem;background:#fff;color:#111827}
+.form textarea{min-height:84px;resize:vertical}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.checkGrid{display:grid;gap:8px;margin:4px 0}
+.checkRow{display:flex;align-items:flex-start;gap:10px;font-weight:600;font-size:.9rem;color:#333}
+.checkRow input{margin-top:3px}
+.checkRow small{display:block;font-weight:500;color:#6c7685}
+.activity>div,.voice>div{border-top:1px solid #e7ebf1;padding:13px 0}
+.activity span,.voice span{font-size:.72rem;color:#8b94a1}
+.activity p,.voice p{font-size:.86rem;margin:4px 0;line-height:1.4}
+.empty{background:#fff;border:1px dashed #ccd4df;border-radius:16px;padding:28px;color:#6b7584}
+.setupPage{padding:38px 22px 80px}
+.setupPage>.back{display:block;max-width:700px;margin:0 auto 20px;color:#4f5b6c;text-decoration:none}
+.setupCard{max-width:700px;margin:0 auto;padding:clamp(24px,5vw,44px)}
+.error{color:#b42318;background:#fff0ee;padding:12px 14px;border-radius:10px}
+.back{font-weight:700}
+.statusBadge{font-size:.7rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase}
+.statusApproved{background:#e6f8f1;color:#0a7a4b}
+.statusSent{background:#eef1f9;color:#3a4b8f}
+.statusRejected{background:#fdeeee;color:#b42318}
+@media(max-width:780px){.shell{padding:28px 18px 60px}.header,.sectionHead{align-items:flex-start;flex-direction:column}.columns{grid-template-columns:1fr}.statsRow{grid-template-columns:1fr}.split{grid-template-columns:1fr}.nav{padding:0 18px}.nav span{display:none}}
