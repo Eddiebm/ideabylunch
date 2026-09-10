@@ -1,5 +1,6 @@
 export const runtime = 'edge'
 import { getRedis } from '@/app/lib/redis'
+import { logAuditEvent } from '@/app/lib/audit-log'
 import { Resend } from 'resend'
 import {
   getConn, setConn,
@@ -56,20 +57,36 @@ export async function GET(req: Request) {
   const liId = process.env.LINKEDIN_CLIENT_ID || ''
   const liSecret = process.env.LINKEDIN_CLIENT_SECRET || ''
 
+  // Distributed lock — prevents duplicate execution if cron fires twice concurrently.
+  // TTL matches the expected max run time; deleted in the finally block.
+  const cronLockKey = 'cron:lock:publish-hooks'
+  const cronLocked = await redis.set(cronLockKey, '1', { nx: true, ex: 120 })
+  if (!cronLocked) {
+    await logAuditEvent(redis, { type: 'cron.skipped', ts: Date.now(), actor: 'system', subject: 'publish-hooks', data: { reason: 'already running' } })
+    return Response.json({ skipped: 'already running' })
+  }
+
   const emails = await redis.smembers('dist:queue:emails') as string[]
   let sent = 0
   const errors: string[] = []
 
+  try {
   for (const email of emails) {
     try {
       const dueIds = await redis.zrange(`dist:queue:${email}`, 0, now, { byScore: true }) as string[]
       if (!dueIds.length) continue
 
       for (const id of dueIds) {
+        // Per-hook atomic claim: NX ensures exactly-once processing even across
+        // concurrent invocations. TTL covers the max time to process one hook.
+        const hookLockKey = `dist:hook:${id}:lock`
+        const hookLocked = await redis.set(hookLockKey, '1', { nx: true, ex: 120 })
+        if (!hookLocked) continue
+
         const raw = await redis.get(`dist:hook:${id}`)
-        if (!raw) continue
+        if (!raw) { await redis.del(hookLockKey); continue }
         const hook = typeof raw === 'string' ? JSON.parse(raw) : raw
-        if (hook.status !== 'pending') continue
+        if (hook.status !== 'pending') { await redis.del(hookLockKey); continue }
 
         const meta = await redis.get(`dist:meta:${email}`)
         const metaData = meta ? (typeof meta === 'string' ? JSON.parse(meta) : meta) : null
@@ -149,13 +166,18 @@ export async function GET(req: Request) {
         hook.sentAt = now
         hook.autoPosted = autoPosted
         await redis.set(`dist:hook:${id}`, JSON.stringify(hook), { ex: 60 * 60 * 24 * 60 })
+        await redis.del(hookLockKey)
         sent++
       }
     } catch (err) {
       errors.push(`${email}: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
+  } finally {
+    await redis.del(cronLockKey)
+  }
 
+  await logAuditEvent(redis, { type: 'cron.run', ts: Date.now(), actor: 'system', subject: 'publish-hooks', data: { sent, errors: errors.length, total: emails.length } })
   return Response.json({ sent, errors, total: emails.length })
 }
 

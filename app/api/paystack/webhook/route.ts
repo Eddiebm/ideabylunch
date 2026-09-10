@@ -5,6 +5,7 @@ import { Redis } from '@upstash/redis'
 import { Resend } from 'resend'
 import { generateHtmlFromBrief } from '@/app/lib/generate'
 import { deployToVercel, slugify } from '@/app/lib/deploy'
+import { logAuditEvent } from '@/app/lib/audit-log'
 
 // ─── Redis ────────────────────────────────────────────────────────────────────
 
@@ -93,6 +94,14 @@ export async function POST(req: Request) {
 
   const redis = getRedis()
 
+  // Idempotency: Paystack retries on non-200. The reference is unique per charge.
+  if (redis) {
+    const alreadyProcessed = await redis.set(
+      `paystack:processed:${reference}`, '1', { nx: true, ex: 60 * 60 * 24 * 7 }
+    )
+    if (!alreadyProcessed) return Response.json({ ok: true, duplicate: true })
+  }
+
   // ── Read order from Redis ──────────────────────────────────────────────────
   const raw = redis ? await redis.get(`order:${reference}`) : null
   const order: any = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null
@@ -113,7 +122,10 @@ export async function POST(req: Request) {
   // ── Watermark + deploy ─────────────────────────────────────────────────────
   const projectSlug = slugify(productName)
   const watermarkedHtml = html ? watermark(html, reference, customerEmail, plan) : null
-  const liveUrl = watermarkedHtml ? await deployToVercel(projectSlug, watermarkedHtml) : null
+  // Deploy to PREVIEW only. Admin must promote to production via promoteDeployment().
+  const deployResult = watermarkedHtml ? await deployToVercel(projectSlug, watermarkedHtml) : null
+  const liveUrl = deployResult?.previewUrl ?? null
+  const deploymentId = deployResult?.deploymentId ?? null
 
   // ── Update order in Redis ──────────────────────────────────────────────────
   if (redis) {
@@ -121,13 +133,31 @@ export async function POST(req: Request) {
       `order:${reference}`,
       JSON.stringify({
         ...order,
-        status: liveUrl ? 'deployed' : (html ? 'deploy_failed' : 'needs_manual_build'),
+        status: liveUrl ? 'preview' : (html ? 'deploy_failed' : 'needs_manual_build'),
         projectSlug,
         liveUrl,
+        deploymentId,
         deployedAt: Date.now(),
       }),
       { ex: 60 * 60 * 24 * 30 }
     )
+
+    await logAuditEvent(redis, {
+      type: 'payment.received',
+      ts: Date.now(),
+      actor: customerEmail || 'unknown',
+      subject: reference,
+      data: { plan, productName, provider: 'paystack' },
+    })
+    if (liveUrl) {
+      await logAuditEvent(redis, {
+        type: 'site.deployed',
+        ts: Date.now(),
+        actor: 'system',
+        subject: reference,
+        data: { liveUrl, deploymentId, projectSlug },
+      })
+    }
   }
 
   // ── Affiliate referral tracking ────────────────────────────────────────────

@@ -5,6 +5,7 @@ import { Resend } from 'resend'
 import { Redis } from '@upstash/redis'
 import { createDashboardToken } from '@/app/lib/auth'
 import { deployToVercel, injectConceptVideo, slugify } from '@/app/lib/deploy'
+import { logAuditEvent } from '@/app/lib/audit-log'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
@@ -435,6 +436,23 @@ export async function POST(req: Request) {
           createdAt: Date.now(),
           deployedAt: liveUrl ? Date.now() : null,
         }), { ex: 60 * 60 * 24 * 90 })
+
+        await logAuditEvent(redis, {
+          type: 'payment.received',
+          ts: Date.now(),
+          actor: customerEmail || 'unknown',
+          subject: session.id,
+          data: { plan, amount: amountPaid, productName, provider: 'stripe' },
+        })
+        if (liveUrl) {
+          await logAuditEvent(redis, {
+            type: 'site.deployed',
+            ts: Date.now(),
+            actor: 'system',
+            subject: session.id,
+            data: { liveUrl, deploymentId, projectSlug },
+          })
+        }
       }
 
       // Notify customer
