@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     const discount = PROMO_CODES[(body.promoCode || '').toUpperCase()] ?? 0
     const baseAmount = gh.oneTime + gh.monthly
     const amount = discount ? Math.round(baseAmount * (1 - discount)) : baseAmount
-    const reference = `i2l_gh_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+    const reference = `i2l_gh_${Date.now()}_${Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2,'0')).join('')}`
 
     const init = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
@@ -113,7 +113,7 @@ export async function POST(req: Request) {
       currency: 'GHS',
     })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'checkout failed'
-    return Response.json({ error: msg }, { status: 500 })
+    console.error('[paystack/checkout]', err instanceof Error ? err.message : String(err))
+    return Response.json({ error: 'internal_error', message: 'Internal server error' }, { status: 500 })
   }
 }

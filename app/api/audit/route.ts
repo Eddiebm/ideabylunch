@@ -215,7 +215,8 @@ export async function POST(req: NextRequest) {
     if (!res.ok) return Response.json({ error: 'fetch_failed', status: res.status }, { status: 502 })
     html = (await res.text()).slice(0, 200_000)
   } catch (err) {
-    return Response.json({ error: 'fetch_error', detail: String(err) }, { status: 502 })
+    console.error('[audit] fetch_error', err)
+    return Response.json({ error: 'fetch_error', message: 'Could not fetch the target URL' }, { status: 502 })
   }
 
   const current = extractContext(html)
@@ -248,7 +249,8 @@ export async function POST(req: NextRequest) {
     }
     audit = JSON.parse(cleaned) as AuditResult
   } catch (err) {
-    return Response.json({ error: 'analysis_failed', detail: String(err) }, { status: 500 })
+    console.error('[audit] analysis_failed', err)
+    return Response.json({ error: 'analysis_failed', message: 'Analysis could not be completed' }, { status: 500 })
   }
 
   const stored: StoredAudit = {

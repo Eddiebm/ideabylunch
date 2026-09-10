@@ -187,8 +187,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ siteId:
       liveUrl: liveUrl || order.liveUrl,
     })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'update failed'
-    console.error('dashboard update error:', msg)
-    return Response.json({ error: msg }, { status: 500 })
+    console.error('[dashboard/[siteId]/update]', err instanceof Error ? err.message : String(err))
+    return Response.json({ error: 'internal_error', message: 'Internal server error' }, { status: 500 })
   }
 }
