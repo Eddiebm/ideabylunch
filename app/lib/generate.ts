@@ -36,7 +36,7 @@ REQUIRED PAGE SECTIONS (build every single one):
 3. PROBLEM — "Why this exists." 2–3 sentences of pain. 3 pain point cards.
 4. SOLUTION / HOW IT WORKS — 3-step process with numbered steps, icons, and short descriptions.
 5. FEATURES — 6-card grid. Each card: icon + bold label + 2-sentence description.
-6. SOCIAL PROOF — 3 testimonial cards with name, role, company, avatar initial, and quote. Make them feel real and specific.
+6. SOCIAL PROOF — 3 placeholder testimonial cards (name, role, company, avatar initial, quote) clearly marked [PLACEHOLDER — replace with real customer quotes before publishing]. Do not fabricate specific endorsements.
 7. PRICING — 2–3 tier cards. Highlight the recommended tier. Include feature lists and CTA per tier.
 8. FAQ — 5–6 accordion-style questions with answers. Use <details>/<summary>.
 9. FINAL CTA — dark background section. Bold closing headline. Single primary CTA button.

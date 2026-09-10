@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          # Stub secrets so build doesn't throw on missing env checks
+          STRIPE_SECRET_KEY: sk_test_stub
+          STRIPE_WEBHOOK_SECRET: whsec_stub
+          PAYSTACK_SECRET_KEY: sk_test_stub
+          UPSTASH_REDIS_REST_URL: https://stub.upstash.io
+          UPSTASH_REDIS_REST_TOKEN: stub
+          OPENROUTER_API_KEY: sk-stub
+          JWT_SECRET: 0000000000000000000000000000000000000000000000000000000000000000
+          VERCEL_DEPLOY_TOKEN: stub
+          RESEND_API_KEY: re_stub
+          ADMIN_SECRET: stub
+          CRON_SECRET: stub
+          NEXT_PUBLIC_APP_URL: https://ideabylunch.com
