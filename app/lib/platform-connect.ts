@@ -1,5 +1,44 @@
 import type { Redis } from '@upstash/redis'
 
+// ─── AES-256-GCM envelope encryption for OAuth tokens at rest ────────────────
+// Key: PLATFORM_TOKENS_KEY env var — 64-char hex string (32 bytes).
+// If unset, tokens are stored unencrypted (logs a warning in dev).
+
+async function loadKey(): Promise<CryptoKey | null> {
+  const hex = process.env.PLATFORM_TOKENS_KEY
+  if (!hex || hex.length !== 64) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[platform-connect] PLATFORM_TOKENS_KEY not set — tokens stored unencrypted')
+    }
+    return null
+  }
+  const bytes = new Uint8Array(hex.match(/.{2}/g)!.map(h => parseInt(h, 16)))
+  return crypto.subtle.importKey('raw', bytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+}
+
+async function encryptToken(plain: string): Promise<string> {
+  const key = await loadKey()
+  if (!key) return plain
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const enc = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plain))
+  const b64 = (buf: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buf)))
+  return `enc:${b64(iv.buffer)}:${b64(enc)}`
+}
+
+async function decryptToken(raw: string): Promise<string> {
+  if (!raw.startsWith('enc:')) return raw
+  const key = await loadKey()
+  if (!key) return raw
+  const [, ivB64, dataB64] = raw.split(':')
+  const fromB64 = (s: string) => Uint8Array.from(atob(s), c => c.charCodeAt(0))
+  const plain = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: fromB64(ivB64) },
+    key,
+    fromB64(dataB64),
+  )
+  return new TextDecoder().decode(plain)
+}
+
 export const PLATFORMS = ['bluesky', 'twitter', 'linkedin', 'threads'] as const
 export type Platform = typeof PLATFORMS[number]
 
@@ -12,13 +51,15 @@ export type PlatformConn = BlueskyConn | TwitterConn | LinkedInConn | ThreadsCon
 const key = (email: string, p: Platform) => `dist:connect:${email.toLowerCase()}:${p}`
 
 export async function setConn(redis: Redis, email: string, platform: Platform, data: PlatformConn) {
-  await redis.set(key(email, platform), JSON.stringify(data), { ex: 60 * 60 * 24 * 100 })
+  const payload = await encryptToken(JSON.stringify(data))
+  await redis.set(key(email, platform), payload, { ex: 60 * 60 * 24 * 100 })
 }
 
 export async function getConn<T = PlatformConn>(redis: Redis, email: string, platform: Platform): Promise<T | null> {
   const raw = await redis.get(key(email, platform))
   if (!raw) return null
-  return (typeof raw === 'string' ? JSON.parse(raw) : raw) as T
+  const plain = await decryptToken(typeof raw === 'string' ? raw : JSON.stringify(raw))
+  return JSON.parse(plain) as T
 }
 
 export async function clearConn(redis: Redis, email: string, platform: Platform) {
@@ -26,13 +67,15 @@ export async function clearConn(redis: Redis, email: string, platform: Platform)
 }
 
 export async function connStatus(redis: Redis, email: string): Promise<Record<Platform, { connected: boolean; handle?: string }>> {
-  const conns = await Promise.all(
-    PLATFORMS.map(p => redis.get(key(email, p)))
-  )
+  const raws = await Promise.all(PLATFORMS.map(p => redis.get(key(email, p))))
+  const parsed = await Promise.all(raws.map(async raw => {
+    if (!raw) return null
+    const plain = await decryptToken(typeof raw === 'string' ? raw : JSON.stringify(raw))
+    return JSON.parse(plain) as any
+  }))
   return Object.fromEntries(PLATFORMS.map((p, i) => {
-    const raw = conns[i]
-    if (!raw) return [p, { connected: false }]
-    const data = typeof raw === 'string' ? JSON.parse(raw) : raw as any
+    const data = parsed[i]
+    if (!data) return [p, { connected: false }]
     const handle = data.handle || data.username || data.name || undefined
     return [p, { connected: true, handle }]
   })) as Record<Platform, { connected: boolean; handle?: string }>

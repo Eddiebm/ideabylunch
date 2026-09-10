@@ -8,7 +8,8 @@ function getRedis() {
 }
 
 export function generateToken(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+  const bytes = crypto.getRandomValues(new Uint8Array(32))
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 export async function createDashboardToken(
@@ -21,10 +22,27 @@ export async function createDashboardToken(
 
   const token = generateToken()
   const expiresAt = Date.now() + expiryDays * 24 * 60 * 60 * 1000
+  const ttl = expiryDays * 24 * 60 * 60
 
   await redis.set(`dashboard:token:${token}`, JSON.stringify({ siteId, email, expiresAt }), {
-    ex: expiryDays * 24 * 60 * 60,
+    ex: ttl,
   })
+  // Track active tokens per site so they can be bulk-revoked
+  await redis.sadd(`dashboard:tokens:${siteId}`, token)
+  // The set itself expires after the longest possible token lifetime (same TTL)
+  await redis.expire(`dashboard:tokens:${siteId}`, ttl)
 
   return token
+}
+
+// Revoke all dashboard tokens for a site — call after email change, account takeover, etc.
+export async function revokeDashboardTokens(siteId: string): Promise<void> {
+  const redis = getRedis()
+  if (!redis) return
+
+  const tokens = await redis.smembers(`dashboard:tokens:${siteId}`) as string[]
+  if (tokens.length) {
+    await Promise.all(tokens.map(t => redis.del(`dashboard:token:${t}`)))
+  }
+  await redis.del(`dashboard:tokens:${siteId}`)
 }
