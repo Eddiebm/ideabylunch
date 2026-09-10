@@ -63,7 +63,7 @@ async function createPaystackSession(body: any, appUrl: string, currency: 'USD' 
   const paystackKey = process.env.PAYSTACK_SECRET_KEY
   if (!paystackKey) throw new Error('Paystack not configured')
 
-  const ref = `i2l_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+  const ref = `i2l_${Date.now()}_${Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2,'0')).join('')}`
 
   let amount: number
   let monthlySubscription: number

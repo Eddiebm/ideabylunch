@@ -43,6 +43,15 @@ export async function POST(req: Request) {
   const redis = getRedis()
   if (!redis) return new Response('OK', { status: 200 })
 
+  // Idempotency: Paystack may retry. Use the transaction reference as the key.
+  const paystackRef = data.reference || data.id
+  if (paystackRef) {
+    const alreadyProcessed = await redis.set(
+      `paystack:processed:${paystackRef}`, '1', { nx: true, ex: 60 * 60 * 24 * 7 }
+    )
+    if (!alreadyProcessed) return new Response('OK', { status: 200 })
+  }
+
   const orderRaw = await redis.get(`order:${siteId}`)
   const order: any = orderRaw ? (typeof orderRaw === 'string' ? JSON.parse(orderRaw) : orderRaw) : null
 

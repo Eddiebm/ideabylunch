@@ -18,7 +18,8 @@ function getRedis() {
 }
 
 function makeToken() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 const PLAN_NAMES: Record<string, string> = {
