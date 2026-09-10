@@ -4,7 +4,7 @@ import { headers } from 'next/headers'
 import { Resend } from 'resend'
 import { Redis } from '@upstash/redis'
 import { createDashboardToken } from '@/app/lib/auth'
-import { injectConceptVideo } from '@/app/lib/deploy'
+import { deployToVercel, injectConceptVideo, slugify } from '@/app/lib/deploy'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
@@ -13,55 +13,6 @@ function getRedis() {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
   if (!url || !token) return null
   return new Redis({ url, token })
-}
-
-function cleanToken(raw: string | undefined): string | null {
-  if (!raw) return null
-  return raw.trim().replace(/\\n$/, '').replace(/^["']|["']$/g, '')
-}
-
-async function deployToVercel(projectSlug: string, html: string): Promise<string | null> {
-  const token = cleanToken(process.env.VERCEL_DEPLOY_TOKEN || process.env.VERCEL_TOKEN)
-  const teamId = process.env.VERCEL_TEAM_ID
-  if (!token) return null
-
-  const qs = teamId ? `?teamId=${teamId}` : ''
-
-  const res = await fetch(`https://api.vercel.com/v13/deployments${qs}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      name: projectSlug,
-      target: 'production',
-      project: projectSlug,
-      files: [{ file: 'index.html', data: html }],
-      projectSettings: {
-        framework: null,
-        buildCommand: null,
-        installCommand: null,
-        outputDirectory: null,
-        devCommand: null,
-      },
-    }),
-  })
-  if (!res.ok) {
-    console.error('Vercel deploy failed', res.status, await res.text())
-    return null
-  }
-  const data: any = await res.json()
-  const url = data?.url || data?.alias?.[0]
-
-  // Make the project publicly accessible (disable SSO + password protection)
-  await fetch(`https://api.vercel.com/v10/projects/${projectSlug}${qs}`, {
-    method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ssoProtection: null, passwordProtection: null }),
-  }).catch(e => console.error('disable protection failed', e))
-
-  return url ? `https://${url.replace(/^https?:\/\//, '')}` : null
 }
 
 function watermark(html: string, meta: { sessionId: string; customerEmail: string; plan: string }): string {
@@ -76,13 +27,6 @@ function watermark(html: string, meta: { sessionId: string; customerEmail: strin
   return html.replace(/^<!DOCTYPE[^>]*>/i, m => `${banner}${m}`)
 }
 
-function slugify(name: string) {
-  return (name || 'site')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40) + '-' + Math.random().toString(36).slice(2, 7)
-}
 
 function extractLocation(brief: string): string {
   const m = brief.match(/\bin\s+([A-Z][a-zA-Z\s]+,\s*[A-Z]{2})\b/)
@@ -353,6 +297,18 @@ export async function POST(req: Request) {
     return new Response('Invalid signature', { status: 400 })
   }
 
+  // Idempotency: reject events we've already processed (Stripe may retry on 5xx).
+  // Key expires after 7 days — well beyond Stripe's retry window.
+  {
+    const redis = getRedis()
+    if (redis) {
+      const alreadyProcessed = await redis.set(
+        `stripe:processed:${event.id}`, '1', { nx: true, ex: 60 * 60 * 24 * 7 }
+      )
+      if (!alreadyProcessed) return Response.json({ ok: true, duplicate: true })
+    }
+  }
+
   if (event.type === 'checkout.session.completed') {
     try {
       const session = event.data.object as Stripe.Checkout.Session
@@ -439,7 +395,10 @@ export async function POST(req: Request) {
       // Watermark + deploy
       const projectSlug = slugify(productName)
       const watermarkedHtml = html ? watermark(html, { sessionId: session.id, customerEmail: customerEmail || '', plan }) : null
-      const liveUrl = watermarkedHtml ? await deployToVercel(projectSlug, watermarkedHtml) : null
+      // Deploy to PREVIEW only. Admin must promote to production via promoteDeployment().
+      const deployResult = watermarkedHtml ? await deployToVercel(projectSlug, watermarkedHtml) : null
+      const liveUrl = deployResult?.previewUrl ?? null
+      const deploymentId = deployResult?.deploymentId ?? null
 
       // Track referral conversion
       const refCode = session.metadata?.ref
@@ -469,9 +428,10 @@ export async function POST(req: Request) {
           plan,
           amount: amountPaid,
           brief,
-          status: liveUrl ? 'deployed' : (html ? 'deploy_failed' : 'needs_manual_build'),
+          status: liveUrl ? 'preview' : (html ? 'deploy_failed' : 'needs_manual_build'),
           projectSlug,
           liveUrl,
+          deploymentId,
           createdAt: Date.now(),
           deployedAt: liveUrl ? Date.now() : null,
         }), { ex: 60 * 60 * 24 * 90 })

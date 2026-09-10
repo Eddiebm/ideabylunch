@@ -69,8 +69,10 @@ export async function POST(req: Request) {
   const baseHtml = order.liveHtml || order.selectedHtml
   const updatedHtml = applySlots(baseHtml, slots)
 
-  // Re-deploy
-  const liveUrl = await deployToVercel(order.projectSlug, updatedHtml)
+  // Re-deploy to preview — admin must promote to production via promoteDeployment()
+  const deployResult = await deployToVercel(order.projectSlug, updatedHtml)
+  const liveUrl = deployResult?.previewUrl ?? null
+  const deploymentId = deployResult?.deploymentId ?? null
 
   // Persist
   const updated = {
@@ -78,6 +80,7 @@ export async function POST(req: Request) {
     slots,
     liveHtml: updatedHtml,
     liveUrl: liveUrl || order.liveUrl,
+    deploymentId: deploymentId || order.deploymentId,
     lastEditedAt: Date.now(),
     lastEditedBy: email,
   }

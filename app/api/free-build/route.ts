@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { Resend } from 'resend'
 import { Redis } from '@upstash/redis'
 import { generateHtmlFromBrief, extractProductName } from '@/app/lib/generate'
+import { deployToVercel, slugify } from '@/app/lib/deploy'
 
 function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL
@@ -11,53 +12,12 @@ function getRedis() {
   return new Redis({ url, token })
 }
 
-function cleanToken(raw: string | undefined): string | null {
-  if (!raw) return null
-  return raw.trim().replace(/\\n$/, '').replace(/^["']|["']$/g, '')
-}
-
-function slugify(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'site'
-}
-
 function watermark(html: string, email: string): string {
   const banner = `<!--
   Built by IdeaByLunch — https://ideabylunch.com
   Free build for: ${email}
-  Built: ${new Date().toISOString()}
 -->\n`
   return html.replace(/^<!DOCTYPE[^>]*>/i, m => `${banner}${m}`)
-}
-
-async function deployToVercel(projectSlug: string, html: string): Promise<string | null> {
-  const token = cleanToken(process.env.VERCEL_DEPLOY_TOKEN || process.env.VERCEL_TOKEN)
-  const teamId = process.env.VERCEL_TEAM_ID
-  if (!token) return null
-
-  const qs = teamId ? `?teamId=${teamId}` : ''
-
-  const res = await fetch(`https://api.vercel.com/v13/deployments${qs}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: projectSlug,
-      target: 'production',
-      project: projectSlug,
-      files: [{ file: 'index.html', data: html }],
-      projectSettings: { framework: null, buildCommand: null, installCommand: null, outputDirectory: null, devCommand: null },
-    }),
-  })
-  if (!res.ok) return null
-  const data: any = await res.json()
-  const url = data?.url || data?.alias?.[0]
-
-  await fetch(`https://api.vercel.com/v10/projects/${projectSlug}${qs}`, {
-    method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ssoProtection: null, passwordProtection: null }),
-  }).catch(() => {})
-
-  return url ? `https://${url.replace(/^https?:\/\//, '')}` : null
 }
 
 export async function POST(req: Request) {
@@ -101,8 +61,10 @@ export async function POST(req: Request) {
     const rawHtml = selectedHtml || await generateHtmlFromBrief(brief, productName, 'starter', [])
     const html = rawHtml ? watermark(rawHtml, email) : null
 
-    // Deploy
-    const liveUrl = html ? await deployToVercel(projectSlug, html) : null
+    // Deploy to preview — admin must promote to production via promoteDeployment()
+    const deployResult = html ? await deployToVercel(projectSlug, html) : null
+    const liveUrl = deployResult?.previewUrl ?? null
+    const deploymentId = deployResult?.deploymentId ?? null
 
     // Save to Redis
     const siteId = `free_${Date.now().toString(36)}`
@@ -112,8 +74,9 @@ export async function POST(req: Request) {
         customerEmail: email,
         productName,
         brief,
-        status: liveUrl ? 'deployed' : 'needs_manual_build',
+        status: liveUrl ? 'preview' : 'needs_manual_build',
         liveUrl,
+        deploymentId,
         plan: 'free',
         createdAt: Date.now(),
         deployedAt: liveUrl ? Date.now() : null,

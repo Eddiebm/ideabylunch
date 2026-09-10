@@ -1,6 +1,7 @@
 export const runtime = 'edge'
 import { Redis } from '@upstash/redis'
 import Stripe from 'stripe'
+import { deployToVercel } from '@/app/lib/deploy'
 
 function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL
@@ -15,7 +16,7 @@ async function createPaystackEditSession(siteId: string, appUrl: string, product
   const paystackKey = process.env.PAYSTACK_SECRET_KEY
   if (!paystackKey) throw new Error('Paystack not configured')
 
-  const ref = `edit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+  const ref = `edit_${Date.now()}_${Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2,'0')).join('')}`
 
   const res = await fetch('https://api.paystack.co/transaction/initialize', {
     method: 'POST',
@@ -76,29 +77,6 @@ function replaceHtmlContent(html: string, updates: Record<string, string>): stri
   return result
 }
 
-async function deployToVercel(siteId: string, html: string): Promise<string | null> {
-  const token = process.env.VERCEL_DEPLOY_TOKEN
-  const teamId = process.env.VERCEL_TEAM_ID
-  if (!token) return null
-
-  const qs = teamId ? `?teamId=${teamId}` : ''
-  const res = await fetch(`https://api.vercel.com/v13/deployments${qs}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: siteId,
-      target: 'production',
-      project: siteId,
-      files: [{ file: 'index.html', data: html }],
-      projectSettings: { framework: null, buildCommand: null, installCommand: null, outputDirectory: null },
-    }),
-  })
-
-  if (!res.ok) return null
-  const data: any = await res.json()
-  const url = data?.url || data?.alias?.[0]
-  return url ? url.replace(/^https?:\/\//, '') : null
-}
 
 export async function POST(req: Request, { params }: { params: Promise<{ siteId: string }> }) {
   try {
@@ -183,8 +161,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ siteId:
 
     const updatedHtml = replaceHtmlContent(order.selectedHtml, updates)
 
-    // Deploy to Vercel
-    const liveUrl = await deployToVercel(siteId, updatedHtml)
+    // Deploy to preview — admin must promote to production via promoteDeployment()
+    const deployResult = await deployToVercel(siteId, updatedHtml)
+    const liveUrl = deployResult?.previewUrl ?? null
+    const deploymentId = deployResult?.deploymentId ?? null
 
     // Save updated order
     await redis.set(
@@ -196,6 +176,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ siteId:
         editCount: editCount + 1,
         lastEditedAt: Date.now(),
         liveUrl: liveUrl || order.liveUrl,
+        deploymentId: deploymentId || order.deploymentId,
       }),
       { ex: 60 * 60 * 24 * 365 },
     )
