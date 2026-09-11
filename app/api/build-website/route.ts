@@ -1,4 +1,6 @@
 import OpenAI from 'openai'
+import { trackFunnelStep } from '@/app/lib/funnel'
+import { getRedis } from '@/app/lib/redis'
 
 // Node.js runtime required — Gemini generation takes 60-120s, exceeding edge 30s limit
 export const maxDuration = 300
@@ -298,6 +300,9 @@ teamPhoto: ${photos?.team || 'null'}
 atmospherePhoto: ${photos?.atmosphere || 'null'}
 
 Build a complete, beautiful, photo-rich website for this product now.`
+
+    // Fire-and-forget: funnel tracking is analytics-only
+    trackFunnelStep(getRedis(), 'site_generated').catch(() => {})
 
     const stream = await openai.chat.completions.create({
       model: 'google/gemini-2.5-flash',

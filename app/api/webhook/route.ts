@@ -6,6 +6,7 @@ import { Redis } from '@upstash/redis'
 import { createDashboardToken } from '@/app/lib/auth'
 import { deployToVercel, injectConceptVideo, slugify } from '@/app/lib/deploy'
 import { logAuditEvent } from '@/app/lib/audit-log'
+import { trackFunnelStep } from '@/app/lib/funnel'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
@@ -400,6 +401,10 @@ export async function POST(req: Request) {
       const deployResult = watermarkedHtml ? await deployToVercel(projectSlug, watermarkedHtml) : null
       const liveUrl = deployResult?.previewUrl ?? null
       const deploymentId = deployResult?.deploymentId ?? null
+
+      // Track funnel conversions (fire-and-forget — analytics only)
+      trackFunnelStep(redis, 'payment_completed').catch(() => {})
+      if (liveUrl) trackFunnelStep(redis, 'site_deployed').catch(() => {})
 
       // Track referral conversion
       const refCode = session.metadata?.ref

@@ -2,6 +2,7 @@ export const runtime = 'edge'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { resolveMarket, MARKET_PRICING } from './lib/pricing'
+import FunnelBeacon from './components/FunnelBeacon'
 
 async function getDeployCount(): Promise<number> {
   try {
@@ -153,6 +154,7 @@ export default async function HomePage({
 
   return (
     <>
+      <FunnelBeacon step="idea_viewed" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

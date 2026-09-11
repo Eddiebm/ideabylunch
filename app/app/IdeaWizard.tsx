@@ -81,6 +81,8 @@ export default function IdeaWizard({ onComplete, onSkip, onVoice }: Props) {
     setQIndex(0)
     setAnswers({})
     setTextInput('')
+    // Track funnel: user began the brief wizard
+    fetch('/api/funnel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ step: 'brief_started' }) }).catch(() => {})
   }
 
   function currentQ() {

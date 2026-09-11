@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { NextRequest } from 'next/server'
 import { Redis } from '@upstash/redis'
 import { STRIPE_MARKET_AMOUNTS, type CountryCode } from '@/app/lib/pricing'
+import { trackFunnelStep } from '@/app/lib/funnel'
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -136,6 +137,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    trackFunnelStep(redis, 'checkout_initiated').catch(() => {})
     return Response.json({ url: session.url })
   } catch (err: unknown) {
     console.error('Checkout error:', err)

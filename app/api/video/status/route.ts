@@ -62,7 +62,7 @@ export async function GET(req: Request) {
       if (cached) return Response.json({ task_id, status: 'complete', video_url: cached })
     }
 
-    const { status: falStatus } = await fal.queue.status(MODEL, { requestId: task_id })
+    const falStatus = ((await fal.queue.status(MODEL, { requestId: task_id })).status) as string
 
     if (falStatus === 'FAILED') return Response.json({ task_id, status: 'failed', video_url: null })
     if (falStatus !== 'COMPLETED') {
@@ -70,7 +70,7 @@ export async function GET(req: Request) {
       return Response.json({ task_id, status, video_url: null })
     }
 
-    const result = await fal.queue.result<{ video: { url: string } }>(MODEL, { requestId: task_id })
+    const result = (await fal.queue.result(MODEL, { requestId: task_id })) as { data: { video: { url: string } } }
     const falUrl = result.data?.video?.url
     if (!falUrl) return Response.json({ task_id, status: 'failed', video_url: null })
 

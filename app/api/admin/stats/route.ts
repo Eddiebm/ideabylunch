@@ -1,4 +1,5 @@
 import { getRedis } from '@/app/lib/redis'
+import { getFunnelStats } from '@/app/lib/funnel'
 
 export const runtime = 'edge'
 
@@ -107,6 +108,8 @@ export async function GET(req: Request) {
   const proKeys = await redis.keys('pro:*')
 
   // Costs (estimated — OpenRouter Gemini 2.5 Flash ~$0.003/brief)
+  const funnelStats = await getFunnelStats(redis)
+
   const briefCount = orders.length + leads.length
   const estimatedAiCost = briefCount * 0.003
   const estimatedInfraCost = 20 // Vercel + Upstash monthly estimate
@@ -162,6 +165,7 @@ export async function GET(req: Request) {
       deploys,
       totalEdits,
     },
+    funnel: funnelStats,
     resellers,
     webhookErrors,
     costs: {
