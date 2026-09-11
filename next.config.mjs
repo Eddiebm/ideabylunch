@@ -1,6 +1,17 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  /* config options here */
-};
+import { withSentryConfig } from '@sentry/nextjs'
 
-export default nextConfig;
+/** @type {import('next').NextConfig} */
+const nextConfig = {}
+
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // Only upload source maps when explicitly building for prod (keeps local builds fast)
+  silent: true,
+  disableLogger: true,
+  automaticVercelMonitors: false,
+  // Suppress source map uploads when DSN is unset (local / CI without secrets)
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+})

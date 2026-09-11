@@ -4,15 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npx tsx scripts/check-env.ts && next build",
     "start": "next start",
     "validate": "node scripts/validate.js",
-    "deploy": "node scripts/validate.js && npx vercel --prod",
+    "deploy": "node scripts/validate.js && npx tsx scripts/check-env.ts && npx vercel --prod",
     "deploy:force": "node scripts/validate.js && npx vercel --prod --force",
-    "check": "node scripts/validate.js"
+    "check": "node scripts/validate.js",
+    "check-env": "npx tsx scripts/check-env.ts"
   },
   "dependencies": {
     "@fal-ai/client": "^1.10.1",
+    "@sentry/nextjs": "^10.74.0",
     "@upstash/redis": "^1.28.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.4.0",
