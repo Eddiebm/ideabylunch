@@ -25,6 +25,10 @@ const REQUIRED_PROD: string[] = [
   'ADMIN_SECRET',
   'ADMIN_EMAIL',
   'PLATFORM_TOKENS_KEY',
+]
+
+// Recommended but not blocking
+const RECOMMENDED_PROD: string[] = [
   'SENTRY_DSN',
 ]
 
@@ -61,6 +65,9 @@ for (const key of REQUIRED) checkVar(key)
 
 if (IS_PROD || IS_PREVIEW) {
   for (const key of REQUIRED_PROD) checkVar(key)
+  for (const key of RECOMMENDED_PROD) {
+    if (!process.env[key]) warn(`${key} not set — recommended for production`)
+  }
 }
 
 if (IS_PROD) {
