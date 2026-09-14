@@ -100,6 +100,8 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 24px 60px' }}>
 
+        <h1 style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>My dashboard</h1>
+
         {/* Site card */}
         {order && (
           <div style={{ background: '#fff', borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,.08)' }}>

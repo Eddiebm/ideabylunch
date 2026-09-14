@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/admin', '/dashboard', '/login', '/preview/'],
+        disallow: ['/api/', '/admin', '/dashboard', '/login', '/preview/', '/distribute/queue'],
       },
     ],
     sitemap: 'https://ideabylunch.com/sitemap.xml',

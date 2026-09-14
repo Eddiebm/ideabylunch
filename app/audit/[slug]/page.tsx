@@ -21,10 +21,10 @@ async function getAudit(slug: string): Promise<StoredAudit | null> {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const data = await getAudit(slug)
-  if (!data) return { title: 'Audit not found' }
+  if (!data) return { title: 'Audit not found', robots: { index: false, follow: false } }
   const score = data.audit.convictionScore
   return {
-    title: `${data.domain} site audit — ${score}/100 conviction · IdeaByLunch`,
+    title: `${data.domain} site audit — ${score}/100 conviction`,
     description: data.audit.oneSentenceVerdict,
     alternates: { canonical: `/audit/${slug}` },
     openGraph: {

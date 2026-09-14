@@ -50,7 +50,7 @@ function LoginForm() {
                 <div style={{ width: 48, height: 48, background: '#F2F2F7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <span style={{ fontSize: 24 }}>📬</span>
                 </div>
-                <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', margin: '0 0 8px' }}>Check your email</h2>
+                <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', margin: '0 0 8px' }}>Check your email</h1>
                 <p style={{ fontSize: 15, color: '#6E6E73', margin: 0 }}>
                   We sent a login link to <strong>{email}</strong>. It expires in 15 minutes.
                 </p>
@@ -58,7 +58,7 @@ function LoginForm() {
             </>
           ) : (
             <>
-              <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', margin: '0 0 8px' }}>Access your dashboard</h2>
+              <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', margin: '0 0 8px' }}>Access your dashboard</h1>
               <p style={{ fontSize: 15, color: '#6E6E73', margin: '0 0 24px' }}>Enter the email you used to purchase your site.</p>
               {error && (
                 <div style={{ background: '#FFF2F2', border: '1px solid #FFCDD2', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
