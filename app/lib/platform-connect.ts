@@ -2,15 +2,19 @@ import type { Redis } from '@upstash/redis'
 
 // ─── AES-256-GCM envelope encryption for OAuth tokens at rest ────────────────
 // Key: PLATFORM_TOKENS_KEY env var — 64-char hex string (32 bytes).
-// If unset, tokens are stored unencrypted (logs a warning in dev).
+// This key is required: if it is missing or malformed we fail loudly (throw)
+// rather than silently falling back to storing OAuth tokens unencrypted.
+// scripts/check-env.ts also blocks prod/preview deploys without it — this is
+// the runtime backstop for any path that reaches here without that check.
 
-async function loadKey(): Promise<CryptoKey | null> {
+async function loadKey(): Promise<CryptoKey> {
   const hex = process.env.PLATFORM_TOKENS_KEY
   if (!hex || hex.length !== 64) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('[platform-connect] PLATFORM_TOKENS_KEY not set — tokens stored unencrypted')
-    }
-    return null
+    throw new Error(
+      '[platform-connect] PLATFORM_TOKENS_KEY is not configured (must be a 64-char hex string). ' +
+      'Refusing to store OAuth tokens unencrypted — generate one with `openssl rand -hex 32` ' +
+      'and set it in your environment.'
+    )
   }
   const bytes = new Uint8Array(hex.match(/.{2}/g)!.map(h => parseInt(h, 16)))
   return crypto.subtle.importKey('raw', bytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
@@ -18,7 +22,6 @@ async function loadKey(): Promise<CryptoKey | null> {
 
 async function encryptToken(plain: string): Promise<string> {
   const key = await loadKey()
-  if (!key) return plain
   const iv = crypto.getRandomValues(new Uint8Array(12))
   const enc = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plain))
   const b64 = (buf: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buf)))
@@ -26,9 +29,10 @@ async function encryptToken(plain: string): Promise<string> {
 }
 
 async function decryptToken(raw: string): Promise<string> {
+  // Not our envelope format (e.g. legacy plaintext written before this key
+  // existed) — return as-is; decrypting doesn't require the key.
   if (!raw.startsWith('enc:')) return raw
   const key = await loadKey()
-  if (!key) return raw
   const [, ivB64, dataB64] = raw.split(':')
   const fromB64 = (s: string) => Uint8Array.from(atob(s), c => c.charCodeAt(0))
   const plain = await crypto.subtle.decrypt(
