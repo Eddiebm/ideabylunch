@@ -1,6 +1,19 @@
 import OpenAI from 'openai'
+import { NextRequest } from 'next/server'
+import { getRedis } from '@/app/lib/redis'
 
 export const runtime = 'edge'
+
+// Imagery calls GPT-4o (via OpenRouter) twice per request — same rate-limit
+// mechanism as /api/generate.
+const FREE_LIMIT = 5
+const EMAIL_LIMIT = 15
+
+function getIp(req: NextRequest): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('x-real-ip')
+    || 'unknown'
+}
 
 // Fetch royalty-free photo — randomized from top 5 results
 async function fetchPhoto(query: string, key: string, seed = 0): Promise<string | null> {
@@ -74,13 +87,52 @@ Output ONLY valid JSON, no other text:
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const openai = new OpenAI({
     apiKey: process.env.OPENROUTER_API_KEY,
     baseURL: 'https://openrouter.ai/api/v1',
   })
   try {
-    const { brief, productName, tagline, vision } = await req.json()
+    const { brief, productName, tagline, vision, email: bodyEmail } = await req.json()
+
+    const redis = getRedis()
+    const ip = getIp(req)
+
+    // Check session cookie for logged-in customers (unlimited)
+    let isPayingSession = false
+    const cookie = req.headers.get('cookie') || ''
+    const sessionMatch = cookie.match(/i2l_session=([a-f0-9]+)/)
+    if (sessionMatch && redis) {
+      const sessionEmail = await redis.get(`session:${sessionMatch[1]}`)
+      if (sessionEmail) isPayingSession = true
+    }
+
+    if (!isPayingSession && redis) {
+      const key = bodyEmail
+        ? `imagery:email:${bodyEmail.toLowerCase()}`
+        : `imagery:ip:${ip}`
+      const limit = bodyEmail ? EMAIL_LIMIT : FREE_LIMIT
+      const count = Number(await redis.get(key)) || 0
+
+      if (count >= limit) {
+        return Response.json(
+          { error: 'limit_reached', limit, email: !!bodyEmail },
+          { status: 429 }
+        )
+      }
+
+      await redis.incr(key)
+      await redis.expire(key, 60 * 60 * 24 * 30) // 30-day rolling window
+
+      if (bodyEmail) {
+        await redis.set(`lead:${bodyEmail.toLowerCase()}`, JSON.stringify({
+          email: bodyEmail,
+          capturedAt: Date.now(),
+          source: 'imagery_generator',
+        }), { ex: 60 * 60 * 24 * 365 })
+      }
+    }
+
     const unsplashKey = process.env.UNSPLASH_ACCESS_KEY
 
     // Step 1: GPT-4o extracts precise photo queries for this specific product

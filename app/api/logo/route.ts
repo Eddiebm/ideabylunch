@@ -1,13 +1,18 @@
 export const runtime = 'edge'
 
 import OpenAI from 'openai'
-import { Redis } from '@upstash/redis'
+import { NextRequest } from 'next/server'
+import { getRedis } from '@/app/lib/redis'
 
-function getRedis() {
-  const url = process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN
-  if (!url || !token) return null
-  return new Redis({ url, token })
+// Logo generation calls DALL-E 3 / Recraft (3 paid image calls per request) —
+// keep the free tier tight, same rate-limit mechanism as /api/generate.
+const FREE_LIMIT = 2
+const EMAIL_LIMIT = 5
+
+function getIp(req: NextRequest): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('x-real-ip')
+    || 'unknown'
 }
 
 async function generateStarterLogos(businessName: string, industry: string, tagline?: string): Promise<string[]> {
@@ -63,14 +68,52 @@ async function generateProLogos(businessName: string, industry: string, tagline?
   return urls
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { businessName, industry, tier, tagline } = await req.json()
+    const { businessName, industry, tier, tagline, email: bodyEmail } = await req.json()
     if (!businessName || !industry || !tier) {
       return Response.json({ error: 'businessName, industry, tier required' }, { status: 400 })
     }
     if (!['starter', 'pro'].includes(tier)) {
       return Response.json({ error: 'tier must be starter or pro' }, { status: 400 })
+    }
+
+    const redis = getRedis()
+    const ip = getIp(req)
+
+    // Check session cookie for logged-in customers (unlimited)
+    let isPayingSession = false
+    const cookie = req.headers.get('cookie') || ''
+    const sessionMatch = cookie.match(/i2l_session=([a-f0-9]+)/)
+    if (sessionMatch && redis) {
+      const sessionEmail = await redis.get(`session:${sessionMatch[1]}`)
+      if (sessionEmail) isPayingSession = true
+    }
+
+    if (!isPayingSession && redis) {
+      const key = bodyEmail
+        ? `logo:email:${bodyEmail.toLowerCase()}`
+        : `logo:ip:${ip}`
+      const limit = bodyEmail ? EMAIL_LIMIT : FREE_LIMIT
+      const count = Number(await redis.get(key)) || 0
+
+      if (count >= limit) {
+        return Response.json(
+          { error: 'limit_reached', limit, email: !!bodyEmail },
+          { status: 429 }
+        )
+      }
+
+      await redis.incr(key)
+      await redis.expire(key, 60 * 60 * 24 * 30) // 30-day rolling window
+
+      if (bodyEmail) {
+        await redis.set(`lead:${bodyEmail.toLowerCase()}`, JSON.stringify({
+          email: bodyEmail,
+          capturedAt: Date.now(),
+          source: 'logo_generator',
+        }), { ex: 60 * 60 * 24 * 365 })
+      }
     }
 
     const urls = tier === 'pro'
@@ -83,7 +126,6 @@ export async function POST(req: Request) {
 
     // Cache for 7 days so customer can download after payment
     const cacheKey = `logos:${businessName.toLowerCase().replace(/\s+/g, '-')}:${tier}:${Date.now()}`
-    const redis = getRedis()
     if (redis) {
       await redis.set(cacheKey, JSON.stringify({ urls, businessName, industry, tier }), { ex: 60 * 60 * 24 * 7 })
     }
