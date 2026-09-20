@@ -1,4 +1,5 @@
 export const runtime = 'edge'
+import type { Metadata } from 'next'
 import { Redis } from '@upstash/redis'
 import { notFound } from 'next/navigation'
 
@@ -22,6 +23,17 @@ async function getPreview(slug: string): Promise<PreviewData | null> {
   const raw = await redis.get(`preview:${slug}`)
   if (!raw) return null
   return typeof raw === 'string' ? JSON.parse(raw) : raw as PreviewData
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const data = await getPreview(slug)
+  if (!data) return { title: 'Preview not found', robots: { index: false, follow: false } }
+  return {
+    title: `${data.businessName} — your free website preview`,
+    description: `A free website preview for ${data.businessName}, built by IdeaByLunch.`,
+    robots: { index: false, follow: false },
+  }
 }
 
 export default async function PreviewPage({ params }: { params: Promise<{ slug: string }> }) {

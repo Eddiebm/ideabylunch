@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — IdeaByLunch',
+  title: 'Privacy Policy',
   description: 'How IdeaByLunch collects, uses, and protects your data.',
   alternates: { canonical: '/privacy' },
 }

@@ -101,9 +101,9 @@ const COMPARISONS: Record<string, Comparison> = {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const c = COMPARISONS[slug]
-  if (!c) return { title: 'IdeaByLunch alternatives' }
+  if (!c) return { title: 'Alternative not found', robots: { index: false, follow: false } }
   return {
-    title: `${c.competitor} alternative — IdeaByLunch`,
+    title: `${c.competitor} alternative`,
     description: `${c.competitor} vs IdeaByLunch. ${c.oneLiner} See why founders pick IdeaByLunch when they want a real, live business — not just code.`,
     alternates: { canonical: `/alternatives/${slug}` },
     openGraph: {
