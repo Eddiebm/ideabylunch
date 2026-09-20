@@ -9,6 +9,7 @@ import EmailGate from './EmailGate'
 import VoiceInterview from './VoiceInterview'
 import ConceptVideoTab from './ConceptVideoTab'
 import LogoTab from './LogoTab'
+import SocialKitTab from './SocialKitTab'
 import AgencyGate from './AgencyGate'
 import { detectComplexity } from '@/app/lib/complexity'
 import type { BuildType } from '@/app/lib/complexity'
@@ -790,6 +791,11 @@ export default function BriefGenerator() {
                 productName={productName || 'Your Product'}
                 vision={visionSection}
                 tagline={firstTagline}
+              />
+              <SocialKitTab
+                productName={productName || 'Your Product'}
+                tagline={firstTagline}
+                vision={visionSection}
               />
             </>
           )}
