@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { NextRequest } from 'next/server'
 import { getRedis } from '@/app/lib/redis'
+import { fetchPublicUrl } from '@/app/lib/safe-fetch'
 
 export const runtime = 'edge'
 
@@ -207,11 +208,11 @@ export async function POST(req: NextRequest) {
 
   let html: string
   try {
-    const res = await fetch(url, {
-      redirect: 'follow',
+    const res = await fetchPublicUrl(url, {
       headers: { 'User-Agent': 'IdeaByLunchAuditBot/1.0 (+https://ideabylunch.com/audit)' },
       signal: AbortSignal.timeout(15000),
     })
+    if (!res) return Response.json({ error: 'invalid_url' }, { status: 400 })
     if (!res.ok) return Response.json({ error: 'fetch_failed', status: res.status }, { status: 502 })
     html = (await res.text()).slice(0, 200_000)
   } catch (err) {
