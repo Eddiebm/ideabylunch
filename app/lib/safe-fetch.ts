@@ -10,7 +10,7 @@
 export type Resolve = (hostname: string) => Promise<Array<{ address: string }>>
 
 function ipv4Blocked(ip: string): boolean {
-  const [a, b] = ip.split('.').map(Number)
+  const [a, b, c] = ip.split('.').map(Number)
   return (
     a === 0 ||
     a === 10 ||
@@ -19,7 +19,7 @@ function ipv4Blocked(ip: string): boolean {
     (a === 169 && b === 254) || // link-local, cloud metadata
     (a === 172 && b >= 16 && b <= 31) ||
     (a === 192 && b === 168) ||
-    (a === 192 && b === 0) ||
+    (a === 192 && b === 0 && c === 0) || // IETF special-purpose
     (a === 198 && (b === 18 || b === 19)) ||
     a >= 224 // multicast and reserved
   )
@@ -59,7 +59,7 @@ export async function publicUrl(raw: string, base?: string, resolve?: Resolve): 
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
   if (url.username || url.password) return null
   if (url.port && url.port !== '80' && url.port !== '443') return null
-  const host = url.hostname.replace(/^\[|\]$/g, '').toLowerCase()
+  const host = url.hostname.replace(/^\[|\]$/g, '').toLowerCase().replace(/\.+$/, '') // 'localhost.' is localhost to DNS
   if (host === 'localhost' || /\.(localhost|local|internal)$/.test(host)) return null
   // URL parsing already turns 2130706433 or 0x7f.1 into 127.0.0.1, so literals arrive dotted.
   if (isIPv4(host) || host.includes(':')) return isBlockedAddress(host) ? null : url
