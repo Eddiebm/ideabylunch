@@ -24,10 +24,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/empire', priority: 0.85, changeFrequency: 'weekly' },
     { path: '/idea-generator', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/gallery', priority: 0.8, changeFrequency: 'weekly' },
+    { path: '/grow', priority: 0.8, changeFrequency: 'weekly' },
     { path: '/hunt', priority: 0.7, changeFrequency: 'weekly' },
     { path: '/refer', priority: 0.6, changeFrequency: 'monthly' },
     { path: '/logo', priority: 0.7, changeFrequency: 'monthly' },
     { path: '/taglines', priority: 0.7, changeFrequency: 'monthly' },
+    { path: '/privacy', priority: 0.3, changeFrequency: 'yearly' },
     { path: '/terms', priority: 0.3, changeFrequency: 'yearly' },
   ]
 

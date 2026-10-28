@@ -32,6 +32,11 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
   icons: { icon: '/favicon.ico' },
+  // Google Search Console "HTML tag" verification — set GOOGLE_SITE_VERIFICATION
+  // to the content="..." value Search Console gives you.
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
