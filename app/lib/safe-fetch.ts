@@ -4,8 +4,9 @@
 // the same way (a public page can redirect to 169.254.169.254).
 //
 // No imports, so it runs on the Edge runtime too. Edge has no DNS lookup, so
-// there a public hostname that resolves to a private address isn't caught; on
-// Node, pass a resolver and every address the name resolves to is checked.
+// there a public hostname that resolves to a private address isn't caught. On
+// Node use fetchPublicPage from safe-fetch-node, which checks the address the
+// connection actually uses.
 
 export type Resolve = (hostname: string) => Promise<Array<{ address: string }>>
 

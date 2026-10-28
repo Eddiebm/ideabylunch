@@ -1,7 +1,6 @@
 import { Resend } from 'resend'
 import { Redis } from '@upstash/redis'
-import { lookup } from 'node:dns/promises'
-import { fetchPublicUrl, type Resolve } from '@/app/lib/safe-fetch'
+import { fetchPublicPage } from '@/app/lib/safe-fetch-node'
 
 export const runtime = 'nodejs'
 
@@ -48,8 +47,6 @@ async function sendSMS(to: string, businessName: string, previewUrl: string): Pr
   } catch { return false }
 }
 
-const resolveAll: Resolve = (hostname) => lookup(hostname, { all: true })
-
 // ── Scrape mailto: + contact page emails directly from the business site ─────
 async function scrapeSiteEmails(website: string): Promise<string[]> {
   const found = new Set<string>()
@@ -58,9 +55,9 @@ async function scrapeSiteEmails(website: string): Promise<string[]> {
   const urls = [base, `${base.replace(/\/$/, '')}/contact`, `${base.replace(/\/$/, '')}/contact-us`, `${base.replace(/\/$/, '')}/about`]
   for (const u of urls) {
     try {
-      const res = await fetchPublicUrl(u, { signal: AbortSignal.timeout(6000), resolve: resolveAll })
+      const res = await fetchPublicPage(u, { signal: AbortSignal.timeout(6000) })
       if (!res || !res.ok) continue
-      const html = await res.text()
+      const html = res.text
       const matches = html.match(re) || []
       for (const m of matches) {
         const lc = m.toLowerCase()
