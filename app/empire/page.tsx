@@ -15,6 +15,7 @@ export const metadata: Metadata = {
     title: 'The Empire — IdeaByLunch',
     description: 'Every app I run, audited weekly with my own tool. Public scores. Watch us improve in public.',
     url: 'https://ideabylunch.com/empire',
+    images: '/opengraph-image',
   },
 }
 

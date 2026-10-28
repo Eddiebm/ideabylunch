@@ -11,6 +11,7 @@ export const metadata: Metadata = {
     title: 'Free Site Audit — IdeaByLunch',
     description: 'Brutal honesty + a rewritten landing page. Free, in 60 seconds.',
     url: 'https://ideabylunch.com/audit',
+    images: '/opengraph-image',
     type: 'website',
   },
 }

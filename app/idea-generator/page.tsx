@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     title: 'Free AI Startup Idea Generator — IdeaByLunch',
     description: 'Generate validated startup ideas for any niche. Free, no signup.',
     url: 'https://ideabylunch.com/idea-generator',
+    images: '/opengraph-image',
     type: 'website',
   },
 }

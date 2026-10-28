@@ -1,9 +1,11 @@
 export const runtime = 'edge'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
-export const metadata = {
-  title: 'Terms of Service — IdeaByLunch',
+export const metadata: Metadata = {
+  title: 'Terms of Service',
   description: 'What you get, what we promise, and what happens if things go wrong.',
+  alternates: { canonical: '/terms' },
 }
 
 const LAST_UPDATED = 'April 2026'

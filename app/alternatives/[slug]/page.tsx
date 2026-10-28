@@ -103,13 +103,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const c = COMPARISONS[slug]
   if (!c) return { title: 'IdeaByLunch alternatives' }
   return {
-    title: `${c.competitor} alternative — IdeaByLunch`,
+    title: `${c.competitor} alternative`,
     description: `${c.competitor} vs IdeaByLunch. ${c.oneLiner} See why founders pick IdeaByLunch when they want a real, live business — not just code.`,
     alternates: { canonical: `/alternatives/${slug}` },
     openGraph: {
       title: `${c.competitor} alternative — IdeaByLunch`,
       description: c.hero,
       url: `https://ideabylunch.com/alternatives/${slug}`,
+    images: '/opengraph-image',
     },
   }
 }

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'AI growth tools for small businesses',
-  description: 'AI tools for local businesses: a 30-day marketing kit, review responses, quotes, win-back campaigns, seasonal promos, hiring posts and price-increase letters — in seconds.',
+  description: 'AI tools for local businesses: a 30-day marketing kit, review replies, quotes, win-back and seasonal campaigns, hiring posts — in seconds.',
   alternates: { canonical: '/grow' },
   openGraph: {
     title: 'Grow your business, one tool at a time — IdeaByLunch',

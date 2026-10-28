@@ -12,6 +12,7 @@ export const metadata: Metadata = {
     title: 'Built by Lunch — real businesses launched today',
     description: 'Every business launched through IdeaByLunch.',
     url: 'https://ideabylunch.com/gallery',
+    images: '/opengraph-image',
   },
 }
 
