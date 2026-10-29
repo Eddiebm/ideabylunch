@@ -5,7 +5,7 @@
 export type LeakStatus = 'pass' | 'fail' | 'skipped' | 'unknown'
 
 export type LeakCheck = {
-  id: 'ad-promise' | 'google-rating' | 'call-button' | 'book-depth'
+  id: 'ad-promise' | 'google-rating' | 'call-button' | 'book-depth' | 'free-offer' | 'follow-up'
   label: string
   status: LeakStatus
   detail: string
@@ -13,6 +13,8 @@ export type LeakCheck = {
 
 export type PhoneLeaks = {
   checks: LeakCheck[]
+  // The stages around the page: an offer for people not ready to buy, and follow-up
+  funnel?: LeakCheck[]
   // Kept so the ad-promise check can be re-run on a cached audit
   firstScreenText: string
   adPromise: string | null
@@ -28,6 +30,26 @@ const BOOK_TEXT = /\b(book|schedule|reserve|request\s+(service|an?\s+appointment
 const BOOK_HREF = /housecallpro|servicetitan|scheduleengine|getjobber|jobber\.com|calendly|acuityscheduling|booksy|vagaro|zocdoc|square\.site\/book|\/book|\/schedule|\/appointment/i
 const RATING_TEXT = /\b[345]\.\d\s*(\/\s*5|out of 5|stars?|★)|★{4,}|\bgoogle\s+(reviews?|rating)|\b\d[\d,]*\+?\s+(five[- ]star|5[- ]star|google)\s+reviews?/i
 const RATING_WIDGET = /elfsight|trustindex|birdeye|podium|embedsocial|reviewsonmywebsite|grade\.us|nicejob|sociablekit|trustmary|widget\.reviews/i
+// An offer for someone not ready to book. "Free estimate" doesn't count — that's for buyers.
+const OFFER_TEXT = /\b(free|download|get (our|the))\s+([\w-]+\s+){0,3}(guide|checklist|e-?book|cost sheet|price list|report|tips)\b|\b(coupon|coupons|specials?|promo code)\b|\$\d+\s+off\b|\b\d{1,2}%\s+off\b|\bfree\s+(inspection|assessment|second opinion|water test|camera inspection|consultation)\b/i
+const CONTACT_INPUT = /<input\b[^>]*(type=["']?(email|tel)\b|name=["'][^"']*(email|phone)[^"']*["'])/i
+const FOLLOW_UP_TOOLS: Array<[RegExp, string]> = [
+  [/leadconnectorhq|msgsndr|gohighlevel/i, 'HighLevel'],
+  [/podium/i, 'Podium'],
+  [/birdeye/i, 'Birdeye'],
+  [/housecallpro/i, 'Housecall Pro'],
+  [/servicetitan|scheduleengine/i, 'ServiceTitan'],
+  [/getjobber|jobber\.com/i, 'Jobber'],
+  [/nicejob/i, 'NiceJob'],
+  [/hs-scripts|hsforms|js\.hs-analytics/i, 'HubSpot'],
+  [/klaviyo/i, 'Klaviyo'],
+  [/list-manage\.com|mailchimp/i, 'Mailchimp'],
+  [/activehosted|activecampaign/i, 'ActiveCampaign'],
+  [/constantcontact|ctctcdn/i, 'Constant Contact'],
+  [/signpost/i, 'Signpost'],
+]
+const SMS_OPT_IN = /\b(msg (&|and) data rates|reply stop|text me|opt in to (receive )?(sms|text))/i
+
 const PHONE_TEXT = /\(?\b\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b/
 
 const STOPWORDS = new Set([
@@ -118,6 +140,26 @@ export function checkAdPromise(adPromise: string | null, firstScreenText: string
   }
 }
 
+function checkFunnel(html: string, text: string, readable: boolean): LeakCheck[] {
+  const offer: LeakCheck = !readable
+    ? { id: 'free-offer', label: 'Free offer for people not ready to buy', status: 'unknown', detail: 'We could not read the page text.' }
+    : OFFER_TEXT.test(text)
+    ? { id: 'free-offer', label: 'Free offer for people not ready to buy', status: 'pass', detail: `There is something for browsers: "${text.match(OFFER_TEXT)![0]}".` }
+    : { id: 'free-offer', label: 'Free offer for people not ready to buy', status: 'fail', detail: 'Only "call now" or "book now". Anyone not ready today leaves with nothing and never comes back.' }
+
+  const tool = FOLLOW_UP_TOOLS.find(([re]) => re.test(html))?.[1]
+  const capturesContact = CONTACT_INPUT.test(html)
+  const followUp: LeakCheck = tool
+    ? { id: 'follow-up', label: 'Follow-up emails and texts', status: 'pass', detail: `The site uses ${tool}, which can follow up by text or email. Check it actually does.` }
+    : capturesContact && SMS_OPT_IN.test(text)
+    ? { id: 'follow-up', label: 'Follow-up emails and texts', status: 'pass', detail: 'A form collects contact details with a text opt-in.' }
+    : capturesContact
+    ? { id: 'follow-up', label: 'Follow-up emails and texts', status: 'unknown', detail: "A form collects contact details, but nothing visible follows up. Ask whether anyone texts these leads back." }
+    : { id: 'follow-up', label: 'Follow-up emails and texts', status: 'fail', detail: 'No way to leave an email or number, so nobody who leaves can be followed up.' }
+
+  return [offer, followUp]
+}
+
 export function analyzePhoneLeaks(html: string, adPromise: string | null): PhoneLeaks {
   const tokens = tokenize(html)
   const totalText = tokens.reduce((n, t) => n + (t.kind === 'img' ? 0 : t.text.length), 0)
@@ -148,6 +190,7 @@ export function analyzePhoneLeaks(html: string, adPromise: string | null): Phone
     return {
       firstScreenText,
       adPromise,
+      funnel: checkFunnel(html, '', false),
       checks: [
         { ...checkAdPromise(adPromise, ''), status: 'unknown', detail: unreadable },
         { id: 'google-rating', label: 'Shows the Google rating', status: 'unknown', detail: unreadable },
@@ -209,5 +252,6 @@ export function analyzePhoneLeaks(html: string, adPromise: string | null): Phone
     firstScreenText,
     adPromise,
     checks: [checkAdPromise(adPromise, firstScreenText), rating, call, book],
+    funnel: checkFunnel(html, allText, true),
   }
 }

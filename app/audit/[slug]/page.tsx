@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getRedis } from '@/app/lib/redis'
 import type { StoredAudit } from '@/app/api/audit/route'
+import type { LeakStatus, PhoneLeaks } from '@/app/lib/phone-leaks'
 import UpgradeButton from './UpgradeButton'
 import ShareButtons from './ShareButtons'
 
@@ -63,6 +64,35 @@ const LEAK_STYLE: Record<string, { bg: string; border: string; tag: string; tagC
   pass: { bg: '#F0FBF3', border: 'rgba(48,209,88,.35)', tag: 'OK', tagColor: '#1E9E45' },
   skipped: { bg: '#FFFFFF', border: 'rgba(0,0,0,.08)', tag: 'Not checked', tagColor: '#AEAEB2' },
   unknown: { bg: '#FFFFFF', border: 'rgba(0,0,0,.08)', tag: "Couldn't read", tagColor: '#AEAEB2' },
+}
+
+const STAGE_TAG: Record<string, string> = { pass: 'In place', fail: 'Missing', skipped: 'Not checked', unknown: "Can't tell" }
+
+type Stage = { title: string; sub: string; status: LeakStatus; detail: string }
+
+// The whole path to a booked job: ad -> free offer -> pages -> follow-up -> booked job
+function pathStages(leaks: PhoneLeaks): Stage[] | null {
+  if (!leaks.funnel) return null
+  const byId = (id: string) => [...leaks.checks, ...leaks.funnel!].find((c) => c.id === id)!
+  const offer = byId('free-offer')
+  const pages = byId('ad-promise')
+  const followUp = byId('follow-up')
+  const book = byId('book-depth')
+  const call = byId('call-button')
+  const booked: Stage = book.status === 'pass' && call.status === 'pass'
+    ? { title: 'Booked job', sub: 'easy to call or book', status: 'pass', detail: 'Tap-to-call up top and a booking button close by.' }
+    : book.status === 'fail' && call.status === 'fail'
+    ? { title: 'Booked job', sub: 'easy to call or book', status: 'fail', detail: 'No quick call button and booking is buried or missing.' }
+    : { title: 'Booked job', sub: 'easy to call or book', status: book.status === 'unknown' ? 'unknown' : 'fail', detail: book.status === 'pass' ? call.detail : book.detail }
+  return [
+    leaks.adPromise
+      ? { title: 'The ad', sub: 'where they already spend', status: 'pass', detail: `Running: "${leaks.adPromise}"` }
+      : { title: 'The ad', sub: 'where they already spend', status: 'skipped', detail: 'Add your Google ad headline to the audit to check the hand-off.' },
+    { title: 'A free offer', sub: 'for people not ready to buy', status: offer.status, detail: offer.detail },
+    { title: 'The pages', sub: 'that say what the ad said', status: pages.status, detail: pages.detail },
+    { title: 'Follow-up', sub: 'emails and texts that book', status: followUp.status, detail: followUp.detail },
+    booked,
+  ]
 }
 
 const SEVERITY_COLOR: Record<string, string> = {
@@ -131,6 +161,35 @@ export default async function AuditResultsPage({ params }: { params: Promise<{ s
           ))}
         </div>
       </div>
+
+      {/* Path to a booked job */}
+      {(() => {
+        const stages = data.leaks ? pathStages(data.leaks) : null
+        if (!stages) return null
+        const missing = stages.filter((st) => st.status === 'fail').length
+        return (
+          <div style={{ maxWidth: 880, margin: '0 auto 48px', padding: '0 24px' }}>
+            <h2 style={{ fontSize: 28, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1px', margin: '0 0 6px' }}>Your path to a booked job</h2>
+            <p style={{ fontSize: 15, color: '#6E6E73', margin: '0 0 18px', lineHeight: 1.5 }}>
+              {missing === 0 ? 'Every step we can see is in place.' : `${missing} of 5 steps missing. A page alone doesn't book jobs. The whole path does.`}
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+              {stages.map((st, i) => {
+                const s = LEAK_STYLE[st.status]
+                return (
+                  <div key={st.title} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 14, padding: '16px 16px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#AEAEB2', letterSpacing: '.06em', marginBottom: 6 }}>STEP {i + 1}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-.2px' }}>{st.title}</div>
+                    <div style={{ fontSize: 12, color: '#6E6E73', marginBottom: 10 }}>{st.sub}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: s.tagColor, letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 6 }}>{STAGE_TAG[st.status]}</div>
+                    <p style={{ fontSize: 13, color: '#6E6E73', lineHeight: 1.45, margin: 0 }}>{st.detail}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Phone leaks */}
       {data.leaks && (
