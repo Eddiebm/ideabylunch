@@ -1,0 +1,27 @@
+name: SEO (live site)
+
+# Checks titles, descriptions, canonicals, share images, robots.txt and sitemap.xml
+# on every URL of the live site. A failed scheduled run emails the repo owner.
+on:
+  schedule:
+    - cron: '17 6 * * *' # daily, 06:17 UTC
+  deployment_status:
+  workflow_dispatch:
+
+jobs:
+  check:
+    # On deploy events, only after a successful production deploy.
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: SEO check
+        run: node .claude/skills/seo-launch/scripts/check-seo.mjs https://ideabylunch.com

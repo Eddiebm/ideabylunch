@@ -39,3 +39,11 @@ jobs:
           ADMIN_SECRET: stub
           CRON_SECRET: stub
           NEXT_PUBLIC_APP_URL: https://ideabylunch.com
+
+      - name: SEO check (every sitemap URL)
+        run: |
+          npx next start -p 3456 > /tmp/next.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3456/robots.txt > /dev/null && break; sleep 1; done
+          node .claude/skills/seo-launch/scripts/check-seo.mjs http://localhost:3456
+        env:
+          GOOGLE_SITE_VERIFICATION: ci-check

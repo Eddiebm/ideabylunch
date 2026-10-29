@@ -5,6 +5,9 @@ The five "after your site is live" steps, and where each one stands.
 To redo or re-check all of this, run the `seo-launch` skill (`.claude/skills/seo-launch/`), or just the checker:
 `node .claude/skills/seo-launch/scripts/check-seo.mjs https://ideabylunch.com`
 
+It also runs automatically: on every pull request (`.github/workflows/ci.yml`), and against the live site
+daily and after each production deploy (`.github/workflows/seo-live.yml`). A failing scheduled run emails the repo owner.
+
 ## 1. Submit to Google Search Console — manual
 1. https://search.google.com/search-console → **Add property**.
 2. Prefer the **Domain** property (`ideabylunch.com`) and verify with the DNS TXT record at the registrar — this covers every subdomain and http/https.
