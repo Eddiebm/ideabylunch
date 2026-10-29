@@ -58,6 +58,13 @@ function ScoreRing({ score }: { score: number }) {
   )
 }
 
+const LEAK_STYLE: Record<string, { bg: string; border: string; tag: string; tagColor: string }> = {
+  fail: { bg: '#FFF1F0', border: 'rgba(255,59,48,.35)', tag: 'Leak', tagColor: '#FF3B30' },
+  pass: { bg: '#F0FBF3', border: 'rgba(48,209,88,.35)', tag: 'OK', tagColor: '#1E9E45' },
+  skipped: { bg: '#FFFFFF', border: 'rgba(0,0,0,.08)', tag: 'Not checked', tagColor: '#AEAEB2' },
+  unknown: { bg: '#FFFFFF', border: 'rgba(0,0,0,.08)', tag: "Couldn't read", tagColor: '#AEAEB2' },
+}
+
 const SEVERITY_COLOR: Record<string, string> = {
   high: '#FF3B30',
   medium: '#FF9500',
@@ -124,6 +131,34 @@ export default async function AuditResultsPage({ params }: { params: Promise<{ s
           ))}
         </div>
       </div>
+
+      {/* Phone leaks */}
+      {data.leaks && (
+        <div style={{ maxWidth: 880, margin: '0 auto 48px', padding: '0 24px' }}>
+          <h2 style={{ fontSize: 28, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1px', margin: '0 0 6px' }}>Opened on a phone</h2>
+          <p style={{ fontSize: 15, color: '#6E6E73', margin: '0 0 18px', lineHeight: 1.5 }}>
+            {(() => {
+              const leaks = data.leaks.checks.filter((c) => c.status === 'fail').length
+              return leaks === 0 ? 'No leaks a customer can see from their couch.' : `${leaks} leak${leaks === 1 ? '' : 's'} a customer can see from their couch.`
+            })()}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+            {data.leaks.checks.map((c) => {
+              const s = LEAK_STYLE[c.status]
+              return (
+                <div key={c.id} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 14, padding: '18px 20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-.2px' }}>{c.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: s.tagColor, letterSpacing: '.04em', textTransform: 'uppercase', flexShrink: 0 }}>{s.tag}</span>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#6E6E73', lineHeight: 1.5, margin: 0 }}>{c.detail}</p>
+                </div>
+              )
+            })}
+          </div>
+          <p style={{ fontSize: 12, color: '#AEAEB2', margin: '12px 0 0' }}>Screens are estimated from the page source at phone width.</p>
+        </div>
+      )}
 
       {/* Problems */}
       <div style={{ maxWidth: 880, margin: '0 auto 48px', padding: '0 24px' }}>

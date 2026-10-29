@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import { NextRequest } from 'next/server'
 import { getRedis } from '@/app/lib/redis'
 import { fetchPublicUrl } from '@/app/lib/safe-fetch'
+import { analyzePhoneLeaks, checkAdPromise, type PhoneLeaks } from '@/app/lib/phone-leaks'
 
 export const runtime = 'edge'
 
@@ -164,18 +165,21 @@ export type StoredAudit = {
   scrapedAt: number
   current: ReturnType<typeof extractContext>
   audit: AuditResult
+  // Absent on audits stored before the phone checks shipped
+  leaks?: PhoneLeaks
 }
 
 const CACHE_FRESH_MS = 60 * 60 * 24 * 1000 // 24h — same URL returns same audit
 
 export async function POST(req: NextRequest) {
-  let body: { url?: string; force?: boolean }
+  let body: { url?: string; force?: boolean; adPromise?: string }
   try { body = await req.json() } catch { return Response.json({ error: 'invalid_json' }, { status: 400 }) }
 
   const url = body.url ? normaliseUrl(body.url) : null
   if (!url) return Response.json({ error: 'invalid_url' }, { status: 400 })
 
   const slug = slugFromUrl(url)
+  const adPromise = body.adPromise?.trim().slice(0, 200) || null
   const redis = getRedis()
   const ip = getIp(req)
 
@@ -184,7 +188,20 @@ export async function POST(req: NextRequest) {
     const raw = await redis.get<StoredAudit | string>(`audit:${slug}`)
     if (raw) {
       const cached: StoredAudit = typeof raw === 'string' ? JSON.parse(raw) : raw
-      if (Date.now() - cached.scrapedAt < CACHE_FRESH_MS) {
+      // Audits from before the phone checks re-run once so they pick them up
+      if (Date.now() - cached.scrapedAt < CACHE_FRESH_MS && cached.leaks) {
+        // A new ad headline only changes the ad-promise check — re-run it on the stored first screen
+        if (adPromise && adPromise !== cached.leaks.adPromise) {
+          cached.leaks = {
+            ...cached.leaks,
+            adPromise,
+            checks: cached.leaks.checks.map((c) =>
+              c.id === 'ad-promise' && c.status !== 'unknown' ? checkAdPromise(adPromise, cached.leaks!.firstScreenText) : c,
+            ),
+          }
+          const ttl = await redis.ttl(`audit:${slug}`)
+          await redis.set(`audit:${slug}`, JSON.stringify(cached), { ex: ttl > 0 ? ttl : 60 * 60 * 24 * 90 })
+        }
         return Response.json({
           slug,
           audit: cached.audit,
@@ -221,6 +238,7 @@ export async function POST(req: NextRequest) {
   }
 
   const current = extractContext(html)
+  const leaks = analyzePhoneLeaks(html, adPromise)
 
   const openai = new OpenAI({
     apiKey: process.env.OPENROUTER_API_KEY,
@@ -260,6 +278,7 @@ export async function POST(req: NextRequest) {
     scrapedAt: Date.now(),
     current,
     audit,
+    leaks,
   }
 
   if (redis) {

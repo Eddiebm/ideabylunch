@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 
 export default function AuditForm() {
   const [url, setUrl] = useState('')
+  const [adPromise, setAdPromise] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [stage, setStage] = useState<string>('')
@@ -18,14 +19,14 @@ export default function AuditForm() {
 
     try {
       // Show progressive stages while the request runs
-      const stageTimer = setTimeout(() => setStage('Reading your hero, your CTAs, your pricing...'), 2500)
+      const stageTimer = setTimeout(() => setStage('Opening it like a customer on a phone...'), 2500)
       const stageTimer2 = setTimeout(() => setStage('Running the 10-point audit...'), 6000)
       const stageTimer3 = setTimeout(() => setStage('Rewriting your homepage...'), 12000)
 
       const res = await fetch('/api/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, adPromise: adPromise.trim() || undefined }),
       })
 
       clearTimeout(stageTimer)
@@ -96,6 +97,25 @@ export default function AuditForm() {
         >
           {loading ? 'Auditing...' : 'Audit my site →'}
         </button>
+        <input
+          type="text"
+          placeholder="Your Google ad headline (optional) — e.g. 24/7 Emergency Plumber, $0 Trip Fee"
+          value={adPromise}
+          onChange={(e) => setAdPromise(e.target.value)}
+          disabled={loading}
+          maxLength={200}
+          style={{
+            flex: '1 1 100%',
+            padding: '12px 18px',
+            fontSize: 14,
+            border: '1px solid rgba(0,0,0,.12)',
+            borderRadius: 12,
+            outline: 'none',
+            background: '#FFF',
+            fontFamily: 'inherit',
+            color: '#1D1D1F',
+          }}
+        />
       </form>
 
       {loading && stage && (
