@@ -3,6 +3,7 @@ export const maxDuration = 300
 import { getRedis } from '@/app/lib/redis'
 import { Resend } from 'resend'
 import OpenAI from 'openai'
+import { reportFailure } from '@/app/lib/report-failure'
 
 type Profile = {
   email: string
@@ -165,7 +166,7 @@ export async function GET(req: Request) {
     to: process.env.ADMIN_EMAIL || 'eddie@bannermanmenson.com',
     subject: `Grow monthly delivery — ${monthLabel}: ${sent} sent, ${failed} failed`,
     html: `<p><strong>${monthLabel} delivery complete.</strong><br>Sent: ${sent} / Failed: ${failed} / Skipped (already sent): ${skipped}<br>Total subscribers: ${subscribers.length}</p>`,
-  }).catch(() => {})
+  }).catch(reportFailure('monthly delivery summary email'))
 
   return Response.json({ ok: true, sent, failed, skipped, total: subscribers.length })
 }

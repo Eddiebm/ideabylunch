@@ -4,6 +4,7 @@ import { Resend } from 'resend'
 import { Redis } from '@upstash/redis'
 import { generateHtmlFromBrief, extractProductName } from '@/app/lib/generate'
 import { deployToVercel, slugify } from '@/app/lib/deploy'
+import { reportFailure } from '@/app/lib/report-failure'
 
 function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
           <p style="font-size:13px;color:#AEAEB2;line-height:1.6">One ask: 20 minutes of honest feedback. What worked, what didn't, what was missing. Just reply to this email.</p>
           <p style="font-size:13px;color:#AEAEB2;margin-top:24px">— Eddie, IdeaByLunch</p>
         </div>`,
-      }).catch(() => {})
+      }).catch(reportFailure('free-build site-live email'))
     }
 
     // Notify Eddie
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
         <p style="font-size:13px;color:#6E6E73;margin:0 0 16px">${email} · ${productName}</p>
         ${liveUrl ? `<p><a href="${liveUrl}" style="color:#0066CC">${liveUrl}</a></p>` : '<p style="color:#FF3B30">Deploy failed — needs manual build</p>'}
       </div>`,
-    }).catch(() => {})
+    }).catch(reportFailure('free-build admin email'))
 
     return Response.json({ ok: true, liveUrl, productName })
   } catch (err: any) {

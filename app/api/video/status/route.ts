@@ -3,6 +3,7 @@ import { fal } from '@fal-ai/client'
 import { put } from '@vercel/blob'
 import { Resend } from 'resend'
 import { getRedis } from '@/app/lib/redis'
+import { reportFailure } from '@/app/lib/report-failure'
 
 const MODEL = 'fal-ai/kling-video/v1.6/standard/text-to-video'
 
@@ -88,7 +89,7 @@ export async function GET(req: Request) {
           ex: 60 * 60 * 24 * 7,
           nx: true,
         })
-        if (alreadyNotified) await sendVideoEmail(email, video_url).catch(() => {})
+        if (alreadyNotified) await sendVideoEmail(email, video_url).catch(reportFailure('video-ready email'))
       }
     }
 

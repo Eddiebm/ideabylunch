@@ -7,6 +7,7 @@ import { createDashboardToken } from '@/app/lib/auth'
 import { deployToVercel, injectConceptVideo, slugify } from '@/app/lib/deploy'
 import { logAuditEvent } from '@/app/lib/audit-log'
 import { trackFunnelStep } from '@/app/lib/funnel'
+import { reportFailure } from '@/app/lib/report-failure'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
@@ -350,14 +351,14 @@ export async function POST(req: Request) {
             <p style="color:#3C3C43">All 7 Grow tools are now unlimited for you. Your first monthly kit lands in your inbox on the 1st.</p>
             <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'}/grow" style="background:#000;color:#fff;padding:11px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Go to Grow →</a></p>
           </div>`,
-        }).catch(() => {})
+        }).catch(reportFailure('Grow welcome email'))
         // Admin alert
         await resend.emails.send({
           from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
           to: process.env.ADMIN_EMAIL || 'eddie@bannermanmenson.com',
           subject: `💰 Grow subscriber — $49/mo — ${customerEmail}`,
           html: `<p><strong>${customerEmail}</strong> subscribed to Grow ($49/mo).</p>`,
-        }).catch(() => {})
+        }).catch(reportFailure('Grow admin alert email'))
         // Trigger Grow email sequence
         if (redis && customerEmail) {
           await redis.set(`seq:grow:${customerEmail.toLowerCase()}`, Date.now(), { ex: 60 * 60 * 24 * 30 })
@@ -474,7 +475,7 @@ export async function POST(req: Request) {
             <p>We're finalising your site and will email the live URL within 24 hours.</p>
             <p style="color:#666;font-size:13px">Reply to this email with any tweaks.</p>
           </div>`,
-        }).catch(() => {})
+        }).catch(reportFailure('order received email'))
       }
 
       // Admin alert — always fires so you never miss a sale
@@ -526,7 +527,7 @@ export async function POST(req: Request) {
           }))
           await redis2.ltrim('errors:webhook', 0, 49)
         }
-      } catch {}
+      } catch (err) { reportFailure('log webhook failure to Redis')(err) }
       // Always email admin on failure so money never lands silently
       try {
         await resend.emails.send({
@@ -535,7 +536,7 @@ export async function POST(req: Request) {
           subject: `⚠️ Webhook handler threw — check Stripe event ${event.id}`,
           html: `<p>Handler crashed. Stripe event <code>${event.id}</code> returned 200 but processing failed.</p><pre>${String(e).slice(0, 2000)}</pre>`,
         })
-      } catch {}
+      } catch (err) { reportFailure('email admin about a webhook failure')(err) }
     }
   }
 
