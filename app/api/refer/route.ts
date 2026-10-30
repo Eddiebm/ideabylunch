@@ -1,5 +1,6 @@
 import { getRedis } from '@/app/lib/redis'
 import { Resend } from 'resend'
+import { reportFailure } from '@/app/lib/report-failure'
 
 export const runtime = 'edge'
 
@@ -98,7 +99,7 @@ export async function PUT(req: Request) {
         <p><strong>Commission owed (30%):</strong> $${earnings.toFixed(2)}</p>
         <p>Pay via PayPal or Wise and reply to confirm.</p>
       </div>`,
-    }).catch(() => {})
+    }).catch(reportFailure('referral payout email'))
   }
 
   return Response.json({ ok: true, earnings })

@@ -6,6 +6,7 @@ import { Resend } from 'resend'
 import { generateHtmlFromBrief } from '@/app/lib/generate'
 import { deployToVercel, slugify } from '@/app/lib/deploy'
 import { logAuditEvent } from '@/app/lib/audit-log'
+import { reportFailure } from '@/app/lib/report-failure'
 
 // ─── Redis ────────────────────────────────────────────────────────────────────
 
@@ -81,7 +82,9 @@ export async function POST(req: Request) {
   let event: any
   try {
     event = JSON.parse(body)
-  } catch {
+  } catch (err) {
+    // Signed by Paystack but not JSON: answer 200 so it isn't retried forever, but say so.
+    reportFailure('Paystack webhook body was signed but not JSON')(err)
     return Response.json({ ok: true })
   }
 
@@ -218,7 +221,7 @@ export async function POST(req: Request) {
   <p><a href="${liveUrl}" style="background:#0066CC;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">Visit your site →</a></p>
   <p style="color:#666;font-size:13px">Reply to this email for any changes.</p>
 </div>`,
-      }).catch(() => {})
+      }).catch(reportFailure('Paystack site-is-live email'))
 
       if (whatsapp) {
         console.log(`[WA-STUB] → ${whatsapp}: "Hi! ${productName} is live at ${liveUrl}. — IdeaByLunch"`)
@@ -231,7 +234,7 @@ export async function POST(req: Request) {
         html: `<div style="font-family:-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px">
   Your order for <strong>${productName}</strong> is confirmed. We're finalising your site and will send the live URL within 24 hours.
 </div>`,
-      }).catch(() => {})
+      }).catch(reportFailure('Paystack order confirmation email'))
     }
   }
 
@@ -258,7 +261,7 @@ export async function POST(req: Request) {
   <p><strong>Reference:</strong> ${reference}</p>
   ${statusLine}
 </div>`,
-    }).catch(() => {})
+    }).catch(reportFailure('Paystack admin new-order email'))
   }
 
   return Response.json({ ok: true })
