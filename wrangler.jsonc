@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ideabylunch",
+  "account_id": "07813953b9a828435bab878a70d4b1df",
   "main": "./worker.ts",
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -14,29 +15,16 @@
       "service": "ideabylunch"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "ideabylunch-next-cache"
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "NEXT_CACHE_DO_QUEUE",
-        "class_name": "DOQueueHandler"
-      }
-    ]
-  },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": ["DOQueueHandler"]
-    }
+  "routes": [
+    { "pattern": "ideabylunch.com", "custom_domain": true },
+    { "pattern": "www.ideabylunch.com", "custom_domain": true }
   ],
   "triggers": {
     // Each expression must have a matching entry in CRON_ROUTES in worker.ts.
     "crons": ["0 7 * * *", "0 9 * * *", "0 12 * * *", "0 8 1 * *"]
+  },
+  "vars": {
+    "NEXT_PUBLIC_APP_URL": "https://ideabylunch.com"
   },
   "observability": {
     "enabled": true

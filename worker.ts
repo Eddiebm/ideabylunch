@@ -30,6 +30,3 @@ export default {
     if (!res.ok) throw new Error(`${path} responded ${res.status}`)
   },
 } satisfies ExportedHandler<Env>
-
-// @ts-ignore `.open-next/worker.js` is generated at build time
-export { DOQueueHandler } from './.open-next/worker.js'
