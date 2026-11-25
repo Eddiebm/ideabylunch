@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { resolveMarket, MARKET_PRICING } from './lib/pricing'
@@ -94,7 +93,7 @@ export default async function HomePage({
   const headersList = await headers()
   const sp = (await (searchParams ?? Promise.resolve({}))) as { market?: string }
   const deployCount = await getDeployCount()
-  const country = headersList.get('x-vercel-ip-country')
+  const country = headersList.get('cf-ipcountry') ?? headersList.get('x-vercel-ip-country')
   const marketCode = resolveMarket({ country, override: sp.market })
   const p = MARKET_PRICING[marketCode]
   const isUS = marketCode === 'US'

@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { resolveMarket, MARKET_PRICING } from '../../lib/pricing'
@@ -171,7 +170,7 @@ export default async function NichePage({ params }: { params: Promise<{ slug: st
   const { slug } = await params
   const niche = NICHES[slug] || DEFAULT
   const headersList = await headers()
-  const country = headersList.get('x-vercel-ip-country')
+  const country = headersList.get('cf-ipcountry') ?? headersList.get('x-vercel-ip-country')
   const marketCode = resolveMarket({ country })
   const p = MARKET_PRICING[marketCode]
 

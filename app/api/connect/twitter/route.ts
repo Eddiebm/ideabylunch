@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { NextRequest } from 'next/server'
 import { getRedis } from '@/app/lib/redis'
 import { clearConn, randomUrlSafe, pkceChallenge, saveOAuthState } from '@/app/lib/platform-connect'

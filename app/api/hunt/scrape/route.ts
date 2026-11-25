@@ -1,5 +1,3 @@
-export const runtime = 'edge'
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface Business {
   name: string

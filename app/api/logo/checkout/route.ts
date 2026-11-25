@@ -1,8 +1,6 @@
 import Stripe from 'stripe'
 import { getRedis } from '@/app/lib/redis'
 
-export const runtime = 'edge'
-
 const VALID_KEY_RE = /^[a-z0-9:_-]{5,120}$/
 const VALID_TIERS = new Set(['starter', 'pro'])
 

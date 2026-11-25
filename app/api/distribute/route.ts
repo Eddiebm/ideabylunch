@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import OpenAI from 'openai'
 import { NextRequest } from 'next/server'
 import { getRedis } from '@/app/lib/redis'

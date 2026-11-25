@@ -1,8 +1,6 @@
 import { getRedis } from '@/app/lib/redis'
 import { getFunnelStats } from '@/app/lib/funnel'
 
-export const runtime = 'edge'
-
 async function auth(req: Request) {
   const secret = req.headers.get('x-admin-secret')
   const expected = process.env.ADMIN_SECRET

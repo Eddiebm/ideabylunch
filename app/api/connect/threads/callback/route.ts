@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { NextRequest } from 'next/server'
 import { getRedis } from '@/app/lib/redis'
 import { getOAuthState, setConn } from '@/app/lib/platform-connect'

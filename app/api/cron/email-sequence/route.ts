@@ -1,5 +1,3 @@
-export const runtime = 'edge'
-
 import { getRedis } from '@/app/lib/redis'
 import { Resend } from 'resend'
 

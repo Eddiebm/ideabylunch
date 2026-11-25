@@ -1,8 +1,6 @@
 import Stripe from 'stripe'
 import { Redis } from '@upstash/redis'
 
-export const runtime = 'edge'
-
 const AFRICAN_COUNTRIES = new Set([
   'GH','NG','KE','ZA','TZ','UG','RW','CI','SN','ET','EG','MA','CM','TN','AO',
   'MZ','ZM','MW','BW','NA','ZW','MU','CV','GM','SL','LR','GN','BJ','TG','BF',

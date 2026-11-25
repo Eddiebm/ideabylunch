@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 import { Redis } from '@upstash/redis'
-import { fetchPublicPage } from '@/app/lib/safe-fetch-node'
+import { fetchPublicUrl } from '@/app/lib/safe-fetch'
 
 export const runtime = 'nodejs'
 
@@ -55,9 +55,12 @@ async function scrapeSiteEmails(website: string): Promise<string[]> {
   const urls = [base, `${base.replace(/\/$/, '')}/contact`, `${base.replace(/\/$/, '')}/contact-us`, `${base.replace(/\/$/, '')}/about`]
   for (const u of urls) {
     try {
-      const res = await fetchPublicPage(u, { signal: AbortSignal.timeout(6000) })
+      const res = await fetchPublicUrl(u, {
+        headers: { 'User-Agent': 'IdeaByLunchBot/1.0 (+https://ideabylunch.com)' },
+        signal: AbortSignal.timeout(6000),
+      })
       if (!res || !res.ok) continue
-      const html = res.text
+      const html = (await res.text()).slice(0, 2_000_000)
       const matches = html.match(re) || []
       for (const m of matches) {
         const lc = m.toLowerCase()

@@ -1,8 +1,6 @@
 import Stripe from 'stripe'
 import { getRedis } from '@/app/lib/redis'
 
-export const runtime = 'edge'
-
 async function getSessionEmail(req: Request): Promise<string | null> {
   const cookie = req.headers.get('cookie') || ''
   const match = cookie.match(/i2l_session=([a-f0-9]+)/)

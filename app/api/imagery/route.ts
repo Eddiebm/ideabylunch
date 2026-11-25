@@ -1,7 +1,5 @@
 import OpenAI from 'openai'
 
-export const runtime = 'edge'
-
 // Fetch royalty-free photo — randomized from top 5 results
 async function fetchPhoto(query: string, key: string, seed = 0): Promise<string | null> {
   try {

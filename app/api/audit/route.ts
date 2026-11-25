@@ -3,8 +3,6 @@ import { NextRequest } from 'next/server'
 import { getRedis } from '@/app/lib/redis'
 import { fetchPublicUrl } from '@/app/lib/safe-fetch'
 
-export const runtime = 'edge'
-
 const FREE_AUDITS_PER_IP_PER_DAY = 10
 
 function getIp(req: NextRequest): string {

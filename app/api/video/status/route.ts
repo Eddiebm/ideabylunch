@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { fal } from '@fal-ai/client'
 import { put } from '@vercel/blob'
 import { Resend } from 'resend'

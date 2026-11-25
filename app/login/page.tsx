@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 

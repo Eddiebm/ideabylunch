@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { revokeDashboardTokens } from '@/app/lib/auth'
 
 export async function POST(req: Request) {

@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import Stripe from 'stripe'
 import { getRedis } from '@/app/lib/redis'
 

@@ -2,7 +2,6 @@
 // (idea_viewed and brief_started can't be recorded server-side without SSR overhead)
 // POST { step: 'idea_viewed' | 'brief_started' }
 
-export const runtime = 'edge'
 import { getRedis } from '@/app/lib/redis'
 import { trackFunnelStep, type FunnelStep } from '@/app/lib/funnel'
 

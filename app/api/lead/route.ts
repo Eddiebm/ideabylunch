@@ -1,7 +1,5 @@
 import { getRedis } from '@/app/lib/redis'
 
-export const runtime = 'edge'
-
 export async function POST(req: Request) {
   const { email, source } = await req.json()
   if (!email?.includes('@')) return Response.json({ ok: false })

@@ -2,8 +2,6 @@ import OpenAI from 'openai'
 import { NextRequest } from 'next/server'
 import { getRedis } from '@/app/lib/redis'
 
-export const runtime = 'edge'
-
 const FREE_LIMIT = 5      // anonymous IP limit — wow first, gate later
 const EMAIL_LIMIT = 12    // after email capture
 

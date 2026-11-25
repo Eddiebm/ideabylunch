@@ -1,7 +1,5 @@
 import { getRedis } from '@/app/lib/redis'
 
-export const runtime = 'edge'
-
 export async function GET(req: Request) {
   const cookie = req.headers.get('cookie') || ''
   const match = cookie.match(/i2l_session=([a-f0-9]+)/)

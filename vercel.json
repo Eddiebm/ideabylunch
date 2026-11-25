@@ -1,21 +1,3 @@
 {
-  "framework": "nextjs",
-  "crons": [
-    {
-      "path": "/api/cron/monthly-delivery",
-      "schedule": "0 8 1 * *"
-    },
-    {
-      "path": "/api/cron/email-sequence",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/publish-hooks",
-      "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/cron/admin-digest",
-      "schedule": "0 7 * * *"
-    }
-  ]
+  "framework": "nextjs"
 }

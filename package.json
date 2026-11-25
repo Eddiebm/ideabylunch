@@ -7,10 +7,12 @@
     "build": "npx tsx scripts/check-env.ts && next build",
     "start": "next start",
     "validate": "node scripts/validate.js",
-    "deploy": "node scripts/validate.js && npx tsx scripts/check-env.ts && npx vercel --prod",
-    "deploy:force": "node scripts/validate.js && npx vercel --prod --force",
+    "deploy": "node scripts/validate.js && NODE_ENV=production npx tsx scripts/check-env.ts && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "check": "node scripts/validate.js",
-    "check-env": "npx tsx scripts/check-env.ts"
+    "check-env": "npx tsx scripts/check-env.ts",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "typecheck:worker": "tsc -p tsconfig.worker.json"
   },
   "dependencies": {
     "@fal-ai/client": "^1.10.1",
@@ -26,9 +28,11 @@
     "stripe": "^16.2.0"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.19",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.168.0"
   }
 }

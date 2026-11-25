@@ -16,7 +16,6 @@ const REQUIRED: string[] = [
   'STRIPE_WEBHOOK_SECRET',
   'RESEND_API_KEY',
   'CRON_SECRET',
-  'JWT_SECRET',
   'NEXT_PUBLIC_APP_URL',
 ]
 

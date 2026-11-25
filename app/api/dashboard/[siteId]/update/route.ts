@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { Redis } from '@upstash/redis'
 import Stripe from 'stripe'
 import { deployToVercel } from '@/app/lib/deploy'

@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { getRedis } from '@/app/lib/redis'
 import { logAuditEvent } from '@/app/lib/audit-log'
 import { Resend } from 'resend'

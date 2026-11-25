@@ -1,8 +1,6 @@
 import { getRedis } from '@/app/lib/redis'
 import { Resend } from 'resend'
 
-export const runtime = 'edge'
-
 const COMMISSION_RATE = 0.30
 const PAYOUT_MINIMUM = 50 // dollars
 

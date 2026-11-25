@@ -1,7 +1,5 @@
 import { getRedis } from '@/app/lib/redis'
 
-export const runtime = 'edge'
-
 async function verifyAdminSecret(provided: string | null): Promise<boolean> {
   const expected = process.env.ADMIN_SECRET
   if (!provided || !expected) return false

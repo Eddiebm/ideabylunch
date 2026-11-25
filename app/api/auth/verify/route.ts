@@ -1,7 +1,5 @@
 import { getRedis } from '@/app/lib/redis'
 
-export const runtime = 'edge'
-
 function generateSession(): string {
   const arr = new Uint8Array(32)
   crypto.getRandomValues(arr)

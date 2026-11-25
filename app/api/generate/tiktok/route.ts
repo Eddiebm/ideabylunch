@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { NextRequest } from 'next/server'
 
 function buildComposition(hook: string, body: string, cta: string, caption: string) {

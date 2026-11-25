@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { getRedis } from '@/app/lib/redis'
 
 export type BusinessProfile = {

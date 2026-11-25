@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { headers } from 'next/headers'
 import { Redis } from '@upstash/redis'
 import EditForm from './form'

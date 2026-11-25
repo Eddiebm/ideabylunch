@@ -1,7 +1,5 @@
 import OpenAI from 'openai'
 
-export const runtime = 'edge'
-
 const STYLES = {
   editorial: {
     name: 'Editorial',

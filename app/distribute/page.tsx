@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 import { useState, useRef, useCallback } from 'react'
 
 type ParsedSection = {

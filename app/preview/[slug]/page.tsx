@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { Redis } from '@upstash/redis'
 import { notFound } from 'next/navigation'
 

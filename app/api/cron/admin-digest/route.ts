@@ -2,7 +2,6 @@
 // Summarises: pending reviews, new orders, revenue delta, funnel bottleneck, paused sellers
 // Cron schedule (vercel.json / cron tab): 0 7 * * *
 
-export const runtime = 'edge'
 import { Resend } from 'resend'
 import { getRedis } from '@/app/lib/redis'
 import { getFunnelStats } from '@/app/lib/funnel'

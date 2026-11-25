@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { fal } from '@fal-ai/client'
 import { getRedis } from '@/app/lib/redis'
 

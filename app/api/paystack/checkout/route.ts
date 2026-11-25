@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { Redis } from '@upstash/redis'
 import { PRICING } from '@/app/lib/pricing'
 

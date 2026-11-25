@@ -1,7 +1,5 @@
 import OpenAI from 'openai'
 
-export const runtime = 'edge'
-
 const PROMPT_SYSTEM = `You are a world-class creative director and art director at a Madison Avenue advertising agency. 
 You write image generation prompts that produce editorial, photorealistic, high-end photography.
 
