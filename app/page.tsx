@@ -161,14 +161,24 @@ export default async function HomePage({
       />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,700;0,800;1,700;1,800&family=DM+Sans:wght@400;500;600&display=swap');
-        @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
         @keyframes pulseDot { 0%,100% { opacity: 1; transform: scale(1) } 50% { opacity: .55; transform: scale(.85) } }
         @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+        @keyframes floatMock { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
         html, body { margin: 0; padding: 0; background: #F8F7F4; font-family: 'DM Sans', system-ui, sans-serif; }
         a { text-decoration: none; }
-        .ticker-track { display: flex; gap: 32px; animation: ticker 40s linear infinite; white-space: nowrap; }
+        .ticker-track { display: flex; gap: 48px; animation: ticker 50s linear infinite; white-space: nowrap; }
         .solution-row { display: grid; grid-template-columns: 48px 200px 1fr; gap: 0 24px; }
+        .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+        .mockup-float { animation: floatMock 5s ease-in-out infinite; }
+        .stats-strip { display: grid; grid-template-columns: repeat(4,1fr); }
+        details summary::-webkit-details-marker { display: none; }
+        @media (max-width: 860px) {
+          .hero-grid { grid-template-columns: 1fr !important; gap: 48px !important; }
+          .hero-mockup { order: -1; }
+          .stats-strip { grid-template-columns: repeat(2,1fr) !important; }
+        }
         @media (max-width: 680px) {
           .grid-3 { grid-template-columns: 1fr !important; }
           .grid-2 { grid-template-columns: 1fr !important; }
@@ -178,6 +188,7 @@ export default async function HomePage({
           .nav-links { display: none !important; }
           .solution-row { grid-template-columns: 36px 1fr !important; }
           .solution-row span:last-child { grid-column: 2 / -1; }
+          .hero-mockup { display: none !important; }
         }
       `}</style>
 
@@ -206,56 +217,143 @@ export default async function HomePage({
           </div>
         </nav>
 
-        {/* ── Ticker ───────────────────────────────────────────────────── */}
-        {/* ── Ticker ───────────────────────────────────────────────────── */}
-        <div style={{ background: '#111111', overflow: 'hidden', height: 36, display: 'flex', alignItems: 'center' }}>
+        {/* ── Announcement bar ─────────────────────────────────────────── */}
+        <div style={{ borderBottom: '1px solid rgba(0,0,0,.08)', background: '#FFFFFF', overflow: 'hidden', height: 36, display: 'flex', alignItems: 'center' }}>
           <div className="ticker-track">
             {Array.from({ length: 2 }).map((_, repeat) => (
               <div key={repeat} style={{ display: 'flex', gap: 48, alignItems: 'center' }}>
-                <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,.65)', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#5A5A5A', letterSpacing: '.06em', textTransform: 'uppercase' }}>
                   {deployCount > 0 ? `${deployCount.toLocaleString()} marketplaces launched` : 'AI Marketplace Builder'}
                 </span>
-                <span style={{ color: '#C8511A' }}>·</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,.65)', letterSpacing: '.06em', textTransform: 'uppercase' }}>Sellers · Buyers · Growth</span>
-                <span style={{ color: '#C8511A' }}>·</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,.65)', letterSpacing: '.06em', textTransform: 'uppercase' }}>You own the code</span>
-                <span style={{ color: '#C8511A' }}>·</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,.65)', letterSpacing: '.06em', textTransform: 'uppercase' }}>Brief is always free</span>
-                <span style={{ color: '#C8511A' }}>·</span>
+                <span style={{ color: '#C8511A', fontSize: 10 }}>◆</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#5A5A5A', letterSpacing: '.06em', textTransform: 'uppercase' }}>Sellers · Buyers · Growth</span>
+                <span style={{ color: '#C8511A', fontSize: 10 }}>◆</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#5A5A5A', letterSpacing: '.06em', textTransform: 'uppercase' }}>You own the code</span>
+                <span style={{ color: '#C8511A', fontSize: 10 }}>◆</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#5A5A5A', letterSpacing: '.06em', textTransform: 'uppercase' }}>Brief is always free</span>
+                <span style={{ color: '#C8511A', fontSize: 10 }}>◆</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* ── Hero ─────────────────────────────────────────────────────── */}
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '100px 24px 96px', animation: 'fadeUp .5s ease both' }}>
-          <div style={{ marginBottom: 24 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#5A5A5A' }}>
-              AI Marketplace Launch + Growth OS
-            </span>
-          </div>
-          <h1 style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 'clamp(40px, 7vw, 76px)', fontWeight: 800, color: '#111111', letterSpacing: '-2px', lineHeight: 1.0, margin: '0 0 28px', maxWidth: 760 }}>
-            Your marketplace idea,<br />
-            live <em style={{ color: '#C8511A', fontStyle: 'italic' }}>by lunch.</em>
-          </h1>
-          <p style={{ fontSize: 'clamp(17px, 2.5vw, 20px)', color: '#5A5A5A', lineHeight: 1.65, margin: '0 0 40px', maxWidth: 540 }}>
-            Brief your marketplace in plain English. We generate the full system — pages, seller flows, buyer capture, analytics, and an AI coach that tells you what to do next.
-          </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Link href="/app" style={{ background: '#111111', color: '#FFFFFF', borderRadius: 10, padding: '15px 32px', fontSize: 16, fontWeight: 600, letterSpacing: '-.2px', display: 'inline-block', textDecoration: 'none' }}>
-              Cook my idea →
-            </Link>
-            <a href="#how" style={{ color: '#5A5A5A', fontSize: 15, fontWeight: 500, textDecoration: 'none' }}>
-              See how it works ↓
-            </a>
-          </div>
-          {!isUS && (
-            <div style={{ marginTop: 20 }}>
-              <span style={{ fontSize: 13, color: '#5A5A5A' }}>
-                Pricing shown in {p.currency} · <a href={toggleHref} style={{ color: '#C8511A', fontWeight: 500, textDecoration: 'none' }}>Switch to USD</a>
-              </span>
+        <div style={{ maxWidth: 1160, margin: '0 auto', padding: '80px 32px 80px', animation: 'fadeUp .6s ease both' }}>
+          <div className="hero-grid">
+            {/* Left: copy */}
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#FFF3EE', borderRadius: 100, padding: '5px 14px', marginBottom: 32 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C8511A', display: 'inline-block', animation: 'pulseDot 2s ease-in-out infinite' }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#C8511A', letterSpacing: '.04em', textTransform: 'uppercase' }}>AI Marketplace Builder</span>
+              </div>
+              <h1 style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 'clamp(44px, 6vw, 80px)', fontWeight: 800, color: '#111111', letterSpacing: '-2.5px', lineHeight: 0.95, margin: '0 0 28px' }}>
+                Your idea,<br />
+                live<em style={{ color: '#C8511A', fontStyle: 'italic' }}> by<br />lunch.</em>
+              </h1>
+              <p style={{ fontSize: 18, color: '#5A5A5A', lineHeight: 1.65, margin: '0 0 36px', maxWidth: 420 }}>
+                Brief your marketplace in plain English. Get a full launch system — pages, seller flows, buyer capture, and an AI growth coach — within hours.
+              </p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                <Link href="/app" style={{ background: '#C8511A', color: '#FFFFFF', borderRadius: 8, padding: '15px 32px', fontSize: 16, fontWeight: 600, letterSpacing: '-.2px', display: 'inline-block', textDecoration: 'none' }}>
+                  Cook my idea →
+                </Link>
+                <a href="#how" style={{ color: '#5A5A5A', fontSize: 15, fontWeight: 500, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  See how it works
+                </a>
+              </div>
+              {!isUS && (
+                <div style={{ marginTop: 20 }}>
+                  <span style={{ fontSize: 13, color: '#888' }}>
+                    Pricing in {p.currency} · <a href={toggleHref} style={{ color: '#C8511A', fontWeight: 500, textDecoration: 'none' }}>Switch to USD</a>
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Right: marketplace mockup */}
+            <div className="hero-mockup mockup-float" style={{ perspective: '1000px' }}>
+              <div style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid rgba(0,0,0,.1)', boxShadow: '0 32px 80px rgba(0,0,0,.14), 0 8px 24px rgba(0,0,0,.08)', overflow: 'hidden', transform: 'rotateY(-4deg) rotateX(2deg)' }}>
+                {/* Browser chrome */}
+                <div style={{ background: '#F2F2F2', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 6, borderBottom: '1px solid rgba(0,0,0,.08)' }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F57', display: 'inline-block' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#FEBC2E', display: 'inline-block' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#28C840', display: 'inline-block' }} />
+                  <div style={{ flex: 1, background: '#E5E5E5', borderRadius: 5, height: 20, marginLeft: 10, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
+                    <span style={{ fontSize: 10, color: '#888' }}>yourmarket.com</span>
+                  </div>
+                </div>
+                {/* Marketplace nav */}
+                <div style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,.06)' }}>
+                  <span style={{ fontFamily: "'Libre Franklin', sans-serif", fontWeight: 800, fontSize: 14, color: '#111' }}>ServiceMkt</span>
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <span style={{ fontSize: 11, color: '#5A5A5A' }}>Find services</span>
+                    <span style={{ fontSize: 11, color: '#5A5A5A' }}>Become a seller</span>
+                  </div>
+                  <div style={{ background: '#C8511A', color: '#FFF', fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 5 }}>Sign up</div>
+                </div>
+                {/* Search bar */}
+                <div style={{ padding: '14px 18px 10px', background: '#FAFAF9' }}>
+                  <div style={{ background: '#FFF', border: '1.5px solid rgba(0,0,0,.1)', borderRadius: 7, padding: '9px 12px', fontSize: 11, color: '#AAA', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>What service do you need?</span>
+                    <div style={{ background: '#C8511A', color: '#FFF', fontSize: 10, padding: '3px 10px', borderRadius: 4, fontWeight: 600 }}>Search</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                    {['Photography', 'Web Design', 'Tutoring', 'Delivery'].map(tag => (
+                      <span key={tag} style={{ fontSize: 10, color: '#5A5A5A', background: '#FFF', border: '1px solid rgba(0,0,0,.1)', borderRadius: 100, padding: '2px 8px' }}>{tag}</span>
+                    ))}
+                  </div>
+                </div>
+                {/* Listings */}
+                <div style={{ padding: '10px 18px 14px', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                  {[
+                    { name: 'Web Design', price: '$299', stars: '4.9', n: 48 },
+                    { name: 'Photography', price: '$150', stars: '5.0', n: 23 },
+                    { name: 'Plumbing', price: '$85/hr', stars: '4.8', n: 61 },
+                  ].map((item, i) => (
+                    <div key={item.name} style={{ background: '#FFF', border: '1px solid rgba(0,0,0,.07)', borderRadius: 8, overflow: 'hidden' }}>
+                      <div style={{ height: 52, background: ['#F3EDE8','#E8EEF3','#EDE8F3'][i], display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(0,0,0,.08)' }} />
+                      </div>
+                      <div style={{ padding: '8px 10px' }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#111', marginBottom: 2 }}>{item.name}</div>
+                        <div style={{ fontSize: 9, color: '#C8511A', marginBottom: 4 }}>★ {item.stars} <span style={{ color: '#AAA' }}>({item.n})</span></div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#111' }}>{item.price}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Stats */}
+                <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(0,0,0,.06)', background: '#FAFAF9', display: 'flex', gap: 24 }}>
+                  <div><span style={{ fontSize: 9, color: '#888' }}>Sellers </span><span style={{ fontSize: 11, fontWeight: 700, color: '#111' }}>142</span></div>
+                  <div><span style={{ fontSize: 9, color: '#888' }}>Bookings </span><span style={{ fontSize: 11, fontWeight: 700, color: '#111' }}>2,891</span></div>
+                  <div><span style={{ fontSize: 9, color: '#888' }}>GMV </span><span style={{ fontSize: 11, fontWeight: 700, color: '#C8511A' }}>$48k</span></div>
+                </div>
+              </div>
+              {/* Badge: "Built by IdeaByLunch" */}
+              <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FFF3EE', border: '1px solid rgba(200,81,26,.2)', borderRadius: 100, padding: '5px 12px' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#C8511A', letterSpacing: '.04em', textTransform: 'uppercase' }}>Built by IdeaByLunch · 4 hrs</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Stats strip ──────────────────────────────────────────────── */}
+        <div style={{ borderTop: '1px solid rgba(0,0,0,.08)', borderBottom: '1px solid rgba(0,0,0,.08)', background: '#FFFFFF' }}>
+          <div className="stats-strip" style={{ maxWidth: 1160, margin: '0 auto', padding: '0 32px' }}>
+            {[
+              { n: '< 4 hrs', label: 'Average time to live marketplace' },
+              { n: p.professional, label: 'One-time launch price, everything included' },
+              { n: '100%', label: 'You own the code — no vendor lock-in' },
+              { n: 'Free', label: 'Brief your idea before you spend anything' },
+            ].map((stat, i) => (
+              <div key={i} style={{ padding: '28px 24px', borderRight: i < 3 ? '1px solid rgba(0,0,0,.08)' : 'none' }}>
+                <div style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, color: '#111111', letterSpacing: '-1px', marginBottom: 4 }}>{stat.n}</div>
+                <div style={{ fontSize: 13, color: '#5A5A5A', lineHeight: 1.4 }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── Problem ──────────────────────────────────────────────────── */}
@@ -516,11 +614,11 @@ export default async function HomePage({
             </div>
 
             {/* Growth OS */}
-            <div style={{ background: '#111111', borderRadius: 12, padding: '32px 28px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div style={{ background: '#FFF3EE', border: '2px solid #C8511A', borderRadius: 12, padding: '32px 28px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
               <div style={{ position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)', background: '#C8511A', color: '#FFF', fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', padding: '4px 14px', borderRadius: '0 0 7px 7px', whiteSpace: 'nowrap' }}>Most founders add this</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.45)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 12 }}>Growth OS</div>
-              <div style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 48, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-2px', lineHeight: 1, marginBottom: 4 }}>{p.monthly}</div>
-              <div style={{ fontSize: 14, color: 'rgba(255,255,255,.35)', marginBottom: 28 }}>after launch · cancel anytime</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#C8511A', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 12 }}>Growth OS</div>
+              <div style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 48, fontWeight: 800, color: '#111111', letterSpacing: '-2px', lineHeight: 1, marginBottom: 4 }}>{p.monthly}</div>
+              <div style={{ fontSize: 14, color: '#888', marginBottom: 28 }}>after launch · cancel anytime</div>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', flex: 1 }}>
                 {[
                   'Hosting & infrastructure',
@@ -533,11 +631,11 @@ export default async function HomePage({
                 ].map(f => (
                   <li key={f} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
                     <span style={{ color: '#C8511A', fontWeight: 700, flexShrink: 0, marginTop: 1, fontSize: 14 }}>→</span>
-                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,.85)', lineHeight: 1.4 }}>{f}</span>
+                    <span style={{ fontSize: 14, color: '#111111', lineHeight: 1.4 }}>{f}</span>
                   </li>
                 ))}
               </ul>
-              <Link href="/app" style={{ background: '#FFFFFF', color: '#111111', borderRadius: 8, padding: '13px', fontSize: 15, fontWeight: 600, letterSpacing: '-.2px', textAlign: 'center', display: 'block', textDecoration: 'none' }}>
+              <Link href="/app" style={{ background: '#C8511A', color: '#FFFFFF', borderRadius: 8, padding: '13px', fontSize: 15, fontWeight: 600, letterSpacing: '-.2px', textAlign: 'center', display: 'block', textDecoration: 'none' }}>
                 Launch + Grow →
               </Link>
             </div>
@@ -572,22 +670,28 @@ export default async function HomePage({
         </div>
 
         {/* ── Final CTA ────────────────────────────────────────────────── */}
-        <div style={{ maxWidth: 780, margin: '0 auto 80px', padding: '0 24px' }}>
-          <div style={{ background: '#111111', borderRadius: 12, padding: '64px 40px', textAlign: 'center' }}>
-            <h2 style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-1.5px', margin: '0 0 14px', lineHeight: 1.1 }}>
-              Your marketplace can be live by lunch.<br />
-              <em style={{ color: '#C8511A', fontStyle: 'italic' }}>Or you can keep thinking about it.</em>
-            </h2>
-            <p style={{ fontSize: 17, color: 'rgba(255,255,255,.5)', margin: '0 0 36px', lineHeight: 1.6 }}>
-              Brief in 60 seconds. System live within hours. You own everything.
-            </p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/app" style={{ background: '#C8511A', color: '#FFFFFF', borderRadius: 8, padding: '16px 36px', fontSize: 17, fontWeight: 600, letterSpacing: '-.2px', display: 'inline-block' }}>
-                Cook my idea →
-              </Link>
-              <a href="#what-you-get" style={{ background: 'rgba(255,255,255,.1)', color: '#FFFFFF', borderRadius: 8, padding: '16px 28px', fontSize: 17, fontWeight: 500, letterSpacing: '-.2px', display: 'inline-block' }}>
-                See what you get
-              </a>
+        <div style={{ maxWidth: 1160, margin: '0 auto 100px', padding: '0 32px' }}>
+          <div style={{ borderTop: '2px solid #111111', paddingTop: 56 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 48, alignItems: 'end' }}>
+              <div>
+                <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#5A5A5A', display: 'block', marginBottom: 20 }}>Ready?</span>
+                <h2 style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 800, color: '#111111', letterSpacing: '-2px', lineHeight: 0.95, margin: 0 }}>
+                  Your marketplace<br />
+                  can be live<br />
+                  <em style={{ color: '#C8511A', fontStyle: 'italic' }}>by lunch.</em>
+                </h2>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start', paddingBottom: 8 }}>
+                <p style={{ fontSize: 16, color: '#5A5A5A', margin: '0 0 16px', lineHeight: 1.6, maxWidth: 300 }}>
+                  Brief in 60 seconds. Live within hours. You own everything — no vendor lock-in.
+                </p>
+                <Link href="/app" style={{ background: '#C8511A', color: '#FFFFFF', borderRadius: 8, padding: '16px 32px', fontSize: 16, fontWeight: 600, letterSpacing: '-.2px', display: 'inline-block', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                  Cook my idea →
+                </Link>
+                <a href="#what-you-get" style={{ fontSize: 14, color: '#5A5A5A', fontWeight: 500, textDecoration: 'none' }}>
+                  See what you get ↓
+                </a>
+              </div>
             </div>
           </div>
         </div>
