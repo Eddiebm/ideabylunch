@@ -101,4 +101,5 @@ A website PASSES delivery if ALL gates pass:
 
 | Date | Commit | Work |
 |------|--------|------|
-| 2026-11-27 | (pending) | Branch created, defects mapped, SSE fix, tests, prompt unification, gates, critique route |
+| 2026-11-27 | 26326f5 | D-001: SSE parser fix + 13 regression tests. D-002/D-003: generationContract.ts, TESTIMONIALS_GUARD on all 5 prompts, QUALITY_FLOOR on DEFAULT. |
+| 2026-11-27 | 96739d2 | D-004: acceptanceGates.ts (10 structural gates), /api/ai/critique route (AI judge for G-04/G-05). |
