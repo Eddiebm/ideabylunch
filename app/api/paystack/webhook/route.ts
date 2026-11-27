@@ -1,11 +1,11 @@
-// Node.js runtime required — generates website HTML via OpenAI and deploys to Vercel (60-120s)
+export const runtime = 'nodejs'
 export const maxDuration = 300
 
 import { Redis } from '@upstash/redis'
 import { Resend } from 'resend'
-import { generateHtmlFromBrief } from '@/app/lib/generate'
 import { deployToVercel, slugify } from '@/app/lib/deploy'
 import { logAuditEvent } from '@/app/lib/audit-log'
+import { getVersionByCheckout, claimDelivery, markDelivered, markDeliveryFailed, markManualReview } from '@/app/lib/site-versions'
 
 // ─── Redis ────────────────────────────────────────────────────────────────────
 
@@ -113,19 +113,66 @@ export async function POST(req: Request) {
   const whatsapp: string | undefined = order?.contact?.whatsapp || undefined
   const affiliateRef: string | undefined = order?.ref || undefined
 
-  // ── Build or use pre-generated HTML ───────────────────────────────────────
-  let html: string | null = order?.selectedHtml || null
-  if (!html && brief) {
-    html = await generateHtmlFromBrief(brief, productName, plan)
+  // ── C-004: Durable delivery — deliver the exact approved HTML from Neon, never regenerate ──
+  let html: string | null = null
+  const neonVersionId: string | null = order?.versionId || event.data?.metadata?.versionId || null
+  const resend = getResend()
+
+  if (neonVersionId) {
+    const claimed = await claimDelivery(neonVersionId)
+    if (!claimed) {
+      // Already claimed — idempotent
+      return Response.json({ ok: true, duplicate: true })
+    }
+    try {
+      const version = await getVersionByCheckout(reference)
+      html = version?.html ?? null
+      if (!html) {
+        await markManualReview({ versionId: neonVersionId, reason: 'Version record found but HTML missing' })
+      }
+    } catch (err) {
+      await markDeliveryFailed({ versionId: neonVersionId, error: String(err) })
+      throw err
+    }
+  } else {
+    // Legacy path — no versionId, no regeneration
+    html = null
+  }
+
+  if (!html) {
+    // Enter manual review — notify admin
+    if (resend && customerEmail) {
+      await resend.emails.send({
+        from: `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`,
+        to: process.env.ADMIN_EMAIL || 'eddie@bannermanmenson.com',
+        subject: `⚠️ Manual review needed — ${customerEmail} — ${reference}`,
+        html: `<p>Paystack order <strong>${reference}</strong> (${customerEmail}) has no HTML available. Manual delivery required.</p>`,
+      }).catch(() => {})
+    }
+    if (redis) {
+      await redis.set(`order:${reference}`, JSON.stringify({
+        ...order, status: 'manual_review', updatedAt: Date.now(),
+      }), { ex: 60 * 60 * 24 * 30 })
+    }
+    return Response.json({ ok: true })
   }
 
   // ── Watermark + deploy ─────────────────────────────────────────────────────
   const projectSlug = slugify(productName)
-  const watermarkedHtml = html ? watermark(html, reference, customerEmail, plan) : null
+  const watermarkedHtml = watermark(html, reference, customerEmail, plan)
   // Deploy to PREVIEW only. Admin must promote to production via promoteDeployment().
-  const deployResult = watermarkedHtml ? await deployToVercel(projectSlug, watermarkedHtml) : null
+  const deployResult = await deployToVercel(projectSlug, watermarkedHtml)
   const liveUrl = deployResult?.previewUrl ?? null
   const deploymentId = deployResult?.deploymentId ?? null
+
+  // Persist delivery outcome to Neon
+  if (neonVersionId) {
+    if (deploymentId) {
+      await markDelivered({ versionId: neonVersionId, deploymentId })
+    } else {
+      await markDeliveryFailed({ versionId: neonVersionId, error: 'Vercel deploy returned no deploymentId' })
+    }
+  }
 
   // ── Update order in Redis ──────────────────────────────────────────────────
   if (redis) {
@@ -204,7 +251,6 @@ export async function POST(req: Request) {
   }
 
   // ── Customer email ─────────────────────────────────────────────────────────
-  const resend = getResend()
   if (resend && customerEmail) {
     const from = `IdeaByLunch <${process.env.RESEND_FROM || 'hello@ideabylunch.com'}>`
     if (liveUrl) {

@@ -107,13 +107,14 @@ const FEATURES: Record<string, string[]> = {
   full:         ['Everything in Premium', 'Authentication (Clerk)', 'Stripe payments wired up', 'Database (Supabase)', '30 days of support'],
 }
 
-function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle, selectedHtml, onClose }: {
+function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle, versionId, sessionToken, onClose }: {
   brief: string
   marketCode: CountryCode
   marketPricing: MarketPricing
   userEmail?: string | null
   designStyle?: string
-  selectedHtml?: string
+  versionId?: string
+  sessionToken?: string
   onClose: () => void
 }) {
   const [loading, setLoading] = useState(false)
@@ -154,11 +155,14 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
     track('checkout_initiated', { method: isPaystack ? 'paystack' : 'stripe', plan: selected, market: marketCode })
     try {
       const affiliateRef = typeof window !== 'undefined' ? (localStorage.getItem('i2l_ref') || undefined) : undefined
+      if (!versionId || !sessionToken) {
+        throw new Error('No approved design selected. Please select a design before checking out.')
+      }
       if (isPaystack) {
         const res = await fetch('/api/paystack/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), brief, country: marketCode, tier: selected, ...(selectedHtml ? { selectedHtml } : {}), ...(addOnTotal > 0 ? { extraPages } : {}), ...(affiliateRef ? { ref: affiliateRef } : {}), ...(promoCode.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}) }),
+          body: JSON.stringify({ email: email.trim(), brief, country: marketCode, tier: selected, versionId, sessionToken, ...(addOnTotal > 0 ? { extraPages } : {}), ...(affiliateRef ? { ref: affiliateRef } : {}), ...(promoCode.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}) }),
         })
         const data = await res.json()
         if (data.url) { track('checkout_redirected', { method: 'paystack' }); window.location.href = data.url }
@@ -167,7 +171,7 @@ function LaunchModal({ brief, marketCode, marketPricing, userEmail, designStyle,
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: selected, brief, express: showExpress && express, market: marketCode, designStyle, ...(selectedHtml ? { selectedHtml } : {}), ...(affiliateRef ? { ref: affiliateRef } : {}) }),
+          body: JSON.stringify({ plan: selected, brief, express: showExpress && express, market: marketCode, designStyle, versionId, sessionToken, ...(affiliateRef ? { ref: affiliateRef } : {}) }),
         })
         const data = await res.json()
         if (data.url) { track('checkout_redirected', { method: 'stripe' }); window.location.href = data.url }
@@ -454,6 +458,7 @@ export default function BriefGenerator() {
   const [country, setCountry] = useState('')
   const [marketCode, setMarketCode] = useState<CountryCode>('US')
   const [selectedDesign, setSelectedDesign] = useState<{ style: string; html: string } | null>(null)
+  const [persistedVersion, setPersistedVersion] = useState<{ versionId: string; sessionToken: string } | null>(null)
   const [freeToken, setFreeToken] = useState<string | null>(null)
   const [freeBuildEmail, setFreeBuildEmail] = useState('')
   const [freeBuildLoading, setFreeBuildLoading] = useState(false)
@@ -576,7 +581,7 @@ export default function BriefGenerator() {
         ::-webkit-scrollbar { width: 0; }
       `}</style>
 
-      {showLaunch && <LaunchModal brief={output} marketCode={marketCode} marketPricing={MARKET_PRICING[marketCode]} userEmail={userEmail} designStyle={selectedDesign?.style} selectedHtml={selectedDesign?.html} onClose={() => setShowLaunch(false)} />}
+      {showLaunch && <LaunchModal brief={output} marketCode={marketCode} marketPricing={MARKET_PRICING[marketCode]} userEmail={userEmail} designStyle={selectedDesign?.style} versionId={persistedVersion?.versionId} sessionToken={persistedVersion?.sessionToken} onClose={() => setShowLaunch(false)} />}
 
       <div style={{ background: '#F2F2F7', minHeight: '100vh', paddingTop: 68 }}>
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '52px 20px 120px' }}>
@@ -769,7 +774,24 @@ export default function BriefGenerator() {
             brief={output}
             productName={productName || 'Your Product'}
             isDone={isDone}
-            onDesignSelected={(style, html) => { track('preview_selected', { style }); setSelectedDesign({ style, html }) }}
+            onDesignSelected={async (style, html) => {
+              track('preview_selected', { style })
+              setSelectedDesign({ style, html })
+              setPersistedVersion(null)
+              try {
+                const res = await fetch('/api/persist-site', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ html, selectedStyle: style, brief: { text: output }, generationModel: 'google/gemini-2.5-flash', customerEmail: userEmail ?? undefined }),
+                })
+                if (res.ok) {
+                  const data = await res.json()
+                  setPersistedVersion({ versionId: data.versionId, sessionToken: data.sessionToken })
+                }
+              } catch {
+                // persist-site failure is non-blocking for preview; checkout will surface it
+              }
+            }}
           />
 
 

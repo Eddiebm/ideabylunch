@@ -7,6 +7,7 @@ import { createDashboardToken } from '@/app/lib/auth'
 import { deployToVercel, injectConceptVideo, slugify } from '@/app/lib/deploy'
 import { logAuditEvent } from '@/app/lib/audit-log'
 import { trackFunnelStep } from '@/app/lib/funnel'
+import { getVersionByCheckout, claimDelivery, markDelivered, markDeliveryFailed, markManualReview } from '@/app/lib/site-versions'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
@@ -380,13 +381,56 @@ export async function POST(req: Request) {
       const productName = order?.productName || session.metadata?.productName || extractProductName(brief)
       const whatsapp = order?.contact?.whatsapp || session.metadata?.whatsapp
 
-      // Get or generate HTML — prefer pre-generated (from LaunchModal preview), then BuildFlow selected, then regenerate
-      let html: string | null = order?.selectedHtml || null
-      if (!html && briefToken && redis) {
-        const pregenHtml = await redis.get(`html:${briefToken}`)
-        if (pregenHtml) html = String(pregenHtml)
+      // C-004: Durable delivery — deliver the exact approved HTML from Neon, never regenerate
+      let html: string | null = null
+      let neonVersionId: string | null = session.metadata?.versionId ?? null
+
+      if (neonVersionId) {
+        // New path: versionId present — load from Neon and claim atomically
+        const claimed = await claimDelivery(neonVersionId)
+        if (!claimed) {
+          // Already claimed or delivered — idempotent, skip
+          return new Response('OK', { status: 200 })
+        }
+        const claimedVersionId = neonVersionId
+        try {
+          const version = await getVersionByCheckout(session.id)
+          html = version?.html ?? null
+          if (!html) {
+            await markManualReview({ versionId: claimedVersionId, reason: 'Version record found but HTML missing' })
+            neonVersionId = null
+          }
+        } catch (err) {
+          await markDeliveryFailed({ versionId: claimedVersionId, error: String(err) })
+          throw err
+        }
+      } else {
+        // Legacy path: order predates C-004 — try Redis briefToken, never regenerate
+        if (briefToken && redis) {
+          const legacyHtml = await redis.get(`html:${briefToken}`)
+          if (legacyHtml) html = String(legacyHtml)
+        }
+        if (!html) {
+          // No HTML available and no approved version — enter manual review, do NOT regenerate
+          console.error(`[webhook] No HTML for session ${session.id} — entering manual_review`)
+          await alertAdmin(resend, {
+            customerEmail: customerEmail || 'unknown',
+            productName,
+            plan,
+            amount: amountPaid,
+            sessionId: session.id,
+            liveUrl: null,
+            deployFailed: false,
+          })
+          if (redis) {
+            await redis.set(`order:${session.id}`, JSON.stringify({
+              sessionId: session.id, customerEmail, productName, plan, amount: amountPaid,
+              status: 'manual_review', createdAt: Date.now(),
+            }), { ex: 60 * 60 * 24 * 90 })
+          }
+          return new Response('OK', { status: 200 })
+        }
       }
-      if (!html && brief) html = await generateHtmlFromBrief(brief, productName, plan)
 
       // Inject concept video if customer generated one
       if (html && customerEmail && redis) {
@@ -401,6 +445,19 @@ export async function POST(req: Request) {
       const deployResult = watermarkedHtml ? await deployToVercel(projectSlug, watermarkedHtml) : null
       const liveUrl = deployResult?.previewUrl ?? null
       const deploymentId = deployResult?.deploymentId ?? null
+
+      // Persist delivery outcome back to Neon (new path only)
+      if (neonVersionId) {
+        if (deploymentId) {
+          await markDelivered({
+            versionId: neonVersionId,
+            deploymentId,
+            paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
+          })
+        } else {
+          await markDeliveryFailed({ versionId: neonVersionId, error: 'Vercel deploy returned no deploymentId' })
+        }
+      }
 
       // Track funnel conversions (fire-and-forget — analytics only)
       trackFunnelStep(redis, 'payment_completed').catch(() => {})

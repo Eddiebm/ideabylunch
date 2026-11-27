@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server'
 import { Redis } from '@upstash/redis'
 import { STRIPE_MARKET_AMOUNTS, type CountryCode } from '@/app/lib/pricing'
 import { trackFunnelStep } from '@/app/lib/funnel'
+import { verifyOwnership, bindCheckoutSession } from '@/app/lib/site-versions'
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -56,8 +57,8 @@ export async function POST(req: NextRequest) {
   if (!stripe) return Response.json({ error: 'Checkout is not available in this environment.' }, { status: 503 })
 
   try {
-    const { plan, brief, ref, express, market, designStyle, selectedHtml } = await req.json() as {
-      plan: string; brief: string; ref?: string; express?: boolean; market?: string; designStyle?: string; selectedHtml?: string
+    const { plan, brief, ref, express, market, designStyle, versionId, sessionToken } = await req.json() as {
+      plan: string; brief: string; ref?: string; express?: boolean; market?: string; designStyle?: string; versionId?: string; sessionToken?: string
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideabylunch.com'
@@ -110,14 +111,20 @@ export async function POST(req: NextRequest) {
 
     if (!lineItems.length) return Response.json({ error: 'Invalid plan' }, { status: 400 })
 
-    // Store full brief in Redis keyed by a token — Stripe metadata only holds 500 chars per field
+    // Verify ownership of the persisted site version before proceeding
+    if (!versionId || !sessionToken) {
+      return Response.json({ error: 'versionId and sessionToken are required' }, { status: 400 })
+    }
+    const owned = await verifyOwnership({ versionId, sessionToken })
+    if (!owned) {
+      return Response.json({ error: 'Site version not found or already claimed' }, { status: 403 })
+    }
+
+    // Store brief in Redis (brief is fine in Redis — it's just display metadata, not delivery-critical)
     const briefToken = makeToken()
     const redis = getRedis()
     if (redis && brief) {
       await redis.set(`brief:${briefToken}`, brief, { ex: 60 * 60 * 24 * 7 })
-    }
-    if (redis && selectedHtml) {
-      await redis.set(`html:${briefToken}`, selectedHtml, { ex: 60 * 60 * 24 * 7 })
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -130,12 +137,16 @@ export async function POST(req: NextRequest) {
       metadata: {
         plan,
         briefToken,
+        versionId,
         briefSummary: brief.slice(0, 400),
         express: express ? 'true' : 'false',
         ...(designStyle ? { designStyle } : {}),
         ...(ref ? { ref } : {}),
       },
     })
+
+    // Bind the Stripe checkout session ID to the site version record
+    await bindCheckoutSession({ versionId, sessionToken, checkoutSessionId: session.id })
 
     trackFunnelStep(redis, 'checkout_initiated').catch(() => {})
     return Response.json({ url: session.url })

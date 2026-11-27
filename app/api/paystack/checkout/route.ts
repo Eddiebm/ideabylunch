@@ -1,6 +1,7 @@
 export const runtime = 'edge'
 import { Redis } from '@upstash/redis'
 import { PRICING } from '@/app/lib/pricing'
+import { verifyOwnership, bindCheckoutSession } from '@/app/lib/site-versions'
 
 function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL
@@ -18,7 +19,8 @@ type Body = {
   brief?: string
   productName?: string
   selectedStyle?: string
-  selectedHtml?: string
+  versionId?: string
+  sessionToken?: string
   whatsapp?: string
   ref?: string
   tier?: string
@@ -31,6 +33,15 @@ export async function POST(req: Request) {
     const body = (await req.json()) as Body
     if (!body.email) {
       return Response.json({ error: 'email required' }, { status: 400 })
+    }
+    if (!body.versionId || !body.sessionToken) {
+      return Response.json({ error: 'versionId and sessionToken are required' }, { status: 400 })
+    }
+
+    // Verify ownership before initiating payment
+    const owned = await verifyOwnership({ versionId: body.versionId, sessionToken: body.sessionToken })
+    if (!owned) {
+      return Response.json({ error: 'Site version not found or already claimed' }, { status: 403 })
     }
 
     const secret = process.env.PAYSTACK_SECRET_KEY
@@ -62,6 +73,7 @@ export async function POST(req: Request) {
           currency: 'GHS',
           productName: (body.productName || 'IdeaByLunch').slice(0, 80),
           selectedStyle: body.selectedStyle || '',
+          versionId: body.versionId,
           whatsapp: body.whatsapp || '',
           ref: body.ref || '',
           promoCode: body.promoCode || '',
@@ -94,7 +106,7 @@ export async function POST(req: Request) {
           productName: body.productName || '',
           brief: body.brief || '',
           selectedStyle: body.selectedStyle || '',
-          selectedHtml: body.selectedHtml || '',
+          versionId: body.versionId,
           plan: body.tier || 'starter',
           extraPages: body.extraPages || 0,
           contact: { email: body.email, whatsapp: body.whatsapp || '' },
@@ -105,6 +117,9 @@ export async function POST(req: Request) {
         { ex: 60 * 60 * 24 * 14 },
       )
     }
+
+    // Bind Paystack reference to the site version record
+    await bindCheckoutSession({ versionId: body.versionId!, sessionToken: body.sessionToken!, checkoutSessionId: reference })
 
     return Response.json({
       url: data.data.authorization_url,
