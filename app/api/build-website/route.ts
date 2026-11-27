@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { trackFunnelStep } from '@/app/lib/funnel'
 import { getRedis } from '@/app/lib/redis'
+import { TESTIMONIALS_GUARD, QUALITY_FLOOR } from '@/app/lib/generationContract'
 
 // Node.js runtime required — Gemini generation takes 60-120s, exceeding edge 30s limit
 export const maxDuration = 300
@@ -17,7 +18,9 @@ DESIGN — derive everything from the brand and industry. Make deliberate, beaut
 REQUIRED SECTIONS: fixed nav · full-viewport hero with photo · how it works (3 steps) · features with feature photo · pricing (3 tiers) · CTA section with atmosphere photo · footer
 
 OUTPUT: A single complete HTML file. @import Google Fonts in <style>. Inline ALL CSS and JS.
-Start directly with <!DOCTYPE html>. No explanation text.`
+Start directly with <!DOCTYPE html>. No explanation text.
+${QUALITY_FLOOR}
+${TESTIMONIALS_GUARD}`
 
 // ─── Impeccable ──────────────────────────────────────────────────────────────
 // Based on the open-source Impeccable design system (impeccable.style)
@@ -76,7 +79,8 @@ PHOTO USAGE:
 - null photos → use a warm CSS gradient matching the palette (no stock-looking placeholder patterns)
 
 OUTPUT: A single complete HTML file. @import Google Fonts in <style>. Inline ALL CSS and JS.
-Start directly with <!DOCTYPE html>. No explanation text.`
+Start directly with <!DOCTYPE html>. No explanation text.
+${TESTIMONIALS_GUARD}`
 
 // ─── Shared craft rules (Impeccable quality floor — applied to every style) ──
 const IMPECCABLE_CRAFT_RULES = `
@@ -159,7 +163,8 @@ PHOTO USAGE:
 - atmospherePhoto → subtle background texture in CTA section with low-opacity overlay
 - null photos → use clean geometric SVG shapes or gradient placeholders matching the palette
 
-${IMPECCABLE_CRAFT_RULES}`
+${IMPECCABLE_CRAFT_RULES}
+${TESTIMONIALS_GUARD}`
 
 // ─── Bold & Vibrant ───────────────────────────────────────────────────────────
 const BOLD_SYSTEM = `You are a world-class frontend designer. Output a COMPLETE, BEAUTIFUL, PRODUCTION-READY single-page HTML document in a Bold & Vibrant style — Awwwards-winner, high-energy, expressive.
@@ -204,7 +209,8 @@ PHOTO USAGE:
 - atmospherePhoto → CTA background with dramatic overlay
 - null photos → bold geometric shapes, large solid color blocks
 
-${IMPECCABLE_CRAFT_RULES}`
+${IMPECCABLE_CRAFT_RULES}
+${TESTIMONIALS_GUARD}`
 
 // ─── Bespoke ──────────────────────────────────────────────────────────────────
 // Fully automated custom design — AI derives everything from the brief.
@@ -266,7 +272,8 @@ PHOTO USAGE:
 - null photos → use bold typographic or geometric treatments instead — no placeholder patterns
 
 OUTPUT: A single complete HTML file. @import Google Fonts in <style>. Inline ALL CSS and JS.
-Start directly with <!DOCTYPE html>. No explanation text.`
+Start directly with <!DOCTYPE html>. No explanation text.
+${TESTIMONIALS_GUARD}`
 
 const STYLE_SYSTEMS: Record<string, string> = {
   default:   DEFAULT_SYSTEM,

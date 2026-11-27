@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { consumeSSEResponse } from '../lib/parseSSE'
 
 interface Photos {
   hero: string | null
@@ -67,22 +68,7 @@ function streamBuild(
     body: JSON.stringify({ ...payload, style }),
     signal,
   })
-    .then(async res => {
-      if (!res.ok) throw new Error('Build failed')
-      const reader = res.body!.getReader()
-      const decoder = new TextDecoder()
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        for (const line of decoder.decode(value, { stream: true }).split('\n')) {
-          if (!line.startsWith('data: ')) continue
-          const data = line.slice(6).trim()
-          if (data === '[DONE]') { onDone(); return }
-          try { const t = JSON.parse(data)?.delta?.text || ''; if (t) onChunk(t) } catch {}
-        }
-      }
-      onDone()
-    })
+    .then(res => consumeSSEResponse(res, { onChunk, onDone, onError }, signal))
     .catch(err => { if (err.name !== 'AbortError') onError(err.message) })
 }
 
