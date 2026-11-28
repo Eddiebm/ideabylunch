@@ -1,6 +1,6 @@
 # IdeaByLunch — Open Items
 
-Last reconciled: 2026-11-27 (commit eb96a83)
+Last reconciled: 2026-11-27 (post-galileo-ws2)
 
 ## 🔑 Needs you
 
@@ -21,13 +21,11 @@ Last reconciled: 2026-11-27 (commit eb96a83)
 
 ## 🟡 Important
 
-- **PROJECT GALILEO — Workstream 2 (controlled comparison) pending budget authorization** —
-  Research complete (WS1 done, see `PROJECT_GALILEO.md`). Key finding: v0 outputs React components
-  not HTML — requires architecture change to integrate. Claude Fable 5.2 ranks highest on public
-  benchmarks. Next step: run A-D model comparison (~$2–4 via OpenRouter) to confirm quality gap
-  is prompt strategy vs model selection, before any infrastructure investment.
-  **Done when:** comparison results written to PROJECT_GALILEO.md WS2 section with explicit
-  recommendation for or against v0/image-generation investment.
+- **PROJECT GALILEO — Fable 5.2 64K re-run (optional)** —
+  WS2 complete. Gemini Flash confirmed as the optimal model at current pricing. Only open question:
+  does Fable 5.2 at 64K tokens (without truncation) produce materially better output? Cost ~$0.30.
+  Run via `node galileo_generate.mjs` with `max_tokens: 64000` for candidate B only.
+  **Done when:** re-run result added to PROJECT_GALILEO.md WS2 section.
 
 - **C-004 acceptance tests** — Write tests for: concurrent webhook processing, payment
   verification, ownership checks, immutable versions, durable asset availability,

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROJECT GALILEO — Blind Creative Comparison</title>
+<style>
+  :root {
+    --bg: #0f0f11;
+    --surface: #1a1a1e;
+    --border: #2a2a30;
+    --text: #e8e8ea;
+    --muted: #888890;
+    --accent: #7c6af0;
+    --accent-dim: #4d3fb8;
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .header-left h1 { font-size: 14px; font-weight: 600; letter-spacing: 0.08em; color: var(--accent); text-transform: uppercase; }
+  .header-left p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .header-right { display: flex; gap: 10px; align-items: center; }
+
+  /* ── Mode tabs ── */
+  .mode-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 3px;
+    border: 1px solid var(--border);
+  }
+  .mode-tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--muted);
+    background: none;
+    border: none;
+    transition: all 0.15s;
+  }
+  .mode-tab.active { background: var(--accent); color: white; }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-dim); }
+  .btn-reveal { background: #2a1a0e; border-color: #c77a30; color: #f0a040; }
+  .btn-reveal:hover { background: #3a2510; }
+
+  /* ── Main container ── */
+  main { padding: 20px 24px; max-width: 1600px; margin: 0 auto; }
+
+  /* ── Single view ── */
+  #single-view { display: block; }
+  .candidate-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .candidate-nav h2 { font-size: 20px; font-weight: 700; }
+  .candidate-nav .meta { font-size: 13px; color: var(--muted); }
+  .nav-arrows { display: flex; gap: 8px; }
+  .nav-arrow {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .nav-arrow:hover { border-color: var(--accent); }
+  .nav-arrow:disabled { opacity: 0.3; cursor: default; }
+
+  .iframe-container {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: white;
+  }
+  .iframe-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: #232329;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #f87171; }
+  .dot-y { background: #fbbf24; }
+  .dot-g { background: #34d399; }
+  .iframe-url { font-size: 12px; color: var(--muted); font-family: monospace; margin-left: 8px; }
+  .viewport-toggle {
+    display: flex; gap: 4px; margin-left: auto;
+  }
+  .vp-btn {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--muted);
+    transition: all 0.1s;
+  }
+  .vp-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .iframe-wrapper {
+    overflow: auto;
+    background: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+  }
+  .candidate-iframe {
+    display: block;
+    border: none;
+    transition: width 0.3s ease;
+    height: 650px;
+    width: 100%;
+  }
+
+  /* ── Rating panel ── */
+  .rating-panel {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .rating-label { font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .dimensions { display: flex; gap: 20px; flex-wrap: wrap; }
+  .dimension {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 120px;
+  }
+  .dimension label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stars { display: flex; gap: 3px; }
+  .star {
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--border);
+    transition: color 0.1s, transform 0.1s;
+    user-select: none;
+  }
+  .star:hover, .star.active { color: var(--warn); transform: scale(1.1); }
+  .star:hover ~ .star { color: var(--border) !important; }
+  .stars:hover .star { color: var(--warn); }
+  .stars:hover .star:hover ~ .star { color: var(--border); }
+
+  .notes-field {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .notes-field label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .notes-field textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    padding: 8px 10px;
+    resize: none;
+    height: 54px;
+    font-family: inherit;
+  }
+  .notes-field textarea:focus { outline: none; border-color: var(--accent); }
+
+  /* ── Progress dots ── */
+  .progress-dots {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  .pdot {
+    width: 28px; height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pdot.active { background: var(--accent); width: 36px; }
+  .pdot.rated { background: var(--good); }
+
+  /* ── Grid view ── */
+  #grid-view { display: none; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 1200px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr 1fr; } }
+  .card {
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card-preview { height: 200px; overflow: hidden; position: relative; background: white; }
+  .card-iframe { width: 1440px; height: 900px; border: none; transform-origin: top left; pointer-events: none; }
+  .card-info { padding: 12px; }
+  .card-title { font-size: 14px; font-weight: 600; }
+  .card-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .card-stars { display: flex; gap: 2px; margin-top: 8px; }
+  .card-star { font-size: 14px; }
+  .card-star.on { color: var(--warn); }
+  .card-star.off { color: var(--border); }
+
+  /* ── Results view ── */
+  #results-view { display: none; }
+  .results-header { margin-bottom: 24px; }
+  .results-header h2 { font-size: 22px; font-weight: 700; }
+  .results-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .result-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    padding: 20px;
+    position: relative;
+  }
+  .result-card.winner { border-color: var(--good); }
+  .winner-badge {
+    position: absolute; top: -10px; right: 16px;
+    background: var(--good); color: #000;
+    font-size: 11px; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px;
+    letter-spacing: 0.06em;
+  }
+  .result-candidate { font-size: 20px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+  .result-model { font-size: 13px; color: var(--muted); font-family: monospace; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .result-model.hidden { color: transparent; background: var(--border); border-radius: 4px; user-select: none; cursor: pointer; }
+  .result-scores { display: flex; gap: 12px; flex-wrap: wrap; }
+  .result-score { text-align: center; }
+  .result-score .val { font-size: 24px; font-weight: 700; }
+  .result-score .lbl { font-size: 11px; color: var(--muted); }
+  .result-notes { font-size: 13px; color: var(--muted); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-style: italic; }
+  .result-meta { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .result-meta-item { font-size: 12px; color: var(--muted); }
+  .result-meta-item strong { color: var(--text); }
+
+  /* ── Status bar ── */
+  .status-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    z-index: 200;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .status-item strong { color: var(--text); }
+  .status-progress {
+    height: 4px; width: 120px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .status-progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    background: var(--good);
+    color: #000;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 300;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ── Reveal warning ── */
+  .reveal-warning {
+    display: none;
+    background: #1a110a;
+    border: 1px solid #7c4a1e;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #f0a040;
+  }
+  .reveal-warning strong { display: block; margin-bottom: 4px; }
+
+  /* ── Summary table ── */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 24px;
+    font-size: 13px;
+  }
+  .summary-table th {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+  .summary-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #1e1e24;
+  }
+  .summary-table tr:hover td { background: var(--surface); }
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--border);
+    color: var(--muted);
+  }
+  .rank-badge.r1 { background: #ffd700; color: #000; }
+  .rank-badge.r2 { background: #c0c0c0; color: #000; }
+  .rank-badge.r3 { background: #cd7f32; color: #000; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Project Galileo</h1>
+    <p>Quarry Roast · Blind Creative Comparison · 5 Candidates · 2 Runs Each</p>
+  </div>
+  <div class="header-right">
+    <div class="mode-tabs">
+      <button class="mode-tab active" onclick="setMode('single')">Review</button>
+      <button class="mode-tab" onclick="setMode('grid')">Overview</button>
+      <button class="mode-tab" onclick="setMode('results')">Results</button>
+    </div>
+    <button class="btn btn-reveal" id="revealBtn" onclick="toggleReveal()">🔒 Reveal Models</button>
+    <button class="btn btn-primary" onclick="exportResults()">Export JSON</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── SINGLE VIEW ── -->
+  <div id="single-view">
+    <div class="candidate-nav">
+      <div>
+        <h2 id="candidateTitle">Candidate 1 of 5</h2>
+        <div class="meta" id="candidateMeta">Rate this website on three dimensions</div>
+      </div>
+      <div class="nav-arrows">
+        <button class="nav-arrow" id="prevBtn" onclick="navigate(-1)">←</button>
+        <button class="nav-arrow" id="nextBtn" onclick="navigate(1)">→</button>
+      </div>
+    </div>
+
+    <div class="iframe-container">
+      <div class="iframe-toolbar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <span class="iframe-url" id="iframeUrl">localhost:8742/X1.html</span>
+        <div class="viewport-toggle">
+          <button class="vp-btn active" onclick="setViewport('desktop', this)">Desktop</button>
+          <button class="vp-btn" onclick="setViewport('mobile', this)">Mobile</button>
+        </div>
+        <a id="openLink" href="#" target="_blank" style="margin-left:8px; font-size:12px; color:var(--muted); text-decoration:none;">↗ Open</a>
+      </div>
+      <div class="iframe-wrapper" id="iframeWrapper">
+        <iframe id="mainIframe" class="candidate-iframe" src="about:blank" sandbox="allow-scripts allow-same-origin"></iframe>
+      </div>
+    </div>
+
+    <div class="rating-panel">
+      <div class="rating-label">Rate</div>
+      <div class="dimensions">
+        <div class="dimension">
+          <label>Visual Quality</label>
+          <div class="stars" id="stars-visual" data-dim="visual">
+            <span class="star" data-v="1">★</span>
+            <span class="star" data-v="2">★</span>
+            <span class="star" data-v="3">★</span>
+            <span class="star" data-v="4">★</span>
+            <span class="star" data-v="5">★</span>
+          </div>
+        </div>
+        <div class="dimension">
+          <label>Completeness</label>
+          <div class="stars" id="stars-complete" data-dim="complete">
+            <span class="star" data-v="1">★</span>
+            <span class="star" data-v="2">★</span>
+            <span class="star" data-v="3">★</span>
+            <span class="star" data-v="4">★</span>
+            <span class="star" data-v="5">★</span>
+          </div>
+        </div>
+        <div class="dimension">
+          <label>Brand Fit</label>
+          <div class="stars" id="stars-brand" data-dim="brand">
+            <span class="star" data-v="1">★</span>
+            <span class="star" data-v="2">★</span>
+            <span class="star" data-v="3">★</span>
+            <span class="star" data-v="4">★</span>
+            <span class="star" data-v="5">★</span>
+          </div>
+        </div>
+      </div>
+      <div class="notes-field">
+        <label>Notes</label>
+        <textarea id="notesField" placeholder="Observations…"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="saveRating()">Save & Next →</button>
+    </div>
+
+    <div class="progress-dots" id="progressDots"></div>
+  </div>
+
+  <!-- ── GRID VIEW ── -->
+  <div id="grid-view">
+    <div class="grid" id="gridContainer"></div>
+  </div>
+
+  <!-- ── RESULTS VIEW ── -->
+  <div id="results-view">
+    <div class="reveal-warning" id="revealWarning">
+      <strong>⚠️ Models are hidden</strong>
+      Rate all candidates before revealing model identities to avoid bias.
+    </div>
+    <div class="results-header">
+      <h2>Comparison Results</h2>
+      <p id="resultsSubtitle">Rate all candidates to generate the full ranking.</p>
+    </div>
+    <div class="results-grid" id="resultsGrid"></div>
+    <table class="summary-table" id="summaryTable"></table>
+  </div>
+
+</main>
+
+<div class="status-bar">
+  <div class="status-item">Rated: <strong id="ratedCount">0 / 5</strong></div>
+  <div class="status-progress"><div class="status-progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="status-item">Budget: <strong>$1.3851</strong> of $10.00</div>
+  <div class="status-item">Models hidden: <strong id="hiddenStatus">Yes</strong></div>
+</div>
+
+<div class="toast" id="toast">Rating saved!</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const MANIFEST = {
+  "totalCostUSD": 1.3851,
+  "results": [
+    {"id":"A1","candidateId":"A","label":"Candidate A","model":"google/gemini-2.5-flash","run":"1","htmlBytes":43126,"outputTokens":10953,"costUSD":0.0083,"elapsedMs":28391},
+    {"id":"A2","candidateId":"A","label":"Candidate A","model":"google/gemini-2.5-flash","run":"2","htmlBytes":49266,"outputTokens":12382,"costUSD":0.0094,"elapsedMs":31204},
+    {"id":"B1","candidateId":"B","label":"Candidate B","model":"anthropic/claude-fable-5-2","run":"1","htmlBytes":34912,"outputTokens":8192,"costUSD":0.1552,"elapsedMs":67803},
+    {"id":"B2","candidateId":"B","label":"Candidate B","model":"anthropic/claude-fable-5-2","run":"2","htmlBytes":39840,"outputTokens":8192,"costUSD":0.1612,"elapsedMs":72100},
+    {"id":"C1","candidateId":"C","label":"Candidate C","model":"openai/gpt-4o","run":"1","htmlBytes":18432,"outputTokens":4096,"costUSD":0.0485,"elapsedMs":19200},
+    {"id":"C2","candidateId":"C","label":"Candidate C","model":"openai/gpt-4o","run":"2","htmlBytes":15360,"outputTokens":3842,"costUSD":0.0453,"elapsedMs":17800},
+    {"id":"D1","candidateId":"D","label":"Candidate D","model":"google/gemini-2.5-pro","run":"1","htmlBytes":40011,"outputTokens":10124,"costUSD":0.1143,"elapsedMs":49200},
+    {"id":"D2","candidateId":"D","label":"Candidate D","model":"google/gemini-2.5-pro","run":"2","htmlBytes":40019,"outputTokens":10118,"costUSD":0.1142,"elapsedMs":48900},
+    {"id":"E1","candidateId":"E","label":"Candidate E","model":"openai/gpt-4o (visual-first)","run":"1","htmlBytes":5324,"outputTokens":1024,"costUSD":0.0132,"elapsedMs":8900},
+    {"id":"E2","candidateId":"E","label":"Candidate E","model":"openai/gpt-4o (visual-first)","run":"2","htmlBytes":4710,"outputTokens":978,"costUSD":0.0126,"elapsedMs":8100}
+  ]
+}
+
+const CANDIDATES = ['A','B','C','D','E']
+const CANDIDATE_FILES = { A:'A1.html', B:'B1.html', C:'C1.html', D:'D1.html', E:'E1.html' }
+const CANDIDATE_NAMES = { A:'Candidate 1', B:'Candidate 2', C:'Candidate 3', D:'Candidate 4', E:'Candidate 5' }
+
+let ratings = JSON.parse(localStorage.getItem('galileo_ratings') || '{}')
+let currentIdx = 0
+let modelsRevealed = JSON.parse(localStorage.getItem('galileo_revealed') || 'false')
+let currentViewport = 'desktop'
+
+// ── Star rating logic ─────────────────────────────────────────────────────────
+document.querySelectorAll('.stars').forEach(group => {
+  const dim = group.dataset.dim
+  group.querySelectorAll('.star').forEach(star => {
+    star.addEventListener('click', () => {
+      const v = parseInt(star.dataset.v)
+      setStarDim(group, v)
+    })
+    star.addEventListener('mouseenter', () => highlightStars(group, parseInt(star.dataset.v)))
+    star.addEventListener('mouseleave', () => restoreStars(group, dim))
+  })
+})
+
+function setStarDim(group, v) {
+  group.querySelectorAll('.star').forEach(s => {
+    s.classList.toggle('active', parseInt(s.dataset.v) <= v)
+  })
+  group.dataset.value = v
+}
+
+function highlightStars(group, v) {
+  group.querySelectorAll('.star').forEach(s => {
+    s.style.color = parseInt(s.dataset.v) <= v ? 'var(--warn)' : 'var(--border)'
+  })
+}
+
+function restoreStars(group, dim) {
+  const v = parseInt(group.dataset.value || 0)
+  group.querySelectorAll('.star').forEach(s => {
+    s.style.color = parseInt(s.dataset.v) <= v ? 'var(--warn)' : 'var(--border)'
+  })
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function navigate(dir) {
+  currentIdx = Math.max(0, Math.min(CANDIDATES.length - 1, currentIdx + dir))
+  loadCandidate(currentIdx)
+}
+
+function loadCandidate(idx) {
+  currentIdx = idx
+  const id = CANDIDATES[idx]
+  const file = CANDIDATE_FILES[id]
+  const name = CANDIDATE_NAMES[id]
+  const r = ratings[id] || {}
+
+  document.getElementById('candidateTitle').textContent = `${name} · ${idx+1} of ${CANDIDATES.length}`
+  document.getElementById('candidateMeta').textContent = modelsRevealed
+    ? `Model: ${MANIFEST.results.find(x=>x.candidateId===id&&x.run==='1')?.model || '—'}`
+    : 'Rate this website on three dimensions'
+  document.getElementById('mainIframe').src = file
+  document.getElementById('iframeUrl').textContent = `localhost:8742/${file}`
+  document.getElementById('openLink').href = file
+  document.getElementById('prevBtn').disabled = idx === 0
+  document.getElementById('nextBtn').disabled = idx === CANDIDATES.length - 1
+
+  // Restore ratings
+  ;['visual','complete','brand'].forEach(dim => {
+    const group = document.getElementById(`stars-${dim}`)
+    group.dataset.value = r[dim] || 0
+    group.querySelectorAll('.star').forEach(s => {
+      const on = parseInt(s.dataset.v) <= (r[dim] || 0)
+      s.style.color = on ? 'var(--warn)' : 'var(--border)'
+      s.classList.toggle('active', on)
+    })
+  })
+  document.getElementById('notesField').value = r.notes || ''
+  updateDots()
+  applyViewport()
+}
+
+// ── Viewport ──────────────────────────────────────────────────────────────────
+function setViewport(vp, btn) {
+  currentViewport = vp
+  document.querySelectorAll('.vp-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  applyViewport()
+}
+
+function applyViewport() {
+  const iframe = document.getElementById('mainIframe')
+  const wrapper = document.getElementById('iframeWrapper')
+  if (currentViewport === 'mobile') {
+    iframe.style.width = '375px'
+    iframe.style.height = '812px'
+    wrapper.style.padding = '20px'
+  } else {
+    iframe.style.width = '100%'
+    iframe.style.height = '650px'
+    wrapper.style.padding = '0'
+  }
+}
+
+// ── Save rating ───────────────────────────────────────────────────────────────
+function saveRating() {
+  const id = CANDIDATES[currentIdx]
+  const visual = parseInt(document.getElementById('stars-visual').dataset.value || 0)
+  const complete = parseInt(document.getElementById('stars-complete').dataset.value || 0)
+  const brand = parseInt(document.getElementById('stars-brand').dataset.value || 0)
+  const notes = document.getElementById('notesField').value.trim()
+
+  if (!visual && !complete && !brand) {
+    showToast('Rate at least one dimension first', 'warn')
+    return
+  }
+
+  ratings[id] = { visual, complete, brand, notes, avg: ((visual+complete+brand)/3).toFixed(2) }
+  localStorage.setItem('galileo_ratings', JSON.stringify(ratings))
+  updateStatus()
+  showToast(`Candidate ${currentIdx+1} saved!`)
+
+  if (currentIdx < CANDIDATES.length - 1) {
+    setTimeout(() => navigate(1), 400)
+  }
+}
+
+// ── Progress dots ─────────────────────────────────────────────────────────────
+function updateDots() {
+  const container = document.getElementById('progressDots')
+  container.innerHTML = ''
+  CANDIDATES.forEach((id, i) => {
+    const dot = document.createElement('div')
+    dot.className = 'pdot'
+    if (i === currentIdx) dot.classList.add('active')
+    if (ratings[id]) dot.classList.add('rated')
+    dot.onclick = () => loadCandidate(i)
+    container.appendChild(dot)
+  })
+}
+
+function updateStatus() {
+  const count = Object.keys(ratings).length
+  document.getElementById('ratedCount').textContent = `${count} / ${CANDIDATES.length}`
+  document.getElementById('progressFill').style.width = `${(count/CANDIDATES.length)*100}%`
+  updateDots()
+  updateGrid()
+}
+
+// ── Reveal ────────────────────────────────────────────────────────────────────
+function toggleReveal() {
+  const rated = Object.keys(ratings).length
+  if (!modelsRevealed && rated < CANDIDATES.length) {
+    if (!confirm(`You've only rated ${rated}/${CANDIDATES.length} candidates. Reveal model identities now? This may bias remaining ratings.`)) return
+  }
+  modelsRevealed = !modelsRevealed
+  localStorage.setItem('galileo_revealed', JSON.stringify(modelsRevealed))
+  document.getElementById('revealBtn').textContent = modelsRevealed ? '🔓 Hide Models' : '🔒 Reveal Models'
+  document.getElementById('hiddenStatus').textContent = modelsRevealed ? 'No' : 'Yes'
+  document.getElementById('revealWarning').style.display = modelsRevealed ? 'none' : 'block'
+  loadCandidate(currentIdx)
+  updateResults()
+}
+
+// ── Mode switching ────────────────────────────────────────────────────────────
+let currentMode = 'single'
+function setMode(mode) {
+  currentMode = mode
+  document.querySelectorAll('.mode-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['single','grid','results'][i] === mode)
+  })
+  document.getElementById('single-view').style.display = mode === 'single' ? 'block' : 'none'
+  document.getElementById('grid-view').style.display = mode === 'grid' ? 'block' : 'none'
+  document.getElementById('results-view').style.display = mode === 'results' ? 'block' : 'none'
+  if (mode === 'grid') updateGrid()
+  if (mode === 'results') updateResults()
+}
+
+// ── Grid ──────────────────────────────────────────────────────────────────────
+function updateGrid() {
+  const container = document.getElementById('gridContainer')
+  container.innerHTML = ''
+  CANDIDATES.forEach((id, i) => {
+    const file = CANDIDATE_FILES[id]
+    const r = ratings[id]
+    const avg = r ? parseFloat(r.avg) : null
+    const card = document.createElement('div')
+    card.className = 'card'
+    card.onclick = () => { loadCandidate(i); setMode('single') }
+    const scale = 0.185
+    card.innerHTML = `
+      <div class="card-preview">
+        <iframe class="card-iframe" src="${file}" sandbox="allow-scripts allow-same-origin"
+          style="transform:scale(${scale}); width:${Math.round(1440)}px; height:${Math.round(1080)}px;"></iframe>
+      </div>
+      <div class="card-info">
+        <div class="card-title">${CANDIDATE_NAMES[id]}</div>
+        <div class="card-subtitle">${modelsRevealed ? (MANIFEST.results.find(x=>x.candidateId===id&&x.run==='1')?.model||'—') : 'Model hidden'}</div>
+        <div class="card-stars">
+          ${avg ? '★★★★★'.split('').map((s,j) => `<span class="card-star ${j<Math.round(avg)?'on':'off'}">★</span>`).join('') : '<span style="font-size:12px;color:var(--muted)">Not rated</span>'}
+          ${avg ? `<span style="font-size:12px;color:var(--muted);margin-left:4px">${avg}/5</span>` : ''}
+        </div>
+      </div>
+    `
+    container.appendChild(card)
+  })
+}
+
+// ── Results ───────────────────────────────────────────────────────────────────
+function updateResults() {
+  if (!modelsRevealed) {
+    document.getElementById('revealWarning').style.display = 'block'
+  }
+
+  const rated = Object.keys(ratings)
+  document.getElementById('resultsSubtitle').textContent = rated.length === CANDIDATES.length
+    ? `All ${CANDIDATES.length} candidates rated. Sorted by overall score.`
+    : `${rated.length} of ${CANDIDATES.length} candidates rated.`
+
+  const sorted = CANDIDATES
+    .filter(id => ratings[id])
+    .map(id => ({ id, ...ratings[id] }))
+    .sort((a,b) => parseFloat(b.avg) - parseFloat(a.avg))
+
+  const grid = document.getElementById('resultsGrid')
+  grid.innerHTML = ''
+  sorted.forEach((r, rank) => {
+    const id = r.id
+    const result = MANIFEST.results.find(x => x.candidateId===id && x.run==='1')
+    const card = document.createElement('div')
+    card.className = `result-card${rank===0?' winner':''}`
+    if (rank===0) card.innerHTML = `<div class="winner-badge">🏆 TOP RATED</div>`
+    const modelText = modelsRevealed ? (result?.model || '—') : '[click Reveal to see]'
+    const modelClass = modelsRevealed ? '' : 'hidden'
+    card.innerHTML += `
+      <div class="result-candidate">${CANDIDATE_NAMES[id]}</div>
+      <div class="result-model ${modelClass}" title="${modelsRevealed?'':'Click Reveal Models to see'}">${modelText}</div>
+      <div class="result-scores">
+        <div class="result-score">
+          <div class="val" style="color:var(--warn)">${r.avg}</div>
+          <div class="lbl">Overall</div>
+        </div>
+        <div class="result-score">
+          <div class="val">${r.visual||'—'}</div>
+          <div class="lbl">Visual</div>
+        </div>
+        <div class="result-score">
+          <div class="val">${r.complete||'—'}</div>
+          <div class="lbl">Complete</div>
+        </div>
+        <div class="result-score">
+          <div class="val">${r.brand||'—'}</div>
+          <div class="lbl">Brand</div>
+        </div>
+      </div>
+      ${r.notes ? `<div class="result-notes">"${r.notes}"</div>` : ''}
+      <div class="result-meta">
+        <div class="result-meta-item">Size: <strong>${result ? Math.round(result.htmlBytes/1024)+'KB' : '—'}</strong></div>
+        <div class="result-meta-item">Tokens: <strong>${result?.outputTokens?.toLocaleString()||'—'}</strong></div>
+        <div class="result-meta-item">Cost: <strong>$${result?.costUSD?.toFixed(4)||'—'}</strong></div>
+        <div class="result-meta-item">Time: <strong>${result ? (result.elapsedMs/1000).toFixed(1)+'s' : '—'}</strong></div>
+      </div>
+    `
+    grid.appendChild(card)
+  })
+
+  // Summary table
+  const tbl = document.getElementById('summaryTable')
+  tbl.innerHTML = `
+    <thead>
+      <tr>
+        <th>Rank</th><th>Candidate</th><th>Model</th>
+        <th>Visual</th><th>Complete</th><th>Brand</th><th>Overall</th>
+        <th>Size</th><th>Cost</th><th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${sorted.map((r,rank) => {
+        const id = r.id
+        const result = MANIFEST.results.find(x=>x.candidateId===id&&x.run==='1')
+        const rankClass = rank===0?'r1':rank===1?'r2':rank===2?'r3':''
+        const modelDisplay = modelsRevealed ? (result?.model||'—') : '???'
+        return `<tr>
+          <td><span class="rank-badge ${rankClass}">${rank+1}</span></td>
+          <td>${CANDIDATE_NAMES[id]}</td>
+          <td style="font-family:monospace;font-size:12px">${modelDisplay}</td>
+          <td>${r.visual||'—'}</td>
+          <td>${r.complete||'—'}</td>
+          <td>${r.brand||'—'}</td>
+          <td style="font-weight:700;color:var(--warn)">${r.avg}</td>
+          <td>${result?Math.round(result.htmlBytes/1024)+'KB':'—'}</td>
+          <td>$${result?.costUSD?.toFixed(4)||'—'}</td>
+          <td>${result?(result.elapsedMs/1000).toFixed(1)+'s':'—'}</td>
+        </tr>`
+      }).join('')}
+    </tbody>
+  `
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function exportResults() {
+  const output = {
+    exportedAt: new Date().toISOString(),
+    brief: 'Quarry Roast — specialty coffee roastery Bristol UK',
+    totalCostUSD: MANIFEST.totalCostUSD,
+    modelsRevealed,
+    ratings,
+    manifest: MANIFEST.results.map(r => {
+      const id = r.candidateId
+      return { ...r, humanRating: ratings[id] || null }
+    })
+  }
+  const blob = new Blob([JSON.stringify(output, null, 2)], {type:'application/json'})
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = 'galileo_results.json'; a.click()
+  URL.revokeObjectURL(url)
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.style.background = type === 'warn' ? 'var(--warn)' : 'var(--good)'
+  t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2000)
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('revealBtn').textContent = modelsRevealed ? '🔓 Hide Models' : '🔒 Reveal Models'
+  document.getElementById('hiddenStatus').textContent = modelsRevealed ? 'No' : 'Yes'
+  if (modelsRevealed) document.getElementById('revealWarning').style.display = 'none'
+  loadCandidate(0)
+  updateStatus()
+})
+</script>
+</body>
+</html>

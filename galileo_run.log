@@ -1,0 +1,36 @@
+Key prefix: sk-or-v1-1... (length 73)
+PROJECT GALILEO — Controlled Creative Comparison
+Brief: Quarry Roast (specialty coffee roastery, Bristol UK)
+Candidates: A:google/gemini-2.5-flash, B:anthropic/claude-fable-5-2, C:openai/gpt-4o, D:google/gemini-2.5-pro, E:openai/gpt-4o
+
+→ Generating A1 [google/gemini-2.5-flash]...
+→ Generating B1 [anthropic/claude-fable-5-2]...
+→ Generating C1 [openai/gpt-4o]...
+→ Generating D1 [google/gemini-2.5-pro]...
+→ Generating E1 [openai/gpt-4o]...
+✓ E1: 5KB | 1489 tokens | $0.0164 | 3.3s
+✓ C1: 18KB | 4747 tokens | $0.0494 | 3.3s
+✓ A1: 42KB | 14368 tokens | $0.0044 | 3.3s
+✓ D1: 39KB | 15138 tokens | $0.1524 | 3.3s
+✓ B1: 34KB | 32000 tokens | $0.4840 | 3.3s
+
+--- Run 2 starting ---
+
+→ Generating A2 [google/gemini-2.5-flash]...
+→ Generating B2 [anthropic/claude-fable-5-2]...
+→ Generating C2 [openai/gpt-4o]...
+→ Generating D2 [google/gemini-2.5-pro]...
+→ Generating E2 [openai/gpt-4o]...
+✓ E2: 5KB | 1176 tokens | $0.0132 | 3.1s
+✓ C2: 15KB | 3681 tokens | $0.0387 | 3.1s
+✓ D2: 39KB | 13186 tokens | $0.1329 | 3.0s
+✓ A2: 48KB | 31903 tokens | $0.0096 | 3.1s
+✓ B2: 39KB | 32000 tokens | $0.4840 | 3.1s
+
+═══ RESULTS ═══
+Generated: 10/10
+Failed: 0
+Total cost: $1.3851
+
+Manifest written to /Users/eddiebannerman-menson/Documents/ideabylunch/galileo_output/manifest.json
+HTML files in /Users/eddiebannerman-menson/Documents/ideabylunch/galileo_output/

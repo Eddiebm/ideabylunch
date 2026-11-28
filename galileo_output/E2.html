@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quarry Roast</title>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, p {
+            margin: 0;
+            padding: 0;
+            color: #3D2B1F;
+        }
+        .hero {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to bottom, #A67C52, #D9A378);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero h1 {
+            font-family: 'Russo One', sans-serif;
+            font-size: 2.5rem;
+            color: #F1ECE1;
+            z-index: 1;
+        }
+        .hero:after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.5) 100%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: swirl 30s infinite linear;
+        }
+        @keyframes swirl {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        .roasting-drum {
+            position: absolute;
+            bottom: 30px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #3D2B1F;
+            animation: drum-spin 10s linear infinite;
+        }
+        @keyframes drum-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .origin {
+            padding: 50px;
+            background-color: #F4EDE4;
+            text-align: center;
+        }
+        .coffee-description {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px;
+            background: #D9A378;
+            color: #3D2B1F;
+        }
+        .subscription {
+            padding: 50px;
+            background-color: #F4EDE4;
+            text-align: center;
+        }
+        .wholesale {
+            padding: 50px;
+            background: #A67C52;
+            color: #F1ECE1;
+            text-align: center;
+        }
+        .tasting-room {
+            padding: 50px;
+            background-color: #F4EDE4;
+            text-align: center;
+        }
+        .footer {
+            padding: 20px;
+            background: #3D2B1F;
+            text-align: center;
+            color: #F1ECE1;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>Quarry Roast: Crafted with Deliberation</h1>
+        <div class="roasting-drum"></div>
+    </div>
+
+    <section class="origin">
+        <h2>Our Story</h2>
+        <p>Founded by Priya Nair, Quarry Roast is built on the principles of dedication to quality and transparency in sourcing. Our journey began with Priya's travels to Ethiopia, Colombia, and Guatemala, immersing herself in the cultures and learning the secrets of exceptional coffee.</p>
+    </section>
+
+    <section class="coffee-description">
+        <h2>The Coffee</h2>
+        <p>Our coffee sings with the voices of its origin. We roast in small batches to honor the unique flavors of each bean, a blend of warmth and richness that embodies the heart of the harvest.</p>
+    </section>
+
+    <section class="subscription">
+        <h2>Join Our Community</h2>
+        <p>Embark on a journey of flavors with our coffee subscription, starting at £15/month. Choose from single origin, blends, or espresso, delivered freshly roasted to your door.</p>
+    </section>
+
+    <section class="wholesale">
+        <h2>For Café Owners</h2>
+        <p>Partner with us to serve exceptional coffee in your café. Our wholesale program covers over 40 independent cafes across the UK, offering tailored support and training for your baristas.</p>
+    </section>
+
+    <section class="tasting-room">
+        <h2>Visit Our Tasting Room</h2>
+        <p>Experience Quarry Roast at its finest at our tasting room and brew bar. Open Wednesday to Sunday, 9am to 5pm. Join us for tastings, barista courses, and a celebration of coffee culture.</p>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2023 Quarry Roast. All rights reserved.</p>
+    </footer>
+</body>
+</html>

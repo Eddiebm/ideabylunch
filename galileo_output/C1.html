@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quarry Roast - Specialty Coffee Roastery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        nav a {
+            text-decoration: none;
+            color: #333;
+            margin: 0 16px;
+            font-weight: 600;
+        }
+        nav .cta {
+            background-color: #ff6f61;
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: #fff;
+            transition: background-color 0.2s ease;
+        }
+        nav .cta:hover {
+            background-color: #e65a50;
+        }
+        header {
+            background: linear-gradient(135deg, #ff6f61, #ff9f80);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 88px;
+            margin-bottom: 16px;
+        }
+        header p {
+            font-size: 20px;
+            margin-bottom: 32px;
+        }
+        header .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+        header .buttons a {
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+        header .buttons a.primary {
+            background-color: #fff;
+            color: #ff6f61;
+        }
+        header .buttons a.primary:hover {
+            transform: translateY(-2px);
+        }
+        header .buttons a.secondary {
+            background-color: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+        }
+        header .buttons a.secondary:hover {
+            transform: translateY(-2px);
+        }
+        .trust-signals {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 40px;
+        }
+        .trust-signals div {
+            text-align: center;
+        }
+        .trust-signals div p {
+            font-size: 20px;
+            margin-top: 8px;
+        }
+        .section {
+            padding: 80px 0;
+        }
+        .section h2 {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .pain-points, .solution-steps, .features-grid, .social-proof, .pricing-tiers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 32px;
+            justify-content: center;
+        }
+        .pain-point, .solution-step, .feature-card, .testimonial, .pricing-tier {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .pain-point:hover, .solution-step:hover, .feature-card:hover, .testimonial:hover, .pricing-tier:hover {
+            transform: translateY(-2px);
+        }
+        .pain-point h3, .solution-step h3, .feature-card h3 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        .solution-step h3 {
+            font-size: 36px;
+        }
+        .solution-step p, .feature-card p, .testimonial p, .pricing-tier p {
+            font-size: 20px;
+        }
+        .testimonial {
+            max-width: 300px;
+        }
+        .pricing-tier {
+            width: 300px;
+            border: 2px solid transparent;
+        }
+        .pricing-tier.recommended {
+            border-color: #ff6f61;
+        }
+        .pricing-tier h3 {
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+        .pricing-tier .price {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .pricing-tier ul {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+        }
+        .pricing-tier ul li {
+            font-size: 20px;
+            margin: 8px 0;
+        }
+        .pricing-tier .cta {
+            display: block;
+            background-color: #ff6f61;
+            color: white;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+        .pricing-tier .cta:hover {
+            background-color: #e65a50;
+        }
+        .faq details {
+            margin-bottom: 16px;
+            padding: 16px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        }
+        .faq summary {
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .faq p {
+            font-size: 20px;
+            margin-top: 8px;
+        }
+        .final-cta {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 80px 0;
+        }
+        .final-cta h2 {
+            font-size: 48px;
+            margin-bottom: 24px;
+        }
+        .final-cta a {
+            background-color: #ff6f61;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 24px;
+            transition: background-color 0.2s ease;
+        }
+        .final-cta a:hover {
+            background-color: #e65a50;
+        }
+        footer {
+            background-color: #f1f1f1;
+            padding: 32px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+        footer .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        footer .brand {
+            font-weight: 900;
+            font-size: 20px;
+        }
+        footer .links {
+            display: flex;
+            gap: 32px;
+        }
+        footer .links div {
+            text-align: left;
+        }
+        footer .links h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        footer .links a {
+            display: block;
+            color: #333;
+            text-decoration: none;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        footer .links a:hover {
+            text-decoration: underline;
+        }
+        footer .social-icons {
+            display: flex;
+            gap: 16px;
+        }
+        footer .social-icons svg {
+            width: 24px;
+            height: 24px;
+            fill: #333;
+            transition: fill 0.2s ease;
+        }
+        footer .social-icons svg:hover {
+            fill: #ff6f61;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="#" class="brand">Quarry Roast</a>
+            <div>
+                <a href="#about">About</a>
+                <a href="#process">Our Process</a>
+                <a href="#features">Features</a>
+                <a href="#contact">Contact</a>
+                <a href="#subscribe" class="cta">Subscribe Now</a>
+            </div>
+        </div>
+    </nav>
+    <header>
+        <div class="container">
+            <h1>Master the Art of Coffee</h1>
+            <p>Experience Bristol's finest specialty coffee, sourced directly from smallholder farms and roasted with precision.</p>
+            <div class="buttons">
+                <a href="#subscribe" class="primary">Subscribe Now</a>
+                <a href="#learn-more" class="secondary">Learn More</a>
+            </div>
+            <div class="trust-signals">
+                <div>
+                    <img src="https://via.placeholder.com/100" alt="Award">
+                    <p>UK Barista Champion</p>
+                </div>
+                <div>
+                    <img src="https://via.placeholder.com/100" alt="Cafes">
+                    <p>40+ Cafes Supplied</p>
+                </div>
+                <div>
+                    <img src="https://via.placeholder.com/100" alt="Years">
+                    <p>5 Years of Excellence</p>
+                </div>
+            </div>
+        </div>
+    </header>
+    <section class="section" id="about">
+        <div class="container">
+            <h2>Why Quarry Roast Exists</h2>
+            <p>In a world of mediocre coffee, Quarry Roast stands as a beacon of quality and transparency. We understand the struggle of finding coffee that truly satisfies.</p>
+            <div class="pain-points">
+                <div class="pain-point">
+                    <h3>Poor Quality</h3>
+                    <p>Too often, coffee is mass-produced, sacrificing flavor for volume.</p>
+                </div>
+                <div class="pain-point">
+                    <h3>Lack of Transparency</h3>
+                    <p>It's hard to know where your coffee comes from and how it's made.</p>
+                </div>
+                <div class="pain-point">
+                    <h3>Impersonal Service</h3>
+                    <p>Many roasteries lack the personal touch and expertise that true coffee lovers crave.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section" id="process">
+        <div class="container">
+            <h2>How It Works</h2>
+            <div class="solution-steps">
+                <div class="solution-step">
+                    <h3>1</h3>
+                    <p>Direct Trade Sourcing</p>
+                    <p>We partner with 12 smallholder farms to ensure the highest quality beans.</p>
+                </div>
+                <div class="solution-step">
+                    <h3>2</h3>
+                    <p>Small Batch Roasting</p>
+                    <p>Our 20kg roasts maximize flavor and freshness in every cup.</p>
+                </div>
+                <div class="solution-step">
+                    <h3>3</h3>
+                    <p>Delivered to Your Door</p>
+                    <p>Enjoy a seamless subscription experience with fresh coffee delivered monthly.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section" id="features">
+        <div class="container">
+            <h2>Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>Single Origin</h3>
+                    <p>Savor unique flavors from distinct regions with our single origin offerings.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Blend Mastery</h3>
+                    <p>Our expert blends balance complexity and flavor for the perfect cup.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Espresso Excellence</h3>
+                    <p>Discover the rich, robust flavors of our expertly crafted espresso.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Subscription Flexibility</h3>
+                    <p>Choose from various plans to suit your taste and lifestyle.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Barista Training</h3>
+                    <p>Enhance your skills with courses from beginner to pro level.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Tasting Room</h3>
+                    <p>Visit our brew bar to explore and enjoy our latest roasts.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section" id="testimonials">
+        <div class="container">
+            <h2>What Our Customers Say</h2>
+            <div class="social-proof">
+                <div class="testimonial">
+                    <p>[PLACEHOLDER] "Quarry Roast transformed my coffee experience. The quality is unmatched!"</p>
+                </div>
+                <div class="testimonial">
+                    <p>[PLACEHOLDER] "I love knowing exactly where my coffee comes from. Transparency matters."</p>
+                </div>
+                <div class="testimonial">
+                    <p>[PLACEHOLDER] "The subscription service is flawless. Fresh coffee at my door every month!"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section" id="pricing">
+        <div class="container">
+            <h2>Choose Your Plan</h2>
+            <div class="pricing-tiers">
+                <div class="pricing-tier">
+                    <h3>Starter</h3>
+                    <p class="price">£15/month</p>
+                    <ul>
+                        <li>Single Origin</li>
+                        <li>Monthly Delivery</li>
+                        <li>Access to Brew Bar</li>
+                    </ul>
+                    <a href="#subscribe" class="cta">Get Started</a>
+                </div>
+                <div class="pricing-tier recommended">
+                    <h3>Explorer</h3>
+                    <p class="price">£25/month</p>
+                    <ul>
+                        <li>Single Origin & Blends</li>
+                        <li>Bi-Weekly Delivery</li>
+                        <li>Barista Training Discounts</li>
+                    </ul>
+                    <a href="#subscribe" class="cta">Most Popular</a>
+                </div>
+                <div class="pricing-tier">
+                    <h3>Connoisseur</h3>
+                    <p class="price">£40/month</p>
+                    <ul>
+                        <li>All Coffee Types</li>
+                        <li>Weekly Delivery</li>
+                        <li>Exclusive Tasting Events</li>
+                    </ul>
+                    <a href="#subscribe" class="cta">Join Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section" id="faq">
+        <div class="container">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq">
+                <details>
+                    <summary>What is direct trade sourcing?</summary>
+                    <p>Direct trade means we buy directly from farmers, ensuring fair prices and high quality.</p>
+                </details>
+                <details>
+                    <summary>How fresh is the coffee?</summary>
+                    <p>All our coffee is roasted to order and shipped immediately for maximum freshness.</p>
+                </details>
+                <details>
+                    <summary>Can I change my subscription plan?</summary>
+                    <p>Yes, you can change or cancel your plan anytime through your account dashboard.</p>
+                </details>
+                <details>
+                    <summary>Do you offer international shipping?</summary>
+                    <p>Currently, we ship within the UK only. We're working on expanding internationally.</p>
+                </details>
+                <details>
+                    <summary>What payment methods do you accept?</summary>
+                    <p>We accept all major credit cards and PayPal for subscription payments.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+    <section class="final-cta">
+        <div class="container">
+            <h2>Ready to Elevate Your Coffee Experience?</h2>
+            <a href="#subscribe" class="cta">Join Quarry Roast Today</a>
+        </div>
+    </section>
+    <footer>
+        <div class="container">
+            <div class="brand">
+                Quarry Roast<br>
+                <span>Your Gateway to Exceptional Coffee</span>
+            </div>
+            <div class="links">
+                <div>
+                    <h4>Company</h4>
+                    <a href="#">About Us</a>
+                    <a href="#">Careers</a>
+                    <a href="#">Press</a>
+                </div>
+                <div>
+                    <h4>Support</h4>
+                    <a href="#">Contact</a>
+                    <a href="#">Help Center</a>
+                    <a href="#">Privacy Policy</a>
+                </div>
+                <div>
+                    <h4>Learn</h4>
+                    <a href="#">Blog</a>
+                    <a href="#">Coffee Guides</a>
+                    <a href="#">FAQs</a>
+                </div>
+            </div>
+            <div class="social-icons">
+                <a href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22.46 6.03c-.77.34-1.58.57-2.44.67a4.28 4.28 0 001.88-2.37 8.55 8.55 0 01-2.71 1.03 4.26 4.26 0 00-7.27 3.88 12.08 12.08 0 01-8.78-4.45 4.27 4.27 0 001.32 5.7 4.23 4.23 0 01-1.93-.53v.05a4.26 4.26 0 003.42 4.18 4.27 4.27 0 01-1.92.07 4.28 4.28 0 003.98 2.96 8.57 8.57 0 01-5.31 1.83c-.35 0-.7-.02-1.04-.06a12.11 12.11 0 006.56 1.93c7.88 0 12.2-6.52 12.2-12.18 0-.19-.01-.38-.02-.57a8.72 8.72 0 002.15-2.23z"/></svg></a>
+                <a href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2.04c-5.5 0-9.96 4.46-9.96 9.96 0 5.5 4.46 9.96 9.96 9.96 5.5 0 9.96-4.46 9.96-9.96 0-5.5-4.46-9.96-9.96-9.96zm4.5 10.74h-2.4v7.5h-3v-7.5h-1.8v-2.88h1.8v-1.5c0-1.68 1.02-2.58 2.52-2.58.72 0 1.34.06 1.52.09v1.77h-1.04c-.84 0-1 .4-1 1v1.22h2.04l-.27 2.88z"/></svg></a>
+                <a href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2.04c-5.5 0-9.96 4.46-9.96 9.96 0 5.5 4.46 9.96 9.96 9.96 5.5 0 9.96-4.46 9.96-9.96 0-5.5-4.46-9.96-9.96-9.96zm4.5 10.74h-2.4v7.5h-3v-7.5h-1.8v-2.88h1.8v-1.5c0-1.68 1.02-2.58 2.52-2.58.72 0 1.34.06 1.52.09v1.77h-1.04c-.84 0-1 .4-1 1v1.22h2.04l-.27 2.88z"/></svg></a>
+            </div>
+        </div>
+        <p>&copy; 2023 Quarry Roast. All rights reserved.</p>
+    </footer>
+</body>
+</html>

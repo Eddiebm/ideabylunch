@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quarry Roast — Exceptional Specialty Coffee, Roasted in Bristol</title>
+    <meta name="description" content="Direct-trade specialty coffee, small-batch roasted in Bristol by a UK Barista Champion. Join our subscription or visit our tasting room.">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --accent-color: #D97706; /* A warm, earthy terracotta/amber */
+            --accent-color-dark: #B45309;
+            --dark-bg: #111827;
+            --dark-text: #111827;
+            --light-text: #F9FAFB;
+            --body-text: #374151;
+            --card-bg: #FFFFFF;
+            --page-bg: #F9FAFB;
+            --border-color: #E5E7EB;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--page-bg);
+            color: var(--body-text);
+            font-size: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 80px;
+        }
+
+        section {
+            padding: 128px 0;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 800;
+            color: var(--dark-text);
+            letter-spacing: -0.025em;
+        }
+
+        h1 {
+            font-size: 88px;
+            line-height: 1.1;
+        }
+
+        h2 {
+            font-size: 48px;
+            line-height: 1.2;
+            margin-bottom: 64px;
+            text-align: center;
+        }
+
+        p {
+            max-width: 65ch;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: var(--light-text);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-color-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(217, 119, 6, 0.2);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--light-text);
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .btn-dark {
+            background-color: var(--dark-text);
+            color: var(--light-text);
+        }
+        
+        .btn-dark:hover {
+            background-color: #374151;
+            transform: translateY(-2px);
+        }
+
+        /* 1. Navigation */
+        .nav {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 24px 0;
+            transition: background-color 0.3s ease, padding 0.3s ease;
+        }
+
+        .nav.scrolled {
+            background-color: rgba(249, 250, 251, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 16px 0;
+        }
+
+        .nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--dark-text);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--body-text);
+            font-weight: 500;
+            font-size: 16px;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-color);
+        }
+
+        /* 2. Hero */
+        .hero {
+            padding: 160px 0;
+            background: radial-gradient(circle at 10% 20%, #B45309, #111827 90%);
+            color: var(--light-text);
+            overflow: hidden;
+        }
+
+        .hero h1 {
+            color: var(--light-text);
+            max-width: 12ch;
+        }
+
+        .hero-subheadline {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 50ch;
+            margin: 32px 0 48px;
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 16px;
+        }
+
+        .trust-signals {
+            margin-top: 128px;
+            display: flex;
+            gap: 64px;
+            align-items: center;
+        }
+
+        .trust-signal {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .trust-signal svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--accent-color);
+        }
+
+        /* 3. Problem */
+        .problem-intro {
+            text-align: center;
+            max-width: 60ch;
+            margin: -48px auto 64px;
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.08);
+        }
+
+        .card h3 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        /* 4. Solution */
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 64px;
+            text-align: center;
+        }
+
+        .solution-step .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: #fff;
+            border: 2px solid var(--border-color);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin: 0 auto 32px;
+        }
+        
+        .solution-step .step-icon {
+            margin-bottom: 24px;
+            color: var(--accent-color);
+        }
+
+        .solution-step h3 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .solution-step p {
+            margin: 0 auto;
+        }
+
+        /* 5. Features */
+        .features {
+            background-color: #fff;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+        .feature-card {
+            padding: 32px;
+        }
+        .feature-card .icon {
+            width: 48px;
+            height: 48px;
+            color: var(--accent-color);
+            margin-bottom: 24px;
+        }
+        .feature-card h3 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        /* 6. Social Proof */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+        .testimonial-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 300px;
+        }
+        .testimonial-card p {
+            font-size: 22px;
+            line-height: 1.5;
+            font-style: italic;
+            color: var(--dark-text);
+        }
+        .testimonial-author {
+            margin-top: 32px;
+            font-style: normal;
+        }
+        .testimonial-author .name {
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        .testimonial-author .title {
+            font-size: 16px;
+        }
+        .placeholder-notice {
+            font-weight: 600;
+            color: var(--accent-color);
+            text-align: center;
+            background: rgba(217, 119, 6, 0.05);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+
+        /* 7. Pricing */
+        .pricing {
+            background-color: #fff;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            align-items: start;
+        }
+        .pricing-card {
+            padding: 48px;
+            border: 2px solid var(--border-color);
+            text-align: center;
+        }
+        .pricing-card.recommended {
+            border-color: var(--accent-color);
+            transform: scale(1.05);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        .pricing-card .tier-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 16px;
+        }
+        .pricing-card .price {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--dark-text);
+        }
+        .pricing-card .price span {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--body-text);
+        }
+        .pricing-card .description {
+            margin: 16px 0 32px;
+            min-height: 50px;
+        }
+        .pricing-card ul {
+            list-style: none;
+            text-align: left;
+            margin: 32px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .pricing-card ul li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+        }
+        .pricing-card ul li svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-color);
+            flex-shrink: 0;
+        }
+
+        /* 8. FAQ */
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .faq-item {
+            border-bottom: 1px solid var(--border-color);
+        }
+        .faq-item summary {
+            padding: 24px 0;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--dark-text);
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .faq-item summary::-webkit-details-marker {
+            display: none;
+        }
+        .faq-item summary::after {
+            content: '+';
+            font-size: 32px;
+            color: var(--accent-color);
+            transition: transform 0.2s ease;
+        }
+        .faq-item[open] summary::after {
+            transform: rotate(45deg);
+        }
+        .faq-item div {
+            padding-bottom: 24px;
+        }
+
+        /* 9. Final CTA */
+        .final-cta {
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+            text-align: center;
+        }
+        .final-cta h2 {
+            color: var(--light-text);
+            margin-bottom: 40px;
+        }
+
+        /* 10. Footer */
+        .footer {
+            background-color: #fff;
+            padding: 80px 0;
+            font-size: 16px;
+        }
+        .footer-main {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 64px;
+            margin-bottom: 64px;
+        }
+        .footer-brand h4 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        .footer-brand p {
+            font-size: 16px;
+        }
+        .footer-column h5 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--dark-text);
+        }
+        .footer-column ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .footer-column a {
+            text-decoration: none;
+            color: var(--body-text);
+            transition: color 0.2s ease;
+        }
+        .footer-column a:hover {
+            color: var(--accent-color);
+        }
+        .footer-bottom {
+            border-top: 1px solid var(--border-color);
+            padding-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .social-links {
+            display: flex;
+            gap: 24px;
+        }
+        .social-links a svg {
+            width: 24px;
+            height: 24px;
+            color: var(--body-text);
+            transition: color 0.2s ease;
+        }
+        .social-links a:hover svg {
+            color: var(--accent-color);
+        }
+        
+        @media (max-width: 1024px) {
+            .container { padding: 0 40px; }
+            h1 { font-size: 64px; }
+            h2 { font-size: 40px; }
+            section { padding: 96px 0; }
+            .problem-grid, .features-grid, .testimonials-grid { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .pricing-card.recommended { transform: scale(1); }
+            .nav-links { display: none; } /* Simplified for example */
+            .footer-main { grid-template-columns: 1fr 1fr; }
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 0 24px; }
+            h1 { font-size: 48px; }
+            h2 { font-size: 32px; margin-bottom: 48px; }
+            body { font-size: 18px; }
+            .hero { padding: 120px 0; }
+            .hero-subheadline { font-size: 20px; }
+            .trust-signals { flex-direction: column; align-items: flex-start; gap: 24px; }
+            .footer-main { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; gap: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. NAVIGATION -->
+    <nav class="nav" id="main-nav">
+        <div class="container">
+            <a href="#" class="nav-logo">Quarry Roast</a>
+            <ul class="nav-links">
+                <li><a href="#features">Our Coffee</a></li>
+                <li><a href="#pricing">Subscriptions</a></li>
+                <li><a href="#features">Wholesale</a></li>
+                <li><a href="#features">Visit Us</a></li>
+            </ul>
+            <a href="#pricing" class="btn btn-primary">Shop Now</a>
+        </div>
+    </nav>
+
+    <main>
+        <!-- 2. HERO -->
+        <header class="hero">
+            <div class="container fade-in">
+                <h1>Exceptional Coffee, Sourced with Soul.</h1>
+                <p class="hero-subheadline">From award-winning farms to your cup. We roast Bristol's finest small-batch coffee with transparency and passion.</p>
+                <div class="hero-ctas">
+                    <a href="#pricing" class="btn btn-primary">Explore Subscriptions</a>
+                    <a href="#" class="btn btn-secondary">Shop Single Bags</a>
+                </div>
+                <div class="trust-signals">
+                    <div class="trust-signal">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 3a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m-3 9h18" /></svg>
+                        <span>Directly Sourced from 12 Farms</span>
+                    </div>
+                    <div class="trust-signal">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-6.75c-.621 0-1.125.504-1.125 1.125v3.375m9 0h-9" /></svg>
+                        <span>UK Barista Champion Founder</span>
+                    </div>
+                    <div class="trust-signal">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                        <span>Small-Batch Roasted in Bristol</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 3. PROBLEM -->
+        <section class="problem">
+            <div class="container">
+                <h2 class="fade-in">Tired of Tasteless, Mass-Market Coffee?</h2>
+                <p class="problem-intro fade-in">The world is full of mediocre coffee. It's over-roasted, untraceable, and leaves you feeling uninspired. You deserve a better, more transparent cup.</p>
+                <div class="problem-grid">
+                    <div class="card fade-in">
+                        <h3>Mysterious Origins</h3>
+                        <p>Anonymous beans from unknown sources lose all sense of place and craft. You have no connection to the people who grew your coffee or the land it came from.</p>
+                    </div>
+                    <div class="card fade-in" style="transition-delay: 0.1s;">
+                        <h3>Stale & Burnt</h3>
+                        <p>Roasted months ago and sitting on a supermarket shelf, most coffee tastes bitter, flat, and lifeless. The vibrant, unique flavours have long since disappeared.</p>
+                    </div>
+                    <div class="card fade-in" style="transition-delay: 0.2s;">
+                        <h3>Unethical Sourcing</h3>
+                        <p>Complex supply chains often leave farmers with a fraction of the final price. This unsustainable model compromises both quality and livelihoods.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. SOLUTION / HOW IT WORKS -->
+        <section class="solution">
+            <div class="container">
+                <h2 class="fade-in">Your Journey to Better Coffee</h2>
+                <div class="solution-grid">
+                    <div class="solution-step fade-in">
+                        <div class="step-number">01</div>
+                        <h3>We Source Directly</h3>
+                        <p>We build lasting relationships with smallholder farms in the world's best growing regions, paying premium prices for their most exceptional beans.</p>
+                    </div>
+                    <div class="solution-step fade-in" style="transition-delay: 0.1s;">
+                        <div class="step-number">02</div>
+                        <h3>We Roast with Precision</h3>
+                        <p>In our Bristol railway arch, every 20kg batch is meticulously roasted to highlight its unique character, terroir, and flavour profile.</p>
+                    </div>
+                    <div class="solution-step fade-in" style="transition-delay: 0.2s;">
+                        <div class="step-number">03</div>
+                        <h3>You Brew with Joy</h3>
+                        <p>Delivered fresh to your door within days of roasting. Experience the vibrant taste of truly special coffee, brewed just the way you like it.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. FEATURES -->
+        <section class="features" id="features">
+            <div class="container">
+                <h2 class="fade-in">More Than Just a Roastery</h2>
+                <div class="features-grid">
+                    <div class="card feature-card fade-in">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5v-1.875a3.375 3.375 0 013.375-3.375h1.5a1.125 1.125 0 011.125 1.125v-1.5a3.375 3.375 0 013.375-3.375H9.75" /></svg>
+                        <h3>Flexible Subscriptions</h3>
+                        <p>Never run out of great coffee. Get our latest single origins or signature blends delivered fresh to your door, on your schedule.</p>
+                    </div>
+                    <div class="card feature-card fade-in" style="transition-delay: 0.05s;">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" /></svg>
+                        <h3>Direct Trade Ethics</h3>
+                        <p>We guarantee fair prices and transparent partnerships, ensuring sustainability from farm to cup and fostering long-term relationships.</p>
+                    </div>
+                    <div class="card feature-card fade-in" style="transition-delay: 0.1s;">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.362-3.797A8.333 8.333 0 0112 2.25c1.153 0 2.243.3 3.218.834A8.25 8.25 0 0115.362 5.214z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0015 0h-15z" /></svg>
+                        <h3>Small-Batch Roasting</h3>
+                        <p>Our commitment to 20kg batches means unparalleled quality control and exceptional freshness in every single bag we produce.</p>
+                    </div>
+                    <div class="card feature-card fade-in" style="transition-delay: 0.15s;">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5A2.25 2.25 0 0011.25 11.25H6.75A2.25 2.25 0 004.5 13.5V21M6.75 21v-7.5A2.25 2.25 0 009 11.25h1.5A2.25 2.25 0 0012.75 13.5V21m-4.5 0h6m-6 0h-1.5m1.5 0v-3.75m0 3.75h1.5m-1.5 0h-6.75m6.75 0h6.75m-6.75 0h-1.5m1.5 0v-6.75m0 6.75h1.5m-1.5 0h-6.75m6.75 0h6.75M9 3.75l3 3m0 0l3-3m-3 3v11.25m0-11.25L9 6.75" /></svg>
+                        <h3>Wholesale Partnerships</h3>
+                        <p>Elevate your cafe's offering. We supply and train over 40 of the UK's best independent coffee shops with our beans and expertise.</p>
+                    </div>
+                    <div class="card feature-card fade-in" style="transition-delay: 0.2s;">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5z" /></svg>
+                        <h3>Barista Training</h3>
+                        <p>Learn from the best. Our champion-led courses cover everything from home brewing fundamentals to professional-level latte art.</p>
+                    </div>
+                    <div class="card feature-card fade-in" style="transition-delay: 0.25s;">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                        <h3>Bristol Tasting Room</h3>
+                        <p>Visit our railway arch to taste our latest brews, talk coffee with our passionate team, and see the roaster in action.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. SOCIAL PROOF -->
+        <section class="social-proof">
+            <div class="container">
+                <h2 class="fade-in">Loved by Coffee Enthusiasts Across the UK</h2>
+                <div class="testimonials-grid">
+                    <div class="card testimonial-card fade-in">
+                        <p class="placeholder-notice">[PLACEHOLDER] Compelling quote about the incredible flavour and freshness of the coffee.</p>
+                        <div class="testimonial-author">
+                            <div class="name">[Placeholder Name]</div>
+                            <div class="title">Home Barista, London</div>
+                        </div>
+                    </div>
+                    <div class="card testimonial-card fade-in" style="transition-delay: 0.1s;">
+                        <p class="placeholder-notice">[PLACEHOLDER] Enthusiastic review from a cafe owner about the quality, consistency, and service.</p>
+                        <div class="testimonial-author">
+                            <div class="name">[Placeholder Name]</div>
+                            <div class="title">Owner, The Daily Grind Cafe</div>
+                        </div>
+                    </div>
+                    <div class="card testimonial-card fade-in" style="transition-delay: 0.2s;">
+                        <p class="placeholder-notice">[PLACEHOLDER] A personal story from a subscriber who discovered their new favourite coffee.</p>
+                        <div class="testimonial-author">
+                            <div class="name">[Placeholder Name]</div>
+                            <div class="title">Monthly Subscriber, Manchester</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. PRICING -->
+        <section class="pricing" id="pricing">
+            <div class="container">
+                <h2 class="fade-in">Start Your Subscription</h2>
+                <div class="pricing-grid">
+                    <div class="card pricing-card fade-in">
+                        <div class="tier-name">The Explorer</div>
+                        <div class="price">£15<span>/month</span></div>
+                        <p class="description">One 250g bag per month. Perfect for discovering new single origins.</p>
+                        <ul>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>One 250g bag monthly</li>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>Roaster's Choice single origin</li>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>Free UK Shipping</li>
+                        </ul>
+                        <a href="#" class="btn btn-dark">Subscribe Now</a>
+                    </div>
+                    <div class="card pricing-card recommended fade-in" style="transition-delay: 0.1s;">
+                        <div class="tier-name">The Enthusiast</div>
+                        <div class="price">£28<span>/month</span></div>
+                        <p class="description">Two 250g bags per month. Our most popular plan for daily drinkers.</p>
+                        <ul>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>Two 250g bags monthly</li>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>Choose your coffee style</li>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>Pause or cancel anytime</li>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>Free UK Shipping</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary">Subscribe Now</a>
+                    </div>
+                    <div class="card pricing-card fade-in" style="transition-delay: 0.2s;">
+                        <div class="tier-name">The Aficionado</div>
+                        <div class="price">£45<span>/month</span></div>
+                        <p class="description">One 1kg bag per month. For the serious home barista or small office.</p>
+                        <ul>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>One 1kg bag monthly</li>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>Best value for volume</li>
+                            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>Free UK Shipping</li>
+                        </ul>
+                        <a href="#" class="btn btn-dark">Subscribe Now</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. FAQ -->
+        <section class="faq">
+            <div class="container">
+                <h2 class="fade-in">Frequently Asked Questions</h2>
+                <div class="faq-container fade-in">
+                    <details class="faq-item">
+                        <summary>How fresh is your coffee when it arrives?</summary>
+                        <div><p>We roast to order and ship within 24 hours. Your coffee will typically arrive 2-5 days after its roast date, which is the perfect time to start brewing for optimal flavour.</p></div>
+                    </details>
+                    <details class="faq-item">
+                        <summary>Can I choose the coffee in my subscription?</summary>
+                        <div><p>Yes! For The Enthusiast plan, you can choose between our single origin, blend, or espresso profiles. The Explorer is a "Roaster's Choice" subscription, designed for discovering something new and exciting each month.</p></div>
+                    </details>
+                    <details class="faq-item">
+                        <summary>Do you offer different grind sizes?</summary>
+                        <div><p>Absolutely. You can choose whole bean or have your coffee ground for your specific brew method (e.g., French Press, V60, Espresso, AeroPress) at checkout.</p></div>
+                    </details>
+                    <details class="faq-item">
+                        <summary>What are your shipping policies?</summary>
+                        <div><p>We offer free standard UK shipping on all subscription orders and any orders over £25. For smaller orders, a small shipping fee applies. We ship via Royal Mail.</p></div>
+                    </details>
+                    <details class="faq-item">
+                        <summary>How does direct trade work?</summary>
+                        <div><p>It means we bypass traditional importers and exporters to build personal, long-term relationships directly with the farmers. We visit the farms, agree on a premium price far above market rates, and ensure the money goes straight to the people who deserve it.</p></div>
+                    </details>
+                    <details class="faq-item">
+                        <summary>Can I visit the roastery and tasting room?</summary>
+                        <div><p>We'd love to see you! Our Bristol railway arch tasting room and brew bar is open to the public from Wednesday to Sunday, 9am to 5pm. Come say hello!</p></div>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. FINAL CTA -->
+        <section class="final-cta">
+            <div class="container fade-in">
+                <h2>Ready to Experience Truly Exceptional Coffee?</h2>
+                <a href="#pricing" class="btn btn-primary">Find Your Perfect Brew</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- 10. FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-main">
+                <div class="footer-brand">
+                    <h4>Quarry Roast</h4>
+                    <p>Exceptional Coffee, Sourced with Soul.</p>
+                </div>
+                <div class="footer-column">
+                    <h5>Shop</h5>
+                    <ul>
+                        <li><a href="#pricing">Subscriptions</a></li>
+                        <li><a href="#">Single Bags</a></li>
+                        <li><a href="#">Equipment</a></li>
+                        <li><a href="#">Gift Cards</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h5>Learn</h5>
+                    <ul>
+                        <li><a href="#">Our Story</a></li>
+                        <li><a href="#">Sourcing</a></li>
+                        <li><a href="#">Brew Guides</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h5>Visit</h5>
+                    <ul>
+                        <li><a href="#">Tasting Room</a></li>
+                        <li><a href="#">Barista Courses</a></li>
+                        <li><a href="#">Wholesale</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Quarry Roast Ltd. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Instagram">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </a>
+                    <a href="#" aria-label="Twitter">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+                    </a>
+                    <a href="#" aria-label="Facebook">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Sticky Navigation on Scroll
+        const nav = document.getElementById('main-nav');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+
+        // 2. Fade-in elements on scroll
+        const faders = document.querySelectorAll('.fade-in');
+        const appearOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const appearOnScroll = new IntersectionObserver(function(entries, appearOnScroll) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                } else {
+                    entry.target.classList.add('visible');
+                    appearOnScroll.unobserve(entry.target);
+                }
+            });
+        }, appearOptions);
+
+        faders.forEach(fader => {
+            appearOnScroll.observe(fader);
+        });
+    </script>
+</body>
+</html>

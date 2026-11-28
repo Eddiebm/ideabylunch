@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Prata&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <title>Quarry Roast</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            color: #4E342E;
+            overflow-x: hidden;
+        }
+        h1, h2 {
+            font-family: 'Prata', serif;
+        }
+        .hero, .roastery-scene, .coffee-bean, .map, .roast-dial {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-color: #F3E5AB;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .hero {
+            background-image: url('https://source.unsplash.com/1600x900/?coffee,cup'); 
+            background-size: cover;
+            display: flex;
+            color: #fff;
+            text-shadow: 1px 1px 2px #000;
+            animation: steam-rise 5s ease-in-out infinite alternate;
+        }
+        @keyframes steam-rise {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+        .content {
+            max-width: 800px;
+            padding: 20px;
+            text-align: center;
+        }
+        .illustration-svg {
+            width: 100%;
+            height: auto;
+        }
+        .illustration-svg path {
+            fill: none;
+            stroke: #795548;
+            stroke-width: 2;
+        }
+        .animation-element {
+            animation: rotate 30s linear infinite;
+            transform-origin: center;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0); }
+            100% { transform: rotate(360deg); }
+        }
+        .section {
+            padding: 60px 20px;
+        }
+        .footer {
+            background-color: #2E1C1C;
+            color: #FFFFFF;
+            padding: 20px;
+            text-align: center;
+        }
+        .footer a {
+            color: #FFFFFF;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<section class="hero">
+    <div class="content">
+        <h1>Quarry Roast</h1>
+        <p>Exceptional coffee, with roots that run deep. Handpicked from the world's finest terroirs.</p>
+    </div>
+</section>
+
+<section class="section roastery-scene" id="origin-story">
+    <div class="content">
+        <h2>Our Journey</h2>
+        <p>Founded by Priya Nair, inspired by farms in Ethiopia, Colombia, and Guatemala.</p>
+    </div>
+    <svg class="illustration-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+        <!-- SVG illustration of a roastery scene -->
+        <circle cx="250" cy="250" r="200" class="animation-element"></circle>
+    </svg>
+</section>
+
+<section class="section coffee-bean" id="the-coffee">
+    <div class="content">
+        <h2>Our Coffee</h2>
+        <p>Experience the rich, warm notes of our small-batch roasted beans. Sourced with care, roasted with passion.</p>
+    </div>
+    <svg class="illustration-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+        <!-- SVG illustration of coffee bean cross-sections -->
+        <path d="M150,250 C150,150 350,150 350,250 C350,350 150,350 150,250 Z"></path>
+        <path d="M200,250 C200,200 300,200 300,250 C300,300 200,300 200,250 Z"></path>
+    </svg>
+</section>
+
+<section class="section map" id="subscription">
+    <div class="content">
+        <h2>Join Our Journey</h2>
+        <p>Subscribe from £15/month. Discover single origin delights, complex blends, or robust espressos.</p>
+    </div>
+    <svg class="illustration-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+        <!-- SVG illustration of a world map highlighting coffee farm origins -->
+        <path d="M50,100 L450,100 L450,400 L50,400 Z"></path>
+        <circle cx="150" cy="200" r="10"></circle>
+        <circle cx="350" cy="300" r="10"></circle>
+        <circle cx="250" cy="150" r="10"></circle>
+    </svg>
+</section>
+
+<section class="section roast-dial" id="wholesale">
+    <div class="content">
+        <h2>For Café Owners</h2>
+        <p>Partner with Quarry Roast and explore exclusive offerings for your café. Craft your coffee story with us.</p>
+    </div>
+    <svg class="illustration-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+        <!-- SVG illustration of a roast dial -->
+        <circle cx="250" cy="250" r="200"></circle>
+        <line x1="250" y1="250" x2="250" y2="100" class="animation-element"></line>
+    </svg>
+</section>
+
+<section class="section tasting-room" id="tasting-room">
+    <div class="content">
+        <h2>Visit Our Tasting Room</h2>
+        <p>Join us Wednesday to Sunday from 9am–5pm. Experience our brew bar and barista training courses.</p>
+    </div>
+    <div class="map-image">
+        <img src="https://source.unsplash.com/600x400/?bristol,tasting-room" alt="Bristol Tasting Room" style="width:100%;">
+    </div>
+</section>
+
+<footer class="footer">
+    <p>© 2023 Quarry Roast | <a href="#origin-story">Our Journey</a> | <a href="#the-coffee">Our Coffee</a> | <a href="#subscription">Subscribe</a> | <a href="#wholesale">Wholesale</a> | <a href="#tasting-room">Visit Us</a></p>
+</footer>
+
+</body>
+</html>

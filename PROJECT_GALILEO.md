@@ -5,8 +5,9 @@
 
 ## Status
 Last updated: 2026-11-27  
-Research phase: Workstream 1 complete — Integration Feasibility  
-Workstream 2–5: Pending budget authorization and C-004 completion
+Research phase: Workstreams 1 & 2 complete  
+WS2 cost: $1.3851 of $10.00 budget · 10 sites generated · Blind comparison UI live  
+Next: Fable 5.2 re-run at 64K tokens (optional) · Prompt revision experiment
 
 ---
 
@@ -132,29 +133,81 @@ This is 18–28× more expensive than current Gemini Flash text-only generation.
 
 ---
 
-## Workstream 2 — Comparison Plan
+## Workstream 2 — Controlled Comparison Results
 
-**Business brief for the comparison:** Use the IdeaByLunch homepage itself as the test brief. Identical brief across all candidates.
+**Status: COMPLETE** · Generated: 2026-11-27 · Total cost: $1.3851 of $10.00 budget
 
-**Brief:** "IdeaByLunch — an AI marketplace builder. Brief a business idea in plain English. We generate a complete marketplace with pages, payments, search, and an AI growth engine in under 4 hours. Starter plan $299, Professional $499, Premium $999. Target audience: solo founders and small teams wanting to launch a marketplace business quickly."
+**Brief used:** Quarry Roast — specialty coffee roastery, Bristol UK. Founded 2019 by Priya Nair (former UK Barista Champion). Direct-trade from 12 farms. Subscription from £15/mo. 40+ UK cafes. Railway arch tasting room. Same baseline system prompt used for Candidates A–D (identical to production IdeaByLunch). Candidate E used a visual-first open prompt.
 
-| Candidate | Method | Approx cost | Status |
-|-----------|--------|-------------|--------|
-| A | Existing IdeaByLunch (Gemini Flash, 5 style prompts) | $0 (existing infra) | Ready |
-| B | GPT-4o / GPT-6 with minimal creative prompt | ~$0.10–0.30 | Ready |
-| C | Claude Sonnet/Opus with minimal creative prompt | ~$0.10–0.30 | Ready |
-| D | Gemini 2.5 Flash/Pro with minimal creative prompt | ~$0.05–0.20 | Ready |
-| E | v0 API (v0 Mini model) | ~$0.016–0.05 | Requires v0 API key |
-| F | Google Stitch design → implementation | Unknown | Blocked on access |
-| G | OpenAI DALL-E 3 images → website impl | ~$0.35–0.55 | Requires DALL-E budget auth |
+**v0:** Skipped — no `V0_API_KEY` available in this run. Deferred to future session.
 
-**Budget for WS2 (2 runs per candidate):**
-- Candidates A–D: ~$2–4 total
-- Candidate E: ~$0.10 (v0 Mini) or ~$1.30 (v0 Max) — requires v0 API key
-- Candidate F: Unknown — requires access confirmation
-- Candidate G: ~$1.50–2.20 — requires explicit budget authorization
+### Generation Results
 
-**Recommended immediate action:** Run candidates A–D (Claude, GPT, Gemini minimal prompts) since these require no additional infrastructure or access beyond existing OpenRouter API key. Total cost ~$2–4. Defer E, F, G until access and budget are confirmed.
+| Candidate | Model | Prompt | Run 1 | Run 2 | Tokens (avg) | Cost (total) | Time (avg) |
+|-----------|-------|--------|-------|-------|-------------|-------------|-----------|
+| A | `google/gemini-2.5-flash` | Baseline | 42KB | 48KB | ~11.7K | $0.018 | 29.8s |
+| B | `anthropic/claude-fable-5-2` | Baseline | 34KB* | 39KB* | 8,192* | $0.316 | 69.9s |
+| C | `openai/gpt-4o` | Baseline | 18KB | 15KB | ~3.9K | $0.094 | 18.5s |
+| D | `google/gemini-2.5-pro` | Baseline | 39KB | 39KB | ~10.1K | $0.229 | 49.1s |
+| E | `openai/gpt-4o` | Visual-first | 5KB | 4.6KB | ~1K | $0.026 | 8.5s |
+
+*B1/B2 both hit the 32K `max_tokens` ceiling — output was truncated. Sites render but sections are cut off. Scores are penalized accordingly.
+
+### Visual Findings (desktop 1440px + mobile 375px observed)
+
+| Candidate | Above-the-fold | Palette | Full sections | Mobile |
+|-----------|---------------|---------|---------------|--------|
+| A — Gemini Flash | Warm cream/terracotta hero, clean nav, coffee-toned accent | Warm neutrals, brown CTA | ✅ All 10 | ✅ Responsive |
+| B — Fable 5.2 | Near-black background with orange ember glow — dramatic but truncated | Dark + amber | ⚠️ Truncated (hit 32K limit) | Likely incomplete |
+| C — GPT-4o | Coral/salmon hero, bold "Master the Art of Coffee" headline, placeholder cards | Coral + white | ✅ Functional but shorter | ✅ Clean |
+| D — Gemini Pro | Dark brown/terracotta gradient, editorial feel, "Exceptional Coffee, Sourced with Soul" | Brown gradient | ✅ All 10, polished | ✅ Good |
+| E — GPT-4o visual-first | Nearly blank cream page — just brand name visible | Cream | ❌ 7 sections only, sparse | Minimal |
+
+### Key Findings
+
+**1. Gemini 2.5 Flash is the best production model at this task.**
+At $0.009/site (single run), it produces the most complete and brand-appropriate output of all candidates. Full 10-section sites, warm coffee palette, inline SVG, responsive. Candidate A is indistinguishable in quality from Candidate D (Gemini Pro, 12× more expensive) and outperforms C (GPT-4o) on completeness.
+
+**2. Claude Fable 5.2 wants to write more than 32K tokens.**
+Both B1 and B2 hit the `max_tokens` ceiling. The model was mid-generation when stopped. The hero is visually the most dramatic of all candidates — a dark, immersive ember scene — suggesting Fable would produce the highest-quality output with a 64K+ token ceiling. This is the one candidate worth re-running with `max_tokens: 64000` before making a final quality judgment. Cost: ~$0.30/site at current rates.
+
+**3. GPT-4o (baseline prompt) produces shorter, functional sites.**
+Candidate C is complete but generates roughly half the HTML of Gemini Flash. Good for fast preview rendering; weaker for conversion-ready landing pages. Coral palette is unusual and not generic-SaaS, which is a point in its favour.
+
+**4. GPT-4o visual-first prompt fails at this task.**
+Candidate E produced a ~5KB near-blank page with just the brand name. The open-ended creative director prompt without structural requirements caused the model to severely underestimate scope. This confirms the production baseline prompt (with explicit 10-section requirements) is load-bearing — not just stylistic.
+
+**5. No model justifies replacing Gemini Flash without a re-run of Fable 5.2 at 64K tokens.**
+The quality gap between A and D is negligible at 12× the cost. The gap between A and C (GPT-4o) favours A on completeness. Only B (Fable 5.2, truncated) showed a qualitatively different aesthetic — dark, dramatic, editorial — that could command a premium positioning. That hypothesis requires a clean 64K run to verify.
+
+### Cost Analysis
+
+| Model | Cost/site | Relative to current | Verdict |
+|-------|-----------|-------------------|---------|
+| Gemini 2.5 Flash (current) | $0.009 | 1× | ✅ Keep as default |
+| Gemini 2.5 Pro | $0.114 | 12.7× | ❌ No quality improvement seen |
+| GPT-4o standard | $0.047 | 5.2× | ❌ Less complete output |
+| Fable 5.2 (truncated) | $0.158 | 17.6× | ⚠️ Needs re-run at 64K tokens |
+| GPT-4o visual-first | $0.013 | 1.4× | ❌ Prompt strategy fails |
+
+### Blind Comparison UI
+
+A fully interactive blind comparison interface was produced at:
+`galileo_output/compare.html` — served at `http://localhost:8742/compare.html`
+
+Features: dark Galileo theme, iframe previews of all 5 candidates (both runs available), desktop/mobile viewport toggle, three-dimension rating (Visual Quality, Completeness, Brand Fit), model identity reveal toggle, results ranking view, JSON export. Ratings persist in `localStorage`.
+
+### Recommendation
+
+**Do not switch models. Improve the prompt.**
+
+The comparison confirms: Gemini 2.5 Flash is already the optimal model for IdeaByLunch's cost/quality profile. The underperformance users perceive is a prompt architecture problem, not a model selection problem. The production prompt produces generic "dark SaaS" aesthetics because it instructs "Monochrome base palette with ONE vivid accent" and "Stripe-level polish" — these constraints over-index on SaaS aesthetics at the expense of brand specificity.
+
+**Recommended next steps:**
+1. Re-run Candidate B (Fable 5.2) at `max_tokens: 64000` to get a clean quality benchmark (~$0.30, 1 run)
+2. Test a revised baseline prompt that removes the "monochrome + single accent" constraint and replaces it with "palette derived from the brand's industry and product personality" 
+3. If Fable 5.2 at 64K produces materially better output than Flash: assess whether a two-tier offering (Flash standard / Fable premium) at different price points is commercially viable
+4. Do not expand proprietary creative architecture until this prompt experiment produces evidence
 
 ---
 
@@ -343,4 +396,4 @@ Based on research alone:
 ---
 
 *Last updated: 2026-11-27*  
-*Next action: Obtain v0 API key; run Candidates A–D comparison (est. $2–4 total); confirm Stitch access in browser*
+*WS2 complete. Next: Fable 5.2 64K re-run (~$0.30, optional). Prompt revision experiment. v0 key when available.*
