@@ -1,6 +1,6 @@
 # IdeaByLunch — Open Items
 
-Last reconciled: 2026-11-27 (post-galileo-ws2)
+Last reconciled: 2026-11-27 (post-observatory-mvp)
 
 ## 🔑 Needs you
 
@@ -46,6 +46,18 @@ Last reconciled: 2026-11-27 (post-galileo-ws2)
 - **Seller recruitment outreach** — `app/api/hunt/` has scrape/outreach sub-routes but no
   automated campaign trigger. Next step: add a cron that emails `hunt:outreach:queue` members
   via Resend on a drip schedule (3 emails over 7 days: intro, proof, CTA).
+
+## ✅ Done
+
+- **Observatory MVP shipped (2026-11-27 · 7affa88)** — `/admin/observatory`: gallery,
+  live desktop/mobile previews, approve/reject/score, blind side-by-side comparison.
+  `/api/observatory` (list+action) and `/api/observatory/preview/[id]` (HTML serve).
+  `observatory_generations` Neon table seeded with all 10 Galileo WS2 outputs.
+  Auth: AUDIT_SECRET via `x-admin-secret` header. Live after DATABASE_URL added to Vercel.
+
+- **PROJECT GALILEO WS2 (2026-11-27 · b089cf8)** — 10/10 Quarry Roast generations
+  across 5 models, blind UI compare.html, full analysis in PROJECT_GALILEO.md.
+  Recommendation: Gemini Flash is cost-quality leader; prompt is the bottleneck, not model.
 
 ## 🟢 Nice to Have
 
